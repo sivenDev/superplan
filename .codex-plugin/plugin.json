@@ -1,0 +1,25 @@
+{
+  "name": "superplan",
+  "version": "0.1.0",
+  "description": "Plan-first delivery workflow skills for docs/superplan repositories, layered on top of Superpowers.",
+  "author": {
+    "name": "siven"
+  },
+  "license": "MIT",
+  "keywords": ["superplan", "planning", "skills", "workflow", "superpowers"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Superplan",
+    "shortDescription": "Plan-first delivery workflows built on Superpowers",
+    "longDescription": "Use Superplan to route PRDs, features, and bugs through reviewed docs/superplan plans before implementation. Install Superpowers first, then use $using-superplan as the main entry skill.",
+    "developerName": "zhengxiwan",
+    "category": "Coding",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "Initialize Superplan in this repository.",
+      "Turn this feature request into a reviewed Superplan plan.",
+      "Record this bug and prepare a repair plan."
+    ],
+    "brandColor": "#0F766E"
+  }
+}

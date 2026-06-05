@@ -1,0 +1,18 @@
+{
+  "name": "superplan-dev",
+  "description": "Development marketplace for the Superplan plugin",
+  "owner": {
+    "name": "siven"
+  },
+  "plugins": [
+    {
+      "name": "superplan",
+      "description": "Superplan workflows for docs/superplan-based planning on top of Superpowers",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "siven"
+      }
+    }
+  ]
+}

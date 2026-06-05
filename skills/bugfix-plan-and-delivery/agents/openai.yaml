@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bugfix Plan and Delivery"
+  short_description: "Plan and fix a bug from docs/superplan/human/bugs.md"
+  default_prompt: "Use $bugfix-plan-and-delivery to turn a recorded bug into reviewed plans under docs/superplan/plans/bugs before coding."

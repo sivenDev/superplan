@@ -1,0 +1,4 @@
+interface:
+  display_name: "Feature Plan and Delivery"
+  short_description: "Plan and deliver a feature from docs/superplan/human"
+  default_prompt: "Use $feature-plan-and-delivery to turn a requested feature into reviewed plans under docs/superplan/plans/features before coding."

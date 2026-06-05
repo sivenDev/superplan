@@ -1,0 +1,4 @@
+interface:
+  display_name: "Using Superplan"
+  short_description: "Guide plan-first delivery from human docs"
+  default_prompt: "Use $using-superplan to route project, feature, or bugfix work from docs/superplan/human into reviewed plans."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Bootstrap from PRD"
+  short_description: "Turn docs/superplan/human/prd.md into approved plans"
+  default_prompt: "Use $project-bootstrap-from-prd to refine docs/superplan/human/prd.md and expand it into reviewed plans before implementation."
