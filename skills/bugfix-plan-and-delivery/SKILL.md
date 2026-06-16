@@ -41,5 +41,7 @@ This skill specializes the shared delivery loop. Read `../using-superplan/refere
 - Bugfix plans belong in `docs/superplan/plans/bugs/`.
 - Every bugfix plan id must encode its source entry: use `B001` for a single plan, or `B001-01`, `B001-02` when split. Set `created` to today's date.
 - Every bugfix plan must name the reproduction or verification path that proves the bug existed and is now fixed.
+- Only use subagent-assisted decomposition or multi-subagent execution after debugging has pinned down the reproduction and root-cause boundaries clearly enough to keep ownership and verification unambiguous.
+- If the fix path is tightly coupled or correctness is uncertain, keep the work serialized and favor the smallest correct change over faster throughput.
 - Prefer the smallest root-cause fix that keeps behavior correct and measurable.
 - If the issue is not understood well enough to explain the root cause, stay in debugging and do not write implementation steps yet.

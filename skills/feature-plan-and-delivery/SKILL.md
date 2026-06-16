@@ -37,6 +37,8 @@ This skill specializes the shared delivery loop. Read `../using-superplan/refere
 - Feature plans belong in `docs/superplan/plans/features/`.
 - Every feature plan id must encode its source entry: use `F001` for a single plan, or `F001-01`, `F001-02` when split. Set `created` to today's date.
 - Prefer one plan per independently testable slice.
+- When one feature can be split into independent slices with clear ownership and verification boundaries, prefer subagent-assisted decomposition during planning and multiple subagents during execution.
+- If shared context or correctness would suffer, keep the plan or execution more serialized.
 - Make the user-visible result or acceptance explicit in `Scope` or `Exit Criteria`.
 - If a feature touches shared infrastructure, call out the shared boundary explicitly instead of hiding it inside a feature-only plan.
 - If feature scope is still fuzzy, stay in `brainstorming` before continuing.

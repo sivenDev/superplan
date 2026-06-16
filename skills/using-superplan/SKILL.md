@@ -8,6 +8,7 @@ description: Use when a repository manages requests through docs/superplan/human
 ## Overview
 
 Superplan routes human-authored requests into reviewed plans before any implementation starts. Use this as the entry skill when the workflow uses `docs/superplan/human/*` for input and `docs/superplan/plans/*` for execution planning and progress.
+By default, prefer subagent-assisted decomposition while planning and multiple subagents while executing independent approved work, but only when the boundaries are clear enough to keep correctness and verification stronger than the throughput gain.
 
 ## Path Convention
 
@@ -63,5 +64,6 @@ The canonical delivery loop and global rules live in `references/delivery-loop.m
 - Never implement before a reviewed plan exists and the human explicitly approves execution.
 - Every plan file under `docs/superplan/plans/**` must follow `references/plan-spec.md`.
 - Keep plans independent, clear, and non-overlapping; review the full related plan set after any change.
+- Prefer subagent-assisted planning and independent multi-subagent execution when they improve clarity and throughput without weakening correctness; do not treat subagents as mandatory.
 - The canonical project-level workflow guardrails live in `references/agents-guardrails.md`. Install or refresh them with `python3 scripts/sync_agents_guardrails.py --write`, and verify with `--check`.
 - `docs/superplan/plans/README.md` is a generated index. After any plan add, remove, rename, or metadata change, run `python3 scripts/generate_plans_readme.py --write`, and verify with `--check`.

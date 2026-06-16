@@ -28,4 +28,6 @@ This skill specializes the shared delivery loop. Read `../using-superplan/refere
 - First-project setup should install the canonical workflow guardrails into `AGENTS.md` unless the repository already has an explicitly stronger policy.
 - Each plan must have a single clear goal, explicit files, verification steps, and a meaningful completion boundary.
 - If a plan cannot be executed and verified independently, split it further.
+- When decomposing a PRD into multiple plans, prefer subagent-assisted decomposition for slices with clear interfaces and acceptance boundaries, but do not force extra splits when sequential reasoning keeps the resulting plan set more correct.
+- During execution of approved PRD-derived plans, prefer multiple subagents only for independent slices with explicit verification boundaries; otherwise keep the work serialized.
 - Mainline `required` plans use ordered numeric ids (`01`, `02`), must set `order` and `created`, and be ready for sequential execution. Express real ordering with `depends_on`.
