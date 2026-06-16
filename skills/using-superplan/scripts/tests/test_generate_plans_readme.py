@@ -87,6 +87,23 @@ class GeneratePlansReadmeTests(unittest.TestCase):
             self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 0)
             self.assertEqual(MODULE.run(["--root", str(root), "--check"]), 0)
 
+    def test_combined_write_and_check_fixes_stale_readme(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(plans_dir / "README.md", "# stale\n")
+            write(plans_dir / "01-first.md", plan(plan_id="01", title="First Plan", status="draft", order=1))
+
+            self.assertEqual(MODULE.run(["--root", str(root), "--write", "--check"]), 0)
+
+    def test_combined_write_and_check_still_fails_on_invalid_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(plans_dir / "01-first.md", plan(plan_id="01", title="First Plan", status="completed", order=1))
+
+            self.assertEqual(MODULE.run(["--root", str(root), "--write", "--check"]), 1)
+
     def test_check_fails_on_unknown_status(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)

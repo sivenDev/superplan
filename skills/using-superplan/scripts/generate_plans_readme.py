@@ -374,9 +374,16 @@ def run(argv: list[str] | None = None) -> int:
         default=None,
         help="Repository root. Defaults to the nearest ancestor of the current directory containing docs/superplan/plans.",
     )
-    mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--write", action="store_true", help="Write docs/superplan/plans/README.md")
-    mode.add_argument("--check", action="store_true", help="Fail if docs/superplan/plans/README.md is stale")
+    parser.add_argument(
+        "--write",
+        action="store_true",
+        help="Write docs/superplan/plans/README.md. Can be combined with --check.",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Fail if docs/superplan/plans/README.md is stale. When combined with --write, checks the freshly written file.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -395,7 +402,6 @@ def run(argv: list[str] | None = None) -> int:
     if args.write:
         readme_path.write_text(generated, encoding="utf-8")
         print(f"updated {readme_path}")
-        return 0
 
     if args.check:
         current = readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
@@ -403,6 +409,9 @@ def run(argv: list[str] | None = None) -> int:
             print(f"stale {readme_path}")
             return 1
         print(f"ok {readme_path}")
+        return 0
+
+    if args.write:
         return 0
 
     print(generated, end="")

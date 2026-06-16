@@ -28,3 +28,10 @@
 - created: 2026-06-16
 
 Update Superplan guidance so plan generation should prefer subagent-assisted decomposition when task boundaries are clear, and execution should prefer multiple subagents for independent work when correctness is not put at risk. This is a preference, not a hard requirement; correctness must take priority over efficiency. Apply this only in Superplan skills/references, not in injected `AGENTS.md` guardrails.
+
+## F002: Support combined README write and check flags
+
+- status: done
+- created: 2026-06-16
+
+Current behavior errors when `generate_plans_readme.py` is invoked with both `--write` and `--check`. Change it so this combination is supported instead: when both flags are present, run the equivalent of `--write` first and then `--check`, so callers do not need to serialize the two operations manually.

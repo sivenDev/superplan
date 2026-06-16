@@ -6,7 +6,7 @@
 
 | Type | Plans | Complete |
 | --- | --- | --- |
-| `feature` | 1 | 1 |
+| `feature` | 2 | 2 |
 
 ## Plan Groups
 
@@ -15,3 +15,4 @@
 | ID | Plan | Status | Created |
 | --- | --- | --- | --- |
 | `F001` | [Prefer Safe Subagent Defaults in Planning and Execution](features/F001-prefer-safe-subagent-defaults.md) | `complete` | 2026-06-16 |
+| `F002` | [Support Combined README Write and Check Flags](features/F002-support-combined-readme-write-check.md) | `complete` | 2026-06-16 |
