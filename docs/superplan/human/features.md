@@ -38,7 +38,7 @@ Current behavior errors when `generate_plans_readme.py` is invoked with both `--
 
 ## F003: Worktree-aware feature and bug numbering
 
-- status: proposed
+- status: accepted
 - created: 2026-07-01
 
 优化生成 bug 和 feature 编号逻辑：当处于 git worktree 时，生成的编号需要包含分支名称，避免多个 worktree 并行开发后合并时出现编号冲突。

@@ -4,9 +4,9 @@
 
 ## Status
 
-| Type | Plans | Complete |
-| --- | --- | --- |
-| `feature` | 2 | 2 |
+| Type | Plans | Draft | Complete |
+| --- | --- | --- | --- |
+| `feature` | 3 | 1 | 2 |
 
 ## Plan Groups
 
@@ -16,3 +16,4 @@
 | --- | --- | --- | --- |
 | `F001` | [Prefer Safe Subagent Defaults in Planning and Execution](features/F001-prefer-safe-subagent-defaults.md) | `complete` | 2026-06-16 |
 | `F002` | [Support Combined README Write and Check Flags](features/F002-support-combined-readme-write-check.md) | `complete` | 2026-06-16 |
+| `F003` | [Worktree-Aware Human Request Numbering](features/F003-worktree-aware-request-numbering.md) | `draft` | 2026-07-01 |
