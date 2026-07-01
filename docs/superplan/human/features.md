@@ -35,3 +35,10 @@ Update Superplan guidance so plan generation should prefer subagent-assisted dec
 - created: 2026-06-16
 
 Current behavior errors when `generate_plans_readme.py` is invoked with both `--write` and `--check`. Change it so this combination is supported instead: when both flags are present, run the equivalent of `--write` first and then `--check`, so callers do not need to serialize the two operations manually.
+
+## F003: Worktree-aware feature and bug numbering
+
+- status: proposed
+- created: 2026-07-01
+
+优化生成 bug 和 feature 编号逻辑：当处于 git worktree 时，生成的编号需要包含分支名称，避免多个 worktree 并行开发后合并时出现编号冲突。
