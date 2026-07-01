@@ -205,6 +205,62 @@ order: 1
             self.assertIn("| `F001-01` |", generated)
             self.assertIn("| `F001-02` |", generated)
 
+    def test_branch_qualified_feature_plan_validates_against_human_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            human = root / "docs" / "superplan" / "human" / "features.md"
+            write(human, "# Features\n\n## F001@feature-safe-01-branch: Known\n")
+            write(
+                plans_dir / "features" / "F001@feature-safe-01-branch.md",
+                plan(
+                    plan_id="F001@feature-safe-01-branch",
+                    title="Branch Feat",
+                    plan_type="feature",
+                    status="draft",
+                ),
+            )
+
+            self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 0)
+            generated = MODULE.generate_readme(root, plans_dir)
+            self.assertIn("| `F001@feature-safe-01-branch` |", generated)
+
+    def test_split_branch_qualified_feature_plan_uses_branch_qualified_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            human = root / "docs" / "superplan" / "human" / "features.md"
+            write(human, "# Features\n\n## F001@feature-safe-01-branch: Known\n")
+            write(
+                plans_dir / "features" / "F001@feature-safe-01-branch-01.md",
+                plan(
+                    plan_id="F001@feature-safe-01-branch-01",
+                    title="Branch Feat Slice",
+                    plan_type="feature",
+                    status="draft",
+                ),
+            )
+
+            self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 0)
+
+    def test_branch_qualified_feature_plan_requires_matching_human_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            human = root / "docs" / "superplan" / "human" / "features.md"
+            write(human, "# Features\n\n## F001@other-branch: Known\n")
+            write(
+                plans_dir / "features" / "F001@feature-safe-01-branch.md",
+                plan(
+                    plan_id="F001@feature-safe-01-branch",
+                    title="Branch Feat",
+                    plan_type="feature",
+                    status="draft",
+                ),
+            )
+
+            self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 1)
+
     def test_no_traceability_section(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)

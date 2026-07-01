@@ -1,6 +1,6 @@
 # Features
 
-> 功能需求清单（人工维护）。每条需求一个 `## ` 小节，编号 `F001`、`F002` … 顺序递增、不复用。
+> 功能需求清单（人工维护）。每条需求一个 `## ` 小节，编号 `F001`、`F002` … 顺序递增、不复用；linked worktree 中自动编号会追加分支限定，如 `F001@branch-slug`。
 >
 > 录入方式（二选一）：
 > - 对 AI 说“新建 feature: <标题>”，由 `$feature-plan-and-delivery` 的 intake 自动追加并编号；
@@ -38,7 +38,7 @@ Current behavior errors when `generate_plans_readme.py` is invoked with both `--
 
 ## F003: Worktree-aware feature and bug numbering
 
-- status: accepted
+- status: done
 - created: 2026-07-01
 
 优化生成 bug 和 feature 编号逻辑：当处于 git worktree 时，生成的编号需要包含分支名称，避免多个 worktree 并行开发后合并时出现编号冲突。

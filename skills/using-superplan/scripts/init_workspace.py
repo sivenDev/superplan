@@ -31,7 +31,7 @@ HUMAN_FILES = {
     ),
     "features.md": (
         "# Features\n\n"
-        "> 功能需求清单（人工维护）。每条需求一个 `## ` 小节，编号 `F001`、`F002` … 顺序递增、不复用。\n"
+        "> 功能需求清单（人工维护）。每条需求一个 `## ` 小节，编号 `F001`、`F002` … 顺序递增、不复用；linked worktree 中自动编号会追加分支限定，如 `F001@branch-slug`。\n"
         ">\n"
         "> 录入方式（二选一）：\n"
         "> - 对 AI 说“新建 feature: <标题>”，由 `$feature-plan-and-delivery` 的 intake 自动追加并编号；\n"
@@ -54,7 +54,7 @@ HUMAN_FILES = {
     ),
     "bugs.md": (
         "# Bugs\n\n"
-        "> 缺陷清单（人工维护）。每条缺陷一个 `## ` 小节，编号 `B001`、`B002` … 顺序递增、不复用。\n"
+        "> 缺陷清单（人工维护）。每条缺陷一个 `## ` 小节，编号 `B001`、`B002` … 顺序递增、不复用；linked worktree 中自动编号会追加分支限定，如 `B001@branch-slug`。\n"
         ">\n"
         "> 录入方式（二选一）：\n"
         "> - 对 AI 说“新建 bug: <标题>”，由 `$bugfix-plan-and-delivery` 的 intake 自动追加并编号；\n"

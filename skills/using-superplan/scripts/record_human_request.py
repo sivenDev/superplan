@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import re
+import subprocess
 from pathlib import Path
 
 
@@ -20,7 +21,7 @@ CONFIG = {
     "bug": {"filename": "bugs.md", "prefix": "B", "heading": "# Bugs"},
 }
 
-ENTRY_PATTERN = re.compile(r"^##\s+([A-Za-z])(\d+):", re.MULTILINE)
+ENTRY_PATTERN = re.compile(r"^##\s+([A-Za-z])(\d+)(?:@[A-Za-z0-9._-]+)?:", re.MULTILINE)
 
 
 def detect_repo_root(start: Path) -> Path:
@@ -42,6 +43,61 @@ def next_id(content: str, prefix: str) -> str:
     ]
     value = (max(numbers) + 1) if numbers else 1
     return f"{prefix}{value:03d}"
+
+
+def git_output(root: Path, *args: str) -> str | None:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+
+def resolve_git_path(root: Path, value: str) -> Path:
+    path = Path(value)
+    if not path.is_absolute():
+        path = root / path
+    return path.resolve()
+
+
+def is_linked_worktree(root: Path) -> bool:
+    git_dir = git_output(root, "rev-parse", "--git-dir")
+    git_common = git_output(root, "rev-parse", "--git-common-dir")
+    if not git_dir or not git_common:
+        return False
+
+    superproject = git_output(root, "rev-parse", "--show-superproject-working-tree")
+    if superproject:
+        return False
+
+    return resolve_git_path(root, git_dir) != resolve_git_path(root, git_common)
+
+
+def branch_slug(root: Path) -> str:
+    name = git_output(root, "branch", "--show-current")
+    if not name:
+        name = git_output(root, "rev-parse", "--short", "HEAD")
+    if not name:
+        name = "detached"
+
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", name)
+    slug = re.sub(r"-+", "-", slug).strip("-._")
+    if not slug:
+        slug = "detached"
+    if re.search(r"-\d+$", slug):
+        slug = f"{slug}-branch"
+    return slug
+
+
+def id_qualifier(root: Path) -> str:
+    if not is_linked_worktree(root):
+        return ""
+    return f"@{branch_slug(root)}"
 
 
 def render_entry(entry_id: str, title: str, body: str | None, date: str) -> str:
@@ -98,7 +154,7 @@ def run(argv: list[str] | None = None) -> int:
     path = human_path(root, args.type)
     content = path.read_text(encoding="utf-8") if path.exists() else ""
 
-    entry_id = next_id(content, config["prefix"])
+    entry_id = next_id(content, config["prefix"]) + id_qualifier(root)
     entry = render_entry(entry_id, title, args.body, args.date)
     updated = append_entry(content, config["heading"], entry)
 

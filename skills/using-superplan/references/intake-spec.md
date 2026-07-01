@@ -16,9 +16,9 @@ an already-recorded one. Typical triggers:
 - Feature: "新建 feature", "feature: ...", "新增功能 ...", "add a feature ...".
 - Bug: "新建 bug", "bug: ...", "报个缺陷 ...", "report a bug ...".
 
-If the human references an existing entry id (for example `F003` / `B002`) or an
-existing description already in the file, skip intake and go straight to the
-delivery loop.
+If the human references an existing entry id (for example `F003`, `F003@feature-x`,
+or `B002`) or an existing description already in the file, skip intake and go
+straight to the delivery loop.
 
 ## File Structure
 
@@ -41,6 +41,11 @@ order. Newest entries are appended at the end.
 - created: 2026-05-29
 
 <optional description lines>
+
+## F003@feature-x: <short title recorded from a linked worktree>
+
+- status: proposed
+- created: 2026-05-29
 ```
 
 `docs/superplan/human/bugs.md` uses the same shape with heading `# Bugs` and `B`-prefixed ids.
@@ -51,6 +56,11 @@ order. Newest entries are appended at the end.
 - Feature ids use prefix `F`; bug ids use prefix `B`.
 - The numeric part is zero-padded to 3 digits: `F001`, `F002`, ... `B001`, `B002`.
 - The next id is `max(existing numeric suffix) + 1`, or `001` when the file has no entries.
+- When intake runs from a linked git worktree, append the current branch slug to
+  the generated id, for example `F003@feature-x` or `B002@fix-crash`. The numeric
+  part still follows the same per-file sequence.
+- Branch slugs replace unsupported characters with `-`. If the slug would end in
+  `-\d+`, append `-branch` so plan split suffixes such as `-01` stay unambiguous.
 
 ## Status Lifecycle (human docs)
 

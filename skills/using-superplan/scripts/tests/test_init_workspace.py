@@ -68,6 +68,9 @@ class InitWorkspaceTests(unittest.TestCase):
             self.assertTrue(features_text.startswith("# Features"))
             self.assertIn("status", features_text)
             self.assertIn("F<NNN>", features_text)
+            self.assertIn("F001@branch-slug", features_text)
+            bugs_text = (root / "docs" / "superplan" / "human" / "bugs.md").read_text(encoding="utf-8")
+            self.assertIn("B001@branch-slug", bugs_text)
 
             agents = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(SYNC.START_MARKER, agents)

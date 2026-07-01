@@ -45,14 +45,32 @@ STATUS_TITLES = {
     "superseded": "Superseded",
 }
 ORDERED_TYPES = {"required", "future"}
-# Feature/bugfix plan ids encode their source human entry: F001 (single plan) or
-# F001-01, F001-02 (when one entry is split into several plans). The source id is
-# the leading prefix.
+# Feature/bugfix plan ids encode their source human entry: F001 (single plan),
+# F001-01, F001-02 (when one entry is split into several plans), or
+# branch-qualified equivalents such as F001@feature-x.
 SOURCE_ID_TYPES = {"feature": "F", "bugfix": "B"}
 SOURCE_FROM_ID = re.compile(r"^([FB]\d{3})(?:-\d+)?$")
+QUALIFIED_SOURCE_FROM_ID = re.compile(r"^([FB]\d{3})@([A-Za-z0-9._-]+)$")
 CREATED_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-HUMAN_ENTRY_PATTERN = re.compile(r"^##\s+([FB]\d{3}):", re.MULTILINE)
+HUMAN_ENTRY_PATTERN = re.compile(r"^##\s+([FB]\d{3}(?:@[A-Za-z0-9._-]+)?):", re.MULTILINE)
 HUMAN_FILES = {"F": "features.md", "B": "bugs.md"}
+
+
+def source_id_from_plan_id(plan_id: str) -> str:
+    match = SOURCE_FROM_ID.match(plan_id)
+    if match:
+        return match.group(1)
+
+    match = QUALIFIED_SOURCE_FROM_ID.match(plan_id)
+    if not match:
+        return ""
+
+    source_prefix = match.group(1)
+    qualifier = match.group(2)
+    split_match = re.match(r"^(.+)-\d+$", qualifier)
+    if split_match:
+        qualifier = split_match.group(1)
+    return f"{source_prefix}@{qualifier}"
 
 
 def detect_repo_root(start: Path) -> Path:
@@ -80,8 +98,7 @@ class PlanMetadata:
         """Source human entry id derived from the plan id (feature/bugfix only)."""
         if self.plan_type not in SOURCE_ID_TYPES:
             return ""
-        match = SOURCE_FROM_ID.match(self.id)
-        return match.group(1) if match else ""
+        return source_id_from_plan_id(self.id)
 
 
 def parse_frontmatter(path: Path) -> dict[str, str]:
@@ -158,11 +175,11 @@ def load_plan(path: Path) -> PlanMetadata:
     plan_id = metadata["id"]
     expected_prefix = SOURCE_ID_TYPES.get(plan_type)
     if expected_prefix:
-        match = SOURCE_FROM_ID.match(plan_id)
-        if not match or not plan_id.startswith(expected_prefix):
+        source_id = source_id_from_plan_id(plan_id)
+        if not source_id or not plan_id.startswith(expected_prefix):
             raise ValueError(
-                f"{path}: {plan_type} plan id must look like {expected_prefix}001 or "
-                f"{expected_prefix}001-01, got '{plan_id}'"
+                f"{path}: {plan_type} plan id must look like {expected_prefix}001, "
+                f"{expected_prefix}001-01, or {expected_prefix}001@branch-slug, got '{plan_id}'"
             )
 
     return PlanMetadata(

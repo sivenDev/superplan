@@ -61,7 +61,7 @@ Field rules:
 - `id`
   Stable, unique plan identifier. The format depends on type:
   - `required`/`future` (PRD-derived): ordered numeric ids matching the filename prefix, e.g. `01`, `02`.
-  - `feature`/`bugfix`: the id encodes its source human entry. Use `F001` / `B001` for a single plan, or `F001-01`, `F001-02` when one entry is split into several plans. The source entry is the leading `F<NNN>` / `B<NNN>` prefix; there is no separate `source_id` field. The prefix must match an existing entry in the matching human doc.
+  - `feature`/`bugfix`: the id encodes its source human entry. Use `F001` / `B001` for a single plan, or `F001-01`, `F001-02` when one entry is split into several plans. If the source entry is branch-qualified because it was recorded from a linked worktree, use ids such as `F001@feature-x` or split ids such as `F001@feature-x-01`. The source entry is the leading `F<NNN>` / `B<NNN>` prefix plus any `@branch-slug` qualifier before the optional split suffix; there is no separate `source_id` field. The source id must match an existing entry in the matching human doc.
 - `title`
   Human-readable plan title. Do not use empty labels such as "plan 1".
 - `type`

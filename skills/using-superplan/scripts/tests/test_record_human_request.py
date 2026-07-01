@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -16,6 +17,26 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RecordHumanRequestTests(unittest.TestCase):
+    def make_linked_worktree(self, tempdir: str, branch: str = "feature/safe-01") -> Path:
+        root = Path(tempdir) / "repo"
+        linked = Path(tempdir) / "linked"
+        root.mkdir()
+        subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True, text=True)
+        subprocess.run(["git", "config", "user.email", "tests@example.com"], cwd=root, check=True)
+        subprocess.run(["git", "config", "user.name", "Tests"], cwd=root, check=True)
+        (root / "docs").mkdir()
+        (root / "docs" / ".keep").write_text("", encoding="utf-8")
+        subprocess.run(["git", "add", "docs/.keep"], cwd=root, check=True)
+        subprocess.run(["git", "commit", "-m", "initial"], cwd=root, check=True, capture_output=True, text=True)
+        subprocess.run(
+            ["git", "worktree", "add", "-b", branch, str(linked)],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return linked
+
     def test_first_feature_gets_f001_with_heading_and_status(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
@@ -57,6 +78,35 @@ class RecordHumanRequestTests(unittest.TestCase):
             bugs = (root / "docs" / "superplan" / "human" / "bugs.md").read_text(encoding="utf-8")
             self.assertTrue(bugs.startswith("# Bugs"))
             self.assertIn("## B001: Crash on save", bugs)
+
+    def test_linked_worktree_feature_id_includes_branch_slug(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = self.make_linked_worktree(tempdir, branch="feature/safe-01")
+
+            code = MODULE.run(
+                ["--root", str(root), "--type", "feature", "--title", "Worktree feature", "--date", "2026-05-29"]
+            )
+            self.assertEqual(code, 0)
+
+            content = (root / "docs" / "superplan" / "human" / "features.md").read_text(encoding="utf-8")
+            self.assertIn("## F001@feature-safe-01-branch: Worktree feature", content)
+
+    def test_linked_worktree_bug_id_includes_branch_slug(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = self.make_linked_worktree(tempdir, branch="fix/crash")
+
+            code = MODULE.run(
+                ["--root", str(root), "--type", "bug", "--title", "Crash", "--date", "2026-05-29"]
+            )
+            self.assertEqual(code, 0)
+
+            content = (root / "docs" / "superplan" / "human" / "bugs.md").read_text(encoding="utf-8")
+            self.assertIn("## B001@fix-crash: Crash", content)
+
+    def test_next_id_counts_branch_qualified_entries(self) -> None:
+        content = "# Features\n\n## F001@feature-safe-01-branch: Existing\n"
+
+        self.assertEqual(MODULE.next_id(content, "F"), "F002")
 
     def test_empty_title_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
