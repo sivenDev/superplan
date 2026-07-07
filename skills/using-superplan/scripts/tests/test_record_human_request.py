@@ -67,6 +67,39 @@ class RecordHumanRequestTests(unittest.TestCase):
             self.assertIn("details", content)
             self.assertLess(content.index("## F001"), content.index("## F002"))
 
+    def test_body_escaped_newlines_render_as_markdown_lines(self) -> None:
+        cases = [
+            ("first line\\nsecond line", "first line\nsecond line"),
+            ("first line\\r\\nsecond line", "first line\nsecond line"),
+        ]
+        for raw_body, expected_body in cases:
+            with self.subTest(raw_body=raw_body):
+                with tempfile.TemporaryDirectory() as tempdir:
+                    root = Path(tempdir)
+                    (root / "docs").mkdir()
+
+                    code = MODULE.run(
+                        [
+                            "--root",
+                            str(root),
+                            "--type",
+                            "feature",
+                            "--title",
+                            "Multi-line",
+                            "--body",
+                            raw_body,
+                            "--date",
+                            "2026-07-07",
+                        ]
+                    )
+                    self.assertEqual(code, 0)
+
+                    content = (
+                        root / "docs" / "superplan" / "human" / "features.md"
+                    ).read_text(encoding="utf-8")
+                    self.assertIn(expected_body, content)
+                    self.assertNotIn(raw_body, content)
+
     def test_bug_numbering_is_independent_from_features(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)

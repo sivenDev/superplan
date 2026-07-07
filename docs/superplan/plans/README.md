@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Draft | Complete |
-| --- | --- | --- | --- |
-| `feature` | 3 | 0 | 3 |
-| `bugfix` | 1 | 1 | 0 |
+| Type | Plans | Complete |
+| --- | --- | --- |
+| `feature` | 3 | 3 |
+| `bugfix` | 1 | 1 |
 
 ## Plan Groups
 
@@ -23,4 +23,4 @@
 
 | ID | Plan | Status | Created |
 | --- | --- | --- | --- |
-| `B001` | [Decode Escaped Newlines in Human Request Bodies](bugs/B001-decode-escaped-newlines-in-request-bodies.md) | `draft` | 2026-07-07 |
+| `B001` | [Decode Escaped Newlines in Human Request Bodies](bugs/B001-decode-escaped-newlines-in-request-bodies.md) | `complete` | 2026-07-07 |

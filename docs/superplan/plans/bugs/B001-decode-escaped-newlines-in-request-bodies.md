@@ -2,7 +2,7 @@
 id: "B001"
 title: "Decode Escaped Newlines in Human Request Bodies"
 type: "bugfix"
-status: "draft"
+status: "complete"
 summary: "Normalize escaped newline sequences in recorded request bodies so generated feature and bug entries contain real Markdown line breaks."
 source: "docs/superplan/human/bugs.md"
 created: "2026-07-07"
@@ -27,9 +27,9 @@ parent: ""
 - Modify: `skills/using-superplan/scripts/tests/test_record_human_request.py`
 
 **Verification:**
-- `python3 -m unittest skills.using-superplan.scripts.tests.test_record_human_request.RecordHumanRequestTests.test_body_escaped_newlines_render_as_markdown_lines`
+- `python3 -m unittest skills/using-superplan/scripts/tests/test_record_human_request.py`
 
-- [ ] Add a focused test that runs the recorder with body arguments containing escaped LF and CRLF newline text:
+- [x] Add a focused test that runs the recorder with body arguments containing escaped LF and CRLF newline text:
 
 ```python
 def test_body_escaped_newlines_render_as_markdown_lines(self) -> None:
@@ -66,8 +66,8 @@ def test_body_escaped_newlines_render_as_markdown_lines(self) -> None:
                 self.assertNotIn(raw_body, content)
 ```
 
-- [ ] Run the focused test and confirm it fails because the expected real newline body is missing and the escaped body text is still present.
-- [ ] Keep existing numbering and worktree tests unchanged.
+- [x] Run the focused test and confirm it fails because the expected real newline body is missing and the escaped body text is still present.
+- [x] Keep existing numbering and worktree tests unchanged.
 
 ## Task 2: Normalize escaped newline sequences in recorder bodies
 
@@ -76,24 +76,24 @@ def test_body_escaped_newlines_render_as_markdown_lines(self) -> None:
 - Modify: `skills/using-superplan/scripts/record_human_request.py`
 
 **Verification:**
-- `python3 -m unittest skills.using-superplan.scripts.tests.test_record_human_request.RecordHumanRequestTests.test_body_escaped_newlines_render_as_markdown_lines`
+- `python3 -m unittest skills/using-superplan/scripts/tests/test_record_human_request.py`
 - `python3 -m unittest discover -s skills/using-superplan/scripts/tests`
 
-- [ ] Add a small helper near `render_entry` that normalizes only newline escape spellings:
+- [x] Add a small helper near `render_entry` that normalizes only newline escape spellings:
 
 ```python
 def normalize_body_text(body: str) -> str:
     return body.replace("\\r\\n", "\n").replace("\\n", "\n")
 ```
 
-- [ ] Call the helper inside `render_entry` before `.strip()`:
+- [x] Call the helper inside `render_entry` before `.strip()`:
 
 ```python
 body_text = normalize_body_text(body or "").strip()
 ```
 
-- [ ] Run the focused test and confirm it passes.
-- [ ] Run the full script test suite and confirm it passes.
+- [x] Run the focused test and confirm it passes.
+- [x] Run the full script test suite and confirm it passes.
 
 ## References
 - `docs/superplan/human/bugs.md`

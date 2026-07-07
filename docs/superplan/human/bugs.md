@@ -26,7 +26,7 @@
 
 ## B001: Feature intake body writes literal newline escapes
 
-- status: accepted
+- status: done
 - created: 2026-07-07
 
 Screenshot symptom: a feature record was generated, but the recorder wrote body newlines as literal \n text in docs/superplan/human/features.md. Expected behavior: recorded feature body text should contain real Markdown line breaks so downstream planning tools can read it normally.

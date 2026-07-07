@@ -100,6 +100,10 @@ def id_qualifier(root: Path) -> str:
     return f"@{branch_slug(root)}"
 
 
+def normalize_body_text(body: str) -> str:
+    return body.replace("\\r\\n", "\n").replace("\\n", "\n")
+
+
 def render_entry(entry_id: str, title: str, body: str | None, date: str) -> str:
     lines = [
         f"## {entry_id}: {title}",
@@ -108,7 +112,7 @@ def render_entry(entry_id: str, title: str, body: str | None, date: str) -> str:
         f"- created: {date}",
         "",
     ]
-    body_text = (body or "").strip()
+    body_text = normalize_body_text(body or "").strip()
     if body_text:
         lines.append(body_text)
         lines.append("")
