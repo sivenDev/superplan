@@ -4,9 +4,10 @@
 
 ## Status
 
-| Type | Plans | Complete |
-| --- | --- | --- |
-| `feature` | 3 | 3 |
+| Type | Plans | Draft | Complete |
+| --- | --- | --- | --- |
+| `feature` | 3 | 0 | 3 |
+| `bugfix` | 1 | 1 | 0 |
 
 ## Plan Groups
 
@@ -17,3 +18,9 @@
 | `F001` | [Prefer Safe Subagent Defaults in Planning and Execution](features/F001-prefer-safe-subagent-defaults.md) | `complete` | 2026-06-16 |
 | `F002` | [Support Combined README Write and Check Flags](features/F002-support-combined-readme-write-check.md) | `complete` | 2026-06-16 |
 | `F003` | [Worktree-Aware Human Request Numbering](features/F003-worktree-aware-request-numbering.md) | `complete` | 2026-07-01 |
+
+### Bugfix Plans
+
+| ID | Plan | Status | Created |
+| --- | --- | --- | --- |
+| `B001` | [Decode Escaped Newlines in Human Request Bodies](bugs/B001-decode-escaped-newlines-in-request-bodies.md) | `draft` | 2026-07-07 |
