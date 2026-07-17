@@ -45,7 +45,7 @@ Current behavior errors when `generate_plans_readme.py` is invoked with both `--
 
 ## F004: Optimize Superplan for high-capability models
 
-- status: proposed
+- status: accepted
 - created: 2026-07-17
 
 Refactor the Superplan workflow for high-capability models: add low, standard, and high risk profiles; use behavior-level rather than function-level testing; run focused verification during iteration and one final full verification; prefer single-agent execution for small and medium tasks; reserve subagents for truly independent or high-risk work; shorten plans and avoid embedding implementation code; use combined plan-index write and check; preserve human plan approval, bug root-cause analysis, and final evidence.
