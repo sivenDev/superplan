@@ -8,26 +8,25 @@ description: Use when a repository manages requests through docs/superplan/human
 ## Overview
 
 Superplan routes human-authored requests into reviewed plans before any implementation starts. Use this as the entry skill when the workflow uses `docs/superplan/human/*` for input and `docs/superplan/plans/*` for execution planning and progress.
-By default, prefer subagent-assisted decomposition while planning and multiple subagents while executing independent approved work, but only when the boundaries are clear enough to keep correctness and verification stronger than the throughput gain.
+Scale planning, testing, verification, and delegation to the risk profiles in `references/delivery-loop.md`. Default small and medium work to one capable agent; use subagents only for genuinely independent slices or high-risk review where the extra boundary improves evidence.
 
 ## Path Convention
 
-All bundled paths below are relative to this skill directory. Resolve `scripts/`
-and `references/` from the installed `skills/using-superplan/` directory before
-running commands.
+`<using-superplan-root>` means the installed `skills/using-superplan/` directory
+that contains this skill's `scripts/` and `references/` folders.
 
 ## Initialization
 
 Before doing anything else, verify the Superpowers prerequisite:
 
 ``` 
-python3 scripts/check_superpowers.py
+python3 <using-superplan-root>/scripts/check_superpowers.py
 ```
 
 When the human asks to initialize (for example "$using-superplan 初始化一下", "初始化 superplan", "init"), bootstrap the workspace with:
 
 ```
-python3 scripts/init_workspace.py
+python3 <using-superplan-root>/scripts/init_workspace.py
 ```
 
 It is idempotent and:
@@ -47,7 +46,7 @@ Pass `--root <path>` to target a repository other than the current directory. Af
    - `docs/superplan/human/bugs.md` for bug fixing
 3. Read `references/delivery-loop.md`. It defines the shared delivery loop and global rules that every Superplan skill follows.
 4. Before creating or revising any plan, read `references/plan-spec.md`.
-5. For greenfield repositories or repositories missing workflow guardrails, read `references/agents-guardrails.md` and sync it into `AGENTS.md` with `python3 scripts/sync_agents_guardrails.py --write`.
+5. For greenfield repositories or repositories missing workflow guardrails, read `references/agents-guardrails.md` and sync it into `AGENTS.md` with `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`.
 
 ## Routing
 
@@ -64,6 +63,8 @@ The canonical delivery loop and global rules live in `references/delivery-loop.m
 - Never implement before a reviewed plan exists and the human explicitly approves execution.
 - Every plan file under `docs/superplan/plans/**` must follow `references/plan-spec.md`.
 - Keep plans independent, clear, and non-overlapping; review the full related plan set after any change.
-- Prefer subagent-assisted planning and independent multi-subagent execution when they improve clarity and throughput without weakening correctness; do not treat subagents as mandatory.
-- The canonical project-level workflow guardrails live in `references/agents-guardrails.md`. Install or refresh them with `python3 scripts/sync_agents_guardrails.py --write`, and verify with `--check`.
-- `docs/superplan/plans/README.md` is a generated index. After any plan add, remove, rename, or metadata change, run `python3 scripts/generate_plans_readme.py --write`, and verify with `--check`.
+- Use the approved Superplan plan as the persisted design and execution artifact. Invoke full brainstorming only for material ambiguity, and do not create parallel Superpowers specs or plans unless the human requests them.
+- Apply the low, standard, or high risk guidance from `references/delivery-loop.md`. Default small and medium work to one agent; reserve subagents for independent slices or high-risk review.
+- The canonical project-level workflow guardrails live in `references/agents-guardrails.md`. Install or refresh them with `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`, and verify with `--check`.
+- `docs/superplan/plans/README.md` is a generated index. After any plan add, remove, rename, or metadata change, run `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`.
+- Task-level commit messages include the plan id when one exists so Git remains the source of truth for the delivered diff.

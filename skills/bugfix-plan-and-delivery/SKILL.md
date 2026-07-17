@@ -9,7 +9,8 @@ description: Use when a bug is recorded in docs/superplan/human/bugs.md and the 
 
 Take a reported bug from `docs/superplan/human/bugs.md` through root-cause analysis, repair planning, and approved execution. This skill is for bug work that must preserve review gates instead of jumping straight to code changes.
 
-Bundled script paths are resolved relative to this skill directory.
+Bundled script paths use `<using-superplan-root>` for the installed
+`skills/using-superplan/` directory.
 
 ## Intake
 
@@ -17,7 +18,7 @@ When the human reports a brand-new bug (for example "新建 bug", "bug: ...", "�
 
 1. Extract a short title (and optional reproduction/symptom notes) from the report.
 2. Record it into `docs/superplan/human/bugs.md` with the next id and `status: proposed`:
-   - `python3 ../using-superplan/scripts/record_human_request.py --type bug --title "<title>" [--body "<symptom / reproduction>"]`
+   - `python3 <using-superplan-root>/scripts/record_human_request.py --type bug --title "<title>" [--body "<symptom / reproduction>"]`
 3. Stop and ask the human to review the recorded entry. Do not start debugging or planning.
 4. After the human confirms (entry becomes `status: accepted`), continue with the delivery loop below using that entry as the source.
 
@@ -32,16 +33,16 @@ This skill specializes the shared delivery loop. Read `../using-superplan/refere
 - Plan type: `bugfix`
 - Extra steps:
   - Run intake first when the report is a new bug (see Intake above).
-  - Before proposing any fix, use `systematic-debugging` to confirm the symptom, reproduction path, and likely root-cause area. Then refine the bug with `brainstorming` until it is explicit enough to plan.
+  - Before proposing any fix, use `systematic-debugging` to confirm the symptom, reproduction path, and root-cause area. Use `brainstorming` only if material scope or repair choices remain unresolved.
   - Each bugfix plan must include `Reproduction` and `Root Cause` (per `plan-spec.md`).
-  - During execution, write the failing regression test first with `test-driven-development`, then implement the minimal fix for the root cause.
+  - During execution, write a failing behavior-level regression first, then implement the minimal root-cause fix. Use the strict `test-driven-development` cycle for that behavior boundary and expand test or review depth according to the shared risk profile.
 
 ## Type-Specific Rules
 
 - Bugfix plans belong in `docs/superplan/plans/bugs/`.
 - Every bugfix plan id must encode its source entry: use `B001` for a single plan, `B001@branch-slug` when the accepted entry is branch-qualified from a linked worktree, or `B001-01`, `B001@branch-slug-01` when split. Set `created` to today's date.
 - Every bugfix plan must name the reproduction or verification path that proves the bug existed and is now fixed.
-- Only use subagent-assisted decomposition or multi-subagent execution after debugging has pinned down the reproduction and root-cause boundaries clearly enough to keep ownership and verification unambiguous.
-- If the fix path is tightly coupled or correctness is uncertain, keep the work serialized and favor the smallest correct change over faster throughput.
+- Default bugfix planning and execution to one capable agent. Use subagents only after debugging has pinned down independent reproduction, root-cause, and verification boundaries, or when high-risk review benefits from a separate context.
+- If the fix path is tightly coupled or correctness is uncertain, keep the work serialized, select the more conservative risk profile, and favor the smallest correct change over throughput.
 - Prefer the smallest root-cause fix that keeps behavior correct and measurable.
 - If the issue is not understood well enough to explain the root cause, stay in debugging and do not write implementation steps yet.

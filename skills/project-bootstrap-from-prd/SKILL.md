@@ -9,7 +9,8 @@ description: Use when first-time project development starts from docs/superplan/
 
 Turn a rough `docs/superplan/human/prd.md` into a clear, approved execution path. This skill owns the first-project flow from requirement clarification through reviewed plans and gated implementation.
 
-Bundled script paths are resolved relative to this skill directory.
+Bundled script paths use `<using-superplan-root>` for the installed
+`skills/using-superplan/` directory.
 
 ## Specialization
 
@@ -19,8 +20,8 @@ This skill specializes the shared delivery loop. Read `../using-superplan/refere
 - Output: `docs/superplan/plans/` (mainline plans with ordered prefixes such as `01-*.md`, `02-*.md`)
 - Plan type: `required` (use `future` for clearly deferred extensions)
 - Extra steps:
-  - Before planning, read `../using-superplan/references/agents-guardrails.md`. If `AGENTS.md` is missing the managed workflow guardrails, run `python3 ../using-superplan/scripts/sync_agents_guardrails.py --write`.
-  - The PRD stays as the source of intent. If scope, constraints, acceptance criteria, or non-goals are unclear, keep refining `prd.md` with `brainstorming` until it is explicit enough to plan.
+  - Before planning, read `../using-superplan/references/agents-guardrails.md`. If `AGENTS.md` is missing the managed workflow guardrails, run `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`.
+  - The PRD stays as the source of intent. Use `brainstorming` only when material scope, constraint, acceptance, non-goal, or architecture choices remain unresolved.
 
 ## Type-Specific Rules
 
@@ -28,6 +29,6 @@ This skill specializes the shared delivery loop. Read `../using-superplan/refere
 - First-project setup should install the canonical workflow guardrails into `AGENTS.md` unless the repository already has an explicitly stronger policy.
 - Each plan must have a single clear goal, explicit files, verification steps, and a meaningful completion boundary.
 - If a plan cannot be executed and verified independently, split it further.
-- When decomposing a PRD into multiple plans, prefer subagent-assisted decomposition for slices with clear interfaces and acceptance boundaries, but do not force extra splits when sequential reasoning keeps the resulting plan set more correct.
-- During execution of approved PRD-derived plans, prefer multiple subagents only for independent slices with explicit verification boundaries; otherwise keep the work serialized.
+- Select the low, standard, or high risk guidance from the shared delivery loop for each independently deliverable slice and scale its tests and verification accordingly.
+- Default planning and execution to one capable agent. Use subagents only when multiple slices have clear interfaces and independent acceptance boundaries, or when high-risk review benefits from an independent context.
 - Mainline `required` plans use ordered numeric ids (`01`, `02`), must set `order` and `created`, and be ready for sequential execution. Express real ordering with `depends_on`.

@@ -2,7 +2,7 @@
 id: "F004"
 title: "Adaptive Superplan Workflow for High-Capability Models"
 type: "feature"
-status: "draft"
+status: "complete"
 summary: "Make Superplan planning, testing, verification, and delegation proportional to task risk while preserving approval and traceability guarantees."
 source: "docs/superplan/human/features.md"
 created: "2026-07-17"
@@ -38,11 +38,11 @@ parent: ""
 - `rg -n "risk|low|standard|high|behavior|single agent|subagent|change map|plan id|write --check" skills/using-superplan/SKILL.md skills/using-superplan/references README.md`
 - `git diff --check -- README.md skills/using-superplan/SKILL.md skills/using-superplan/references`
 
-- [ ] Replace unconditional full brainstorming and generic code-heavy planning with a Superplan composition rule that escalates only material ambiguity and keeps the approved Superplan plan as the sole persisted design artifact.
-- [ ] Define low, standard, and high risk guidance, including the required testing, verification, and review depth for each profile.
-- [ ] Make focused iteration plus one relevant final regression run the default, while preserving fresh completion evidence and stricter high-risk checks.
-- [ ] Define layered traceability through human entry, plan change map, executable evidence, and commits carrying the plan id.
-- [ ] Update the injected guardrails, entry skill, and README summary so downstream agents receive the same policy with no new schema or automation.
+- [x] Replace unconditional full brainstorming and generic code-heavy planning with a Superplan composition rule that escalates only material ambiguity and keeps the approved Superplan plan as the sole persisted design artifact.
+- [x] Define low, standard, and high risk guidance, including the required testing, verification, and review depth for each profile.
+- [x] Make focused iteration plus one relevant final regression run the default, while preserving fresh completion evidence and stricter high-risk checks.
+- [x] Define layered traceability through human entry, plan change map, executable evidence, and commits carrying the plan id.
+- [x] Update the injected guardrails, entry skill, and README summary so downstream agents receive the same policy with no new schema or automation.
 
 ## Task 2: Align project, feature, and bugfix routes
 
@@ -51,20 +51,22 @@ parent: ""
 - Modify: `skills/project-bootstrap-from-prd/SKILL.md`
 - Modify: `skills/feature-plan-and-delivery/SKILL.md`
 - Modify: `skills/bugfix-plan-and-delivery/SKILL.md`
+- Modify: `skills/using-superplan/references/intake-spec.md`
 
 **Change Map:**
 - `project-bootstrap-from-prd`: select verification depth per independently deliverable slice and reserve subagents for genuinely independent work or valuable review.
 - `feature-plan-and-delivery`: test observable acceptance behavior and default bounded feature work to one capable agent.
 - `bugfix-plan-and-delivery`: retain systematic root-cause analysis and a failing behavior-level regression test, while reserving broader strict TDD and review expansion for higher-risk fixes.
+- `intake-spec.md`: align shared recorder commands with the `<using-superplan-root>` path convention used by every route.
 
 **Verification:**
-- `rg -n "risk|behavior|regression|single agent|subagent|root cause|verification" skills/project-bootstrap-from-prd/SKILL.md skills/feature-plan-and-delivery/SKILL.md skills/bugfix-plan-and-delivery/SKILL.md`
-- `git diff --check -- skills/project-bootstrap-from-prd/SKILL.md skills/feature-plan-and-delivery/SKILL.md skills/bugfix-plan-and-delivery/SKILL.md`
+- `rg -n "risk|behavior|regression|single agent|subagent|root cause|verification|using-superplan-root" skills/project-bootstrap-from-prd/SKILL.md skills/feature-plan-and-delivery/SKILL.md skills/bugfix-plan-and-delivery/SKILL.md skills/using-superplan/references/intake-spec.md`
+- `git diff --check -- skills/project-bootstrap-from-prd/SKILL.md skills/feature-plan-and-delivery/SKILL.md skills/bugfix-plan-and-delivery/SKILL.md skills/using-superplan/references/intake-spec.md`
 
-- [ ] Remove route wording that makes subagent-assisted planning or execution the default for small and medium work.
-- [ ] Align feature verification with observable acceptance boundaries instead of per-function test requirements.
-- [ ] Preserve bug reproduction, root-cause explanation, and a regression test that proves the defect while making additional verification proportional to risk.
-- [ ] Review the entry skill, shared references, and all three route skills together and remove contradictory or repeated instructions.
+- [x] Remove route wording that makes subagent-assisted planning or execution the default for small and medium work.
+- [x] Align feature verification with observable acceptance boundaries instead of per-function test requirements.
+- [x] Preserve bug reproduction, root-cause explanation, and a regression test that proves the defect while making additional verification proportional to risk.
+- [x] Review the entry skill, shared references, and all three route skills together and remove contradictory or repeated instructions.
 
 ## Task 3: Synchronize guardrails, verify the repository, and finish F004
 
@@ -88,11 +90,11 @@ parent: ""
 - `python3 skills/using-superplan/scripts/generate_plans_readme.py --write --check`
 - `git diff --check`
 
-- [ ] Synchronize the managed `AGENTS.md` block, inspect the diff, and ensure the pre-existing non-managed modification remains unstaged.
-- [ ] Review the full feature plan set for independence, intentional policy replacement, and explicit boundaries.
-- [ ] Run the full existing script suite once after all skill and reference edits are final.
-- [ ] After verification succeeds, mark this plan `complete`, mark F004 `done`, and regenerate the plan index with the combined command.
-- [ ] Create a task-level implementation commit containing only F004 paths and the managed `AGENTS.md` hunk, using an `F004`-qualified commit message.
+- [x] Synchronize the managed `AGENTS.md` block, inspect the diff, and ensure the pre-existing non-managed modification remains unstaged.
+- [x] Review the full feature plan set for independence, intentional policy replacement, and explicit boundaries.
+- [x] Run the full existing script suite once after all skill and reference edits are final.
+- [x] After verification succeeds, mark this plan `complete`, mark F004 `done`, and regenerate the plan index with the combined command.
+- [x] Create a task-level implementation commit containing only F004 paths and the managed `AGENTS.md` hunk, using an `F004`-qualified commit message.
 
 ## References
 - `docs/superplan/human/features.md`

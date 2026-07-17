@@ -29,6 +29,10 @@ Does not apply to:
 - Plans should stay independent whenever possible; real dependencies must be explicit.
 - Plan documents exist to guide execution, not to preserve historical logs.
 - Keep only information that affects current decisions.
+- Record intended outcomes, boundaries, files, important symbols, and evidence;
+  let Git record the exact implementation.
+- Do not duplicate complete implementation or test code in a plan unless a short
+  snippet is necessary to define a public contract or a non-obvious algorithm.
 
 ## File Naming
 
@@ -131,11 +135,14 @@ All project plans use one body template:
 - Create: `...`
 - Test: `...`
 
+**Change Map:**
+- `path/to/file`: boundary, symbol, or policy section that changes
+
 **Verification:**
 - `...`
 
-- [ ] Step 1 ...
-- [ ] Step 2 ...
+- [ ] Result-oriented step 1 ...
+- [ ] Result-oriented step 2 ...
 
 ## References
 - `...`
@@ -180,6 +187,8 @@ Each task must include:
 
 - clear `Outcome`
 - explicit `Files`
+- a `Change Map` naming the important file, symbol, boundary, or policy section
+  changes when they are not obvious from `Files`
 - executable `Verification`
 - checkbox steps
 
@@ -189,6 +198,39 @@ Additional requirements:
 - one task serves one delivery boundary
 - if a task requires too much hidden context, split it further
 - if a task cannot be independently verified, split it further
+- steps describe behavior-level or result-level progress, not mandatory 2–5
+  minute mechanics
+- do not split test writing and implementation into separate delivery tasks only
+  to restate a red-green cycle
+- test observable acceptance behavior rather than requiring a separate test for
+  every new function or method
+
+## Risk and Verification
+
+Risk profiles are defined in `delivery-loop.md`. They are guidance, not
+frontmatter fields.
+
+- When the profile is not obvious, record the selection and its consequences in
+  Architecture or task Verification text.
+- Low-risk plans may use validators, structural checks, smoke checks, or existing
+  focused tests without adding new unit tests.
+- Standard-risk plans use behavior-level acceptance tests, focused iteration,
+  and one relevant final regression run.
+- High-risk plans retain strict test-first, debugging, review, and regression
+  depth appropriate to their impact.
+- Do not repeat the same verification command in several steps unless the tested
+  state materially changes between runs.
+
+## Traceability
+
+Plans describe intended changes; Git describes delivered changes.
+
+- The human entry provides the request id and intent.
+- Each task provides an outcome, exact files, important boundaries, and evidence.
+- Task-level commit messages include the plan id when one exists, for example
+  `feat(F004): apply adaptive verification policy`.
+- Future agents recover exact changes through `git log --grep <plan-id>`,
+  `git show`, and `git blame`, rather than relying on copied code in the plan.
 
 ## Type-Specific Rules
 
@@ -233,11 +275,14 @@ Do not put these into plans:
 - implementation lists unrelated to the plan boundary
 - brainstorming transcripts
 - process-maintenance documents disguised as project plans
+- complete implementation or test bodies that merely duplicate the future diff
+- mechanical microsteps such as separate plan items for writing a test, watching
+  it fail, writing code, and watching it pass
+- repeated verification commands against an unchanged implementation state
 
 ## Workflow Rules
 
 - New or updated plans must follow this reference.
 - After writing a plan, review the full related plan set for independence and clarity.
 - After changing plan metadata, refresh the generated index:
-  - `python3 ../scripts/generate_plans_readme.py --write`
-  - `python3 ../scripts/generate_plans_readme.py --check`
+  - `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`

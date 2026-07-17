@@ -49,11 +49,34 @@ If your harness only supports raw skill installation from GitHub paths, install 
 - `feature-plan-and-delivery`: turns accepted feature entries into reviewed feature plans.
 - `bugfix-plan-and-delivery`: turns accepted bug entries into reviewed bugfix plans.
 
+## Adaptive Workflow
+
+Superplan scales process depth to task risk instead of applying the same planning,
+testing, verification, and delegation ceremony to every change:
+
+- Low-risk documentation, configuration, template, and mechanical work uses the
+  smallest relevant validator or smoke check and does not require new unit tests
+  by default.
+- Standard behavior changes test observable acceptance behavior, use focused
+  checks while iterating, and run one relevant final regression after the
+  implementation stabilizes.
+- High-risk security, concurrency, migration, compatibility, data-integrity, or
+  complex defect work keeps strict test-first development, debugging, regression,
+  and independent review depth.
+
+The approved Superplan plan is the persisted design and execution artifact. Plans
+record outcomes, exact files, important boundaries, and evidence without copying
+the complete future diff. Small and medium tasks default to one capable agent;
+subagents are reserved for genuinely independent slices or high-risk review.
+
+Task-level commit messages include the plan id when one exists, linking the human
+request and plan to the actual implementation in Git.
+
 ## Path Convention
 
-Agent-facing skill docs use paths relative to the installed skill directory.
-Human-facing installation docs may still refer to the installed `using-superplan`
-location conceptually when an absolute path is needed.
+Agent-facing skill and reference docs use `<using-superplan-root>` for the
+installed `skills/using-superplan/` directory. Human-facing repository commands
+may use paths relative to the repository root.
 
 ## Development
 

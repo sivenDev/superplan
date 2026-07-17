@@ -3,6 +3,9 @@
 1. Before starting any new task, inspect the current workspace and recent progress; when the task is done, create a separate commit for that task's changes.
 2. At the start of every task, understand the current progress first; when the task is complete, update the progress accordingly. Plans live under `./docs/superplan/plans`.
 3. Whenever a plan changes, review the entire related plan set until the plans are independent, the structure is clear, and dependencies are explicit.
+4. For work routed through Superplan, use the approved Superplan plan as the sole persisted design and execution artifact unless the human explicitly requests additional documents.
+5. Scale planning, tests, verification, and review to risk: validate low-risk docs and configuration directly, test observable behavior for standard changes, and use strict test-first development, debugging, and expanded review for high-risk work. Run focused checks while iterating and one relevant final regression after implementation stabilizes.
+6. Default small and medium work to one capable agent. Use subagents only for genuinely independent slices or high-risk review, and include the plan id in task-level commit messages when one exists.
 
 # Development Rules
 1. When implementing a code change, inspect the directly related code in the same area, and clean up directly related redundancy or bloat, but do not expand it into unrelated refactoring.

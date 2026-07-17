@@ -9,7 +9,8 @@ description: Use when a feature is recorded in docs/superplan/human/features.md 
 
 Turn a requested feature into a reviewed implementation plan, then execute only after approval. This skill is for feature work that starts from `docs/superplan/human/features.md` or an equivalent feature note in the same workflow.
 
-Bundled script paths are resolved relative to this skill directory.
+Bundled script paths use `<using-superplan-root>` for the installed
+`skills/using-superplan/` directory.
 
 ## Intake
 
@@ -17,7 +18,7 @@ When the human proposes a brand-new feature (for example "新建 feature", "feat
 
 1. Extract a short title (and optional description) from the request.
 2. Record it into `docs/superplan/human/features.md` with the next id and `status: proposed`:
-   - `python3 ../using-superplan/scripts/record_human_request.py --type feature --title "<title>" [--body "<description>"]`
+   - `python3 <using-superplan-root>/scripts/record_human_request.py --type feature --title "<title>" [--body "<description>"]`
 3. Stop and ask the human to review the recorded entry. Do not start planning.
 4. After the human confirms (entry becomes `status: accepted`), continue with the delivery loop below using that entry as the source.
 
@@ -37,8 +38,8 @@ This skill specializes the shared delivery loop. Read `../using-superplan/refere
 - Feature plans belong in `docs/superplan/plans/features/`.
 - Every feature plan id must encode its source entry: use `F001` for a single plan, `F001@branch-slug` when the accepted entry is branch-qualified from a linked worktree, or `F001-01`, `F001@branch-slug-01` when split. Set `created` to today's date.
 - Prefer one plan per independently testable slice.
-- When one feature can be split into independent slices with clear ownership and verification boundaries, prefer subagent-assisted decomposition during planning and multiple subagents during execution.
-- If shared context or correctness would suffer, keep the plan or execution more serialized.
+- Select the shared low, standard, or high risk guidance for each slice. Test observable user acceptance behavior rather than requiring a separate test for every implementation function.
+- Default bounded feature planning and execution to one capable agent. Use subagents only for multiple independent slices with clear ownership and verification boundaries, or for high-risk review.
 - Make the user-visible result or acceptance explicit in `Scope` or `Exit Criteria`.
 - If a feature touches shared infrastructure, call out the shared boundary explicitly instead of hiding it inside a feature-only plan.
-- If feature scope is still fuzzy, stay in `brainstorming` before continuing.
+- If material feature scope or architecture choices remain unresolved, stay in `brainstorming` before continuing.

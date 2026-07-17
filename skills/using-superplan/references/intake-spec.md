@@ -6,7 +6,8 @@ enter the delivery loop.
 
 It is shared by `$feature-plan-and-delivery` and `$bugfix-plan-and-delivery`.
 
-Bundled script paths are relative to the `skills/using-superplan/` directory.
+Bundled script paths use `<using-superplan-root>` for the installed
+`skills/using-superplan/` directory.
 
 ## When Intake Triggers
 
@@ -75,7 +76,7 @@ frontmatter `status` values in `plan-spec.md`.
 
 1. Recognize a new-item trigger and extract a short title (and optional description).
 2. Append a new entry with the next id and `status: proposed` using the recorder:
-   - `python3 ../scripts/record_human_request.py --type feature --title "<title>" [--body "<description>"]`
+   - `python3 <using-superplan-root>/scripts/record_human_request.py --type feature --title "<title>" [--body "<description>"]`
    - Use `--type bug` for bugs. The command prints the new id.
 3. Stop and ask the human to review the recorded entry. Do not start planning yet.
 4. After the human confirms (entry moves to `status: accepted`), continue with the
