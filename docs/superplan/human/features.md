@@ -42,3 +42,10 @@ Current behavior errors when `generate_plans_readme.py` is invoked with both `--
 - created: 2026-07-01
 
 优化生成 bug 和 feature 编号逻辑：当处于 git worktree 时，生成的编号需要包含分支名称，避免多个 worktree 并行开发后合并时出现编号冲突。
+
+## F004: Optimize Superplan for high-capability models
+
+- status: proposed
+- created: 2026-07-17
+
+Refactor the Superplan workflow for high-capability models: add low, standard, and high risk profiles; use behavior-level rather than function-level testing; run focused verification during iteration and one final full verification; prefer single-agent execution for small and medium tasks; reserve subagents for truly independent or high-risk work; shorten plans and avoid embedding implementation code; use combined plan-index write and check; preserve human plan approval, bug root-cause analysis, and final evidence.
