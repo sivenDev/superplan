@@ -62,12 +62,12 @@ parent: ""
 - `python3 skills/using-superplan/scripts/install_superpowers_profile.py --help`
 - `git diff --check -- skills/using-superplan/scripts/superpowers_profile_installer.py skills/using-superplan/scripts/install_superpowers_profile.py skills/using-superplan/scripts/tests/test_install_superpowers_profile.py`
 
-- [ ] Resolve one unambiguous target directory, default state root, versioned dependency directory, timestamped backup directory, and manifest path without modifying them during resolution or dry-run.
-- [ ] Clone into a temporary sibling, detach at the pinned commit, reject an unexpected `HEAD`, and publish the dependency cache only after the external context-budget check, exact directory inventory, regular-file boundaries, and frontmatter names all validate.
-- [ ] Preflight every profile skill plus the obsolete `subagent-driven-development` path, list all conflicts at once, permit replacement only with `--replace-existing`, and block entries that cannot be safely identified and moved as complete recoverable paths.
-- [ ] Move approved conflicts into one backup, create links for exactly the 13 validated source directories, remove the obsolete dispatch skill from the active set, verify all final targets, and atomically publish a manifest containing schema, profile, model, repository, revision, source, target, inventory, and backup provenance.
-- [ ] Journal every mutation and restore the prior filesystem plus prior manifest in reverse order after any failure; retain successful backups for manual recovery and make a repeated identical activation report an idempotent no-op.
-- [ ] Prove the transaction entirely with temporary directories and local Git fixtures so the unit suite never touches the network or real user skills.
+- [x] Resolve one unambiguous target directory, default state root, versioned dependency directory, timestamped backup directory, and manifest path without modifying them during resolution or dry-run.
+- [x] Clone into a temporary sibling, detach at the pinned commit, reject an unexpected `HEAD`, and publish the dependency cache only after the external context-budget check, exact directory inventory, regular-file boundaries, and frontmatter names all validate.
+- [x] Preflight every profile skill plus the obsolete `subagent-driven-development` path, list all conflicts at once, permit replacement only with `--replace-existing`, and block entries that cannot be safely identified and moved as complete recoverable paths.
+- [x] Move approved conflicts into one backup, create links for exactly the 13 validated source directories, remove the obsolete dispatch skill from the active set, verify all final targets, and atomically publish a manifest containing schema, profile, model, repository, revision, source, target, inventory, and backup provenance.
+- [x] Journal every mutation and restore the prior filesystem plus prior manifest in reverse order after any failure; retain successful backups for manual recovery and make a repeated identical activation report an idempotent no-op.
+- [x] Prove the transaction entirely with temporary directories and local Git fixtures so the unit suite never touches the network or real user skills.
 
 ## Task 3: Integrate the active profile with initialization and Superplan guidance
 
