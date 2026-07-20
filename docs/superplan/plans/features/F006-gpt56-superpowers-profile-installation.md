@@ -2,7 +2,7 @@
 id: "F006"
 title: "GPT-5.6 Superpowers Profile Installation"
 type: "feature"
-status: "approved"
+status: "in_progress"
 summary: "Install, activate, and verify the pinned GPT-5.6 Superpowers skill profile without vendoring it into Superplan."
 source: "docs/superplan/human/features.md"
 created: "2026-07-20"
@@ -38,11 +38,11 @@ parent: ""
 - `python3 skills/using-superplan/scripts/check_superpowers.py --help`
 - `git diff --check -- skills/using-superplan/scripts/superpowers_profiles.py skills/using-superplan/scripts/superpowers_dependency.py skills/using-superplan/scripts/check_superpowers.py skills/using-superplan/scripts/tests/test_check_superpowers.py`
 
-- [ ] Define the only supported profile from the pinned external repository facts, including its complete skill inventory and Codex-native delegation boundary.
-- [ ] Resolve explicit model and profile selectors without fallback, and make unsupported values fail before path or manifest mutation can occur.
-- [ ] Extend discovery to the documented Codex user skills directory while preserving existing search compatibility and blocking ambiguous duplicate installations.
-- [ ] Validate active GPT-5.6 provenance, revision, inventory, and link targets through the manifest while preserving the existing no-manifest dependency behavior.
-- [ ] Add behavior-level tests for successful selection, missing or duplicated installations, unsupported models, and every manifest-drift failure surfaced to users.
+- [x] Define the only supported profile from the pinned external repository facts, including its complete skill inventory and Codex-native delegation boundary.
+- [x] Resolve explicit model and profile selectors without fallback, and make unsupported values fail before path or manifest mutation can occur.
+- [x] Extend discovery to the documented Codex user skills directory while preserving existing search compatibility and blocking ambiguous duplicate installations.
+- [x] Validate active GPT-5.6 provenance, revision, inventory, and link targets through the manifest while preserving the existing no-manifest dependency behavior.
+- [x] Add behavior-level tests for successful selection, missing or duplicated installations, unsupported models, and every manifest-drift failure surfaced to users.
 
 ## Task 2: Deliver a transactional GPT-5.6 clone and activation installer
 

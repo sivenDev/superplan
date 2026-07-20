@@ -44,14 +44,28 @@ def run(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Only check explicitly provided --skills-dir/--superpowers-root locations.",
     )
+    parser.add_argument("--model", help="Model id to validate. Only GPT-5.6 is supported.")
+    parser.add_argument("--profile", help="Superpowers profile to validate.")
+    parser.add_argument(
+        "--state-root",
+        default=str(Path.home() / ".superplan"),
+        help="Superplan dependency, backup, and active-profile state directory.",
+    )
     args = parser.parse_args(argv)
 
     dependency = _load("superpowers_dependency")
-    result = dependency.check_installation(
-        skills_dirs=[Path(path) for path in args.skills_dir],
-        superpowers_roots=[Path(path) for path in args.superpowers_root],
-        include_defaults=not args.no_default_search,
-    )
+    try:
+        result = dependency.check_installation(
+            skills_dirs=[Path(path) for path in args.skills_dir],
+            superpowers_roots=[Path(path) for path in args.superpowers_root],
+            include_defaults=not args.no_default_search,
+            profile_name=args.profile,
+            model=args.model,
+            state_root=Path(args.state_root),
+        )
+    except ValueError as exc:
+        print(str(exc))
+        return 2
     print(dependency.format_result(result))
     return 0 if result.ok else 1
 
