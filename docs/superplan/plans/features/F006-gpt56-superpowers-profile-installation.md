@@ -2,7 +2,7 @@
 id: "F006"
 title: "GPT-5.6 Superpowers Profile Installation"
 type: "feature"
-status: "in_progress"
+status: "complete"
 summary: "Install, activate, and verify the pinned GPT-5.6 Superpowers skill profile without vendoring it into Superplan."
 source: "docs/superplan/human/features.md"
 created: "2026-07-20"
@@ -119,11 +119,11 @@ parent: ""
 - `git diff --check`
 - Disposable real-repository smoke flow: create a `mktemp -d` root; install with `--model gpt-5.6 --state-root <temp>/state --skills-dir <temp>/skills --replace-existing`; run the cached `skills/superpowers/check-context-budget.sh`; run `check_superpowers.py --model gpt-5.6 --state-root <temp>/state --skills-dir <temp>/skills --no-default-search`; initialize a temporary Git repository with `init_workspace.py --model gpt-5.6 --superpowers-state-root <temp>/state --superpowers-skills-dir <temp>/skills --no-default-superpowers-search`; and rerun the same installer command expecting an idempotent no-op.
 
-- [ ] Run the focused profile, installer, and initialization tests, including injected failures that prove the original skill tree and manifest are restored exactly.
-- [ ] Run the real pinned repository smoke flow entirely under a disposable directory and confirm all 13 activated links resolve into the pinned dependency cache.
-- [ ] Run the full script suite, guardrail check, plan-index write/check, and repository diff validation against the final implementation state.
-- [ ] Review the complete feature-plan set, then mark F006 `complete`, mark its human entry `done`, and regenerate the plan index without rerunning unchanged code tests after metadata-only updates.
-- [ ] Commit only the F006 implementation, tests, documentation, progress, and generated index with a plan-qualified commit message.
+- [x] Run the focused profile, installer, and initialization tests, including injected failures that prove the original skill tree and manifest are restored exactly.
+- [x] Run the real pinned repository smoke flow entirely under a disposable directory and confirm all 13 activated links resolve into the pinned dependency cache.
+- [x] Run the full script suite, guardrail check, plan-index write/check, and repository diff validation against the final implementation state.
+- [x] Review the complete feature-plan set, then mark F006 `complete`, mark its human entry `done`, and regenerate the plan index without rerunning unchanged code tests after metadata-only updates.
+- [x] Commit only the F006 implementation, tests, documentation, progress, and generated index with a plan-qualified commit message.
 
 ## References
 - `docs/superplan/human/features.md`
