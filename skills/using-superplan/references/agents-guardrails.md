@@ -1,6 +1,6 @@
 
 # Workflow Guardrails
-1. Before starting any new task, inspect the current workspace and recent progress; when the task is done, create a separate commit for that task's changes.
+1. Before starting any new task, inspect the current workspace and recent progress. For Superplan-routed work, ask whether to use a new worktree before any mutation when meaningful Git changes risk overwrite, commit mixing, or conflicts; ignore insignificant noise. When the task is done, create a separate commit for that task's changes.
 2. At the start of every task, understand the current progress first; when the task is complete, update the progress accordingly. Plans live under `./docs/superplan/plans`.
 3. Whenever a plan changes, review the entire related plan set until the plans are independent, the structure is clear, and dependencies are explicit.
 4. For work routed through Superplan, the approved plan and the Superplan delivery-loop risk profile are the project-level authority for persisted artifacts, testing, verification, delegation, and task-level traceability.

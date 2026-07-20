@@ -39,12 +39,21 @@ Pass `--root <path>` to target a repository other than the current directory. Af
 
 ## Entry Checks
 
-1. Inspect `git status` and understand current progress in `docs/superplan/plans` before editing anything.
-2. Read the matching human input:
+1. Read `references/delivery-loop.md`, then run its Workspace Safety Check before
+   intake, plan changes, or implementation edits. Inspect `git status` plus enough
+   staged, unstaged, and relevant untracked diff context to decide whether
+   meaningful Git changes could be overwritten, mixed into the task, or conflict
+   with it. Ignore clearly insignificant or safely reproducible noise. If
+   important changes exist, explain the risk and ask whether to move all
+   subsequent Superplan work into a new worktree. Resolve the choice first: use
+   `using-git-worktrees` when accepted, or continue in place with precise staging
+   and unrelated-change preservation when declined. Never stash, commit, or
+   create the worktree without consent.
+2. Inspect recent commits and understand current progress in `docs/superplan/plans` before editing anything.
+3. Read the matching human input:
    - `docs/superplan/human/prd.md` for first project development
    - `docs/superplan/human/features.md` for feature delivery
    - `docs/superplan/human/bugs.md` for bug fixing
-3. Read `references/delivery-loop.md`. It defines the shared delivery loop and global rules that every Superplan skill follows.
 4. Before creating or revising any plan, read `references/plan-spec.md`.
 5. For greenfield repositories or repositories missing workflow guardrails, read `references/agents-guardrails.md` and sync it into `AGENTS.md` with `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`.
 

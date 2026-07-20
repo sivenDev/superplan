@@ -72,6 +72,23 @@ subagents are reserved for genuinely independent slices or high-risk review.
 Task-level commit messages include the plan id when one exists, linking the human
 request and plan to the actual implementation in Git.
 
+## Dirty Worktree Safety
+
+Before Superplan records intake, changes plans, or starts implementation, it
+inspects Git status and relevant diff context for meaningful Git changes. A dirty
+workspace does not trigger an automatic prompt: the agent uses semantic judgment
+and asks about an isolated worktree only when existing changes could be
+overwritten, mixed into the task's commit, or create an integration conflict.
+Timestamp-only metadata, caches, and safely reproducible generated noise are
+ignored unless they are consequential in context.
+
+If the human accepts isolation, Superplan delegates creation to
+`using-git-worktrees`, leaves the original uncommitted changes untouched, and
+resumes the same route from the committed baseline in the new worktree. If the
+human declines, work continues in place with unrelated-change preservation and
+precise staging. Superplan never stashes, commits, or creates a worktree without
+explicit consent.
+
 ## Path Convention
 
 Agent-facing skill and reference docs use `<using-superplan-root>` for the

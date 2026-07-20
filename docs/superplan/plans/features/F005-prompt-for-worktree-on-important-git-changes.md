@@ -2,7 +2,7 @@
 id: "F005"
 title: "Prompt for Worktree on Important Git Changes"
 type: "feature"
-status: "draft"
+status: "complete"
 summary: "Require Superplan to identify meaningful dirty-worktree risk and ask before moving subsequent work into an isolated worktree."
 source: "docs/superplan/human/features.md"
 created: "2026-07-20"
@@ -37,12 +37,12 @@ parent: ""
 - `rg -n -i "important|meaningful|git status|diff|worktree|consent|stash|noise|unrelated|non-git" skills/using-superplan/SKILL.md skills/using-superplan/references/delivery-loop.md skills/using-superplan/references/agents-guardrails.md README.md`
 - `git diff --check -- skills/using-superplan/SKILL.md skills/using-superplan/references/delivery-loop.md skills/using-superplan/references/agents-guardrails.md README.md`
 
-- [ ] Define important changes by semantic risk to preservation, staging, and merge safety rather than by a fixed file list or any-dirty rule.
-- [ ] Require the agent to inspect enough status and diff context to explain why isolation is being offered, while ignoring clearly insignificant or reproducible noise.
-- [ ] Place the human question before intake, plan creation, approval-state changes, or implementation edits; never infer consent or create a worktree automatically.
-- [ ] Specify that accepting isolation uses `using-git-worktrees`, starts from the committed repository baseline, leaves original changes untouched, and resumes the selected Superplan route in the new worktree.
-- [ ] Specify that declining isolation continues in the current worktree with unrelated-change preservation and exact staging, while non-Git workspaces bypass the worktree prompt and unexpected inspection failures are surfaced before mutation.
-- [ ] Align the entry skill, managed guardrail, and README summary with the canonical rule without copying the full policy into route-specific skills.
+- [x] Define important changes by semantic risk to preservation, staging, and merge safety rather than by a fixed file list or any-dirty rule.
+- [x] Require the agent to inspect enough status and diff context to explain why isolation is being offered, while ignoring clearly insignificant or reproducible noise.
+- [x] Place the human question before intake, plan creation, approval-state changes, or implementation edits; never infer consent or create a worktree automatically.
+- [x] Specify that accepting isolation uses `using-git-worktrees`, starts from the committed repository baseline, leaves original changes untouched, and resumes the selected Superplan route in the new worktree.
+- [x] Specify that declining isolation continues in the current worktree with unrelated-change preservation and exact staging, while non-Git workspaces bypass the worktree prompt and unexpected inspection failures are surfaced before mutation.
+- [x] Align the entry skill, managed guardrail, and README summary with the canonical rule without copying the full policy into route-specific skills.
 
 ## Task 2: Synchronize guardrails, verify behavior documentation, and finish F005
 
@@ -66,11 +66,11 @@ parent: ""
 - `python3 skills/using-superplan/scripts/generate_plans_readme.py --write --check`
 - `git diff --check`
 
-- [ ] Synchronize and inspect the managed guardrail diff, confirming the pre-existing non-managed `AGENTS.md` change remains preserved and unstaged.
-- [ ] Review the complete feature-plan set for independent boundaries, explicit F003 dependency, and consistency with F004's canonical-policy structure.
-- [ ] Run the full script unittest suite once against the final skill/reference state and capture successful output.
-- [ ] After verification succeeds, mark this plan `complete`, mark F005 `done`, regenerate the plan index, and avoid rerunning unchanged code tests after metadata-only edits.
-- [ ] Create a dedicated F005 implementation commit containing only the feature's implementation, progress, generated index, and managed guardrail hunk.
+- [x] Synchronize and inspect the managed guardrail diff, confirming the pre-existing non-managed `AGENTS.md` change remains preserved and unstaged.
+- [x] Review the complete feature-plan set for independent boundaries, explicit F003 dependency, and consistency with F004's canonical-policy structure.
+- [x] Run the full script unittest suite once against the final skill/reference state and capture successful output.
+- [x] After verification succeeds, mark this plan `complete`, mark F005 `done`, regenerate the plan index, and avoid rerunning unchanged code tests after metadata-only edits.
+- [x] Create a dedicated F005 implementation commit containing only the feature's implementation, progress, generated index, and managed guardrail hunk.
 
 ## References
 - `docs/superplan/human/features.md`

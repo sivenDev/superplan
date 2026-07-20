@@ -17,6 +17,36 @@ working directory. If the current directory is not inside the target repository,
 the script fails instead of writing elsewhere. Pass `--root <path>` to target a
 repository explicitly.
 
+## Workspace Safety Check
+
+Before intake records a request, planning creates or changes artifacts, or
+implementation edits the repository, inspect the current workspace for Git
+changes that could interfere with the requested work.
+
+1. If the workspace is a Git repository, inspect `git status` plus enough staged,
+   unstaged, and relevant untracked diff context to understand the changes. Do
+   not treat a dirty status alone as sufficient evidence.
+2. Use semantic judgment to classify changes as important when their content
+   could be overwritten by the requested work, accidentally staged or committed
+   with it, or create a merge conflict during integration. Timestamp-only
+   metadata, caches, logs, and safely reproducible generated noise do not trigger
+   the prompt unless the surrounding context makes them consequential.
+3. When important Git changes exist, summarize the concrete risk and ask the
+   human whether subsequent Superplan work should move to a new isolated
+   worktree. Resolve this choice before request intake, plan creation or status
+   changes, and implementation edits. Never infer consent or automatically stash,
+   commit, or move the existing changes.
+4. If the human accepts, invoke `using-git-worktrees`, create the isolated
+   workspace from the committed repository baseline, leave the original
+   worktree untouched, and resume the same Superplan route there. Uncommitted
+   changes remain only in the original worktree.
+5. If the human declines, continue in the current worktree while preserving
+   unrelated changes and staging only exact task paths or hunks.
+
+Non-Git workspaces continue without a worktree prompt. If Git inspection fails
+unexpectedly in a Git workspace, surface the failure and resolve it before any
+workflow mutation instead of assuming the workspace is clean.
+
 ## Superpowers Composition
 
 For work routed through `docs/superplan/**`, Superplan owns the persisted request,
@@ -74,8 +104,9 @@ compatibility, complex defects, or broad changes with uncertain impact.
 
 ## Delivery Loop
 
-1. Check `git status`, recent commits, and current progress in
-   `docs/superplan/plans`. Identify the exact request and preserve unrelated work.
+1. Run the workspace safety check above, then inspect recent commits and current
+   progress in `docs/superplan/plans`. Identify the exact request and preserve
+   unrelated work.
 2. Read the route's input document under `docs/superplan/human/` and respect its
    bookkeeping rules.
 3. Confirm scope, constraints, acceptance criteria, non-goals, and the risk

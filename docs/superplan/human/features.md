@@ -52,7 +52,7 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 
 ## F005: Prompt for worktree when important Git changes exist
 
-- status: accepted
+- status: done
 - created: 2026-07-20
 
 开始 Superplan 流程时，先检查当前项目是否存在重要的 Git 变更；若存在，在继续 intake、规划或实现前询问用户是否要在当前项目中新建 worktree 执行后续流程。需要明确“重要变更”的判定、用户选择留在当前工作区时的行为，以及不重要的噪声变更不应触发询问。
