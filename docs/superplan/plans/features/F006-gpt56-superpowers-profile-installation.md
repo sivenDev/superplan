@@ -92,11 +92,11 @@ parent: ""
 - `rg -n "gpt-5\.6|gpt56|install_superpowers_profile|active-superpowers-profile|native.*delegat|subagent-driven-development" skills/using-superplan README.md docs/install.md`
 - `git diff --check -- skills/using-superplan/scripts/init_workspace.py skills/using-superplan/scripts/tests/test_init_workspace.py skills/using-superplan/SKILL.md skills/using-superplan/references/delivery-loop.md README.md docs/install.md`
 
-- [ ] Forward explicit or active-profile selection through initialization and ensure every dependency failure occurs before human docs, guardrails, or the plan index are written.
-- [ ] Keep legacy initialization compatible when no active profile exists, while rejecting unsupported selectors and manifest/link drift without silently reinstalling or repairing user state.
-- [ ] Remove the workflow's dependency on the missing dispatch skill and describe Codex-native delegation without requiring subagents for small or medium tasks.
-- [ ] Explain the exact installation, replacement, backup, restart, model-selection, verification, and initialization sequence, including why the installer requires an explicit model instead of inferring the current `/model` session.
-- [ ] Cover the profile-aware initialization boundary with temporary-workspace tests that prove both success and pre-write refusal behavior.
+- [x] Forward explicit or active-profile selection through initialization and ensure every dependency failure occurs before human docs, guardrails, or the plan index are written.
+- [x] Keep legacy initialization compatible when no active profile exists, while rejecting unsupported selectors and manifest/link drift without silently reinstalling or repairing user state.
+- [x] Remove the workflow's dependency on the missing dispatch skill and describe Codex-native delegation without requiring subagents for small or medium tasks.
+- [x] Explain the exact installation, replacement, backup, restart, model-selection, verification, and initialization sequence, including why the installer requires an explicit model instead of inferring the current `/model` session.
+- [x] Cover the profile-aware initialization boundary with temporary-workspace tests that prove both success and pre-write refusal behavior.
 
 ## Task 4: Prove the pinned end-to-end flow and finish F006
 

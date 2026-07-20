@@ -23,10 +23,29 @@ Before doing anything else, verify the Superpowers prerequisite:
 python3 <using-superplan-root>/scripts/check_superpowers.py
 ```
 
+For Codex running GPT-5.6, install the pinned GPT-5.6 profile after installing
+Superplan, then restart Codex or open a new chat:
+
+```
+python3 <using-superplan-root>/scripts/install_superpowers_profile.py \
+  --model gpt-5.6 \
+  --replace-existing
+```
+
+The installer supports only `gpt-5.6` and `gpt-5.6-*`. It backs up verified
+same-name Superpowers skills before replacement and never changes the model
+selected by `/model`, `--model`, or Codex configuration.
+
 When the human asks to initialize (for example "$using-superplan 初始化一下", "初始化 superplan", "init"), bootstrap the workspace with:
 
 ```
 python3 <using-superplan-root>/scripts/init_workspace.py
+```
+
+When the GPT-5.6 profile is active, initialization can enforce it explicitly:
+
+```
+python3 <using-superplan-root>/scripts/init_workspace.py --model gpt-5.6
 ```
 
 It is idempotent and:

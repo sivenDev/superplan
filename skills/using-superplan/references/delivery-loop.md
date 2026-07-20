@@ -123,9 +123,10 @@ compatibility, complex defects, or broad changes with uncertain impact.
 6. Present the plan set to the human and stop for approval. Human approval is the
    `draft -> approved` gate; never implement before it.
 7. After approval, move the plan through `approved -> in_progress` and execute in
-   dependency order. Default small and medium work to one capable agent. Use
-   `subagent-driven-development` only for genuinely independent slices or
-   high-risk review where the extra boundary improves evidence.
+   dependency order. Default small and medium work to one capable agent. When
+   the platform provides native delegation, use it only for genuinely
+   independent slices or high-risk review where the extra boundary improves
+   evidence; Superplan does not require a bundled dispatch skill.
 8. During implementation, run focused checks appropriate to the selected risk
    profile. For defects, keep a behavior-level regression that proves the
    reproduced failure. Clean directly related redundancy without widening scope.

@@ -139,13 +139,23 @@ def ensure_superpowers_installed(
     superpowers_roots: list[str],
     superpowers_skills_dirs: list[str],
     include_default_search: bool,
+    model: str | None,
+    profile_name: str | None,
+    state_root: str,
 ) -> int:
     dependency = _load("superpowers_dependency")
-    result = dependency.check_installation(
-        skills_dirs=[Path(path) for path in superpowers_skills_dirs],
-        superpowers_roots=[Path(path) for path in superpowers_roots],
-        include_defaults=include_default_search,
-    )
+    try:
+        result = dependency.check_installation(
+            skills_dirs=[Path(path) for path in superpowers_skills_dirs],
+            superpowers_roots=[Path(path) for path in superpowers_roots],
+            include_defaults=include_default_search,
+            profile_name=profile_name,
+            model=model,
+            state_root=Path(state_root),
+        )
+    except ValueError as exc:
+        print(str(exc))
+        return 2
     print(dependency.format_result(result))
     return 0 if result.ok else 1
 
@@ -179,6 +189,19 @@ def run(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Only check explicitly provided Superpowers locations.",
     )
+    parser.add_argument(
+        "--model",
+        help="Model id to validate before initialization. Only GPT-5.6 is profile-aware.",
+    )
+    parser.add_argument(
+        "--superpowers-profile",
+        help="Explicit active Superpowers profile to validate.",
+    )
+    parser.add_argument(
+        "--superpowers-state-root",
+        default=str(Path.home() / ".superplan"),
+        help="Superplan dependency, backup, and active-profile state directory.",
+    )
     args = parser.parse_args(argv)
     root = Path(args.root).resolve()
 
@@ -187,6 +210,9 @@ def run(argv: list[str] | None = None) -> int:
             superpowers_roots=args.superpowers_root,
             superpowers_skills_dirs=args.superpowers_skills_dir,
             include_default_search=not args.no_default_superpowers_search,
+            model=args.model,
+            profile_name=args.superpowers_profile,
+            state_root=args.superpowers_state_root,
         )
         if status != 0:
             return status
