@@ -2,7 +2,7 @@
 id: "F006"
 title: "GPT-5.6 Superpowers Profile Installation"
 type: "feature"
-status: "draft"
+status: "approved"
 summary: "Install, activate, and verify the pinned GPT-5.6 Superpowers skill profile without vendoring it into Superplan."
 source: "docs/superplan/human/features.md"
 created: "2026-07-20"
