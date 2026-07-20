@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Complete |
-| --- | --- | --- |
-| `feature` | 4 | 4 |
-| `bugfix` | 1 | 1 |
+| Type | Plans | Draft | Complete |
+| --- | --- | --- | --- |
+| `feature` | 5 | 1 | 4 |
+| `bugfix` | 1 | 0 | 1 |
 
 ## Plan Groups
 
@@ -19,6 +19,7 @@
 | `F002` | [Support Combined README Write and Check Flags](features/F002-support-combined-readme-write-check.md) | `complete` | 2026-06-16 |
 | `F003` | [Worktree-Aware Human Request Numbering](features/F003-worktree-aware-request-numbering.md) | `complete` | 2026-07-01 |
 | `F004` | [Adaptive Superplan Workflow for High-Capability Models](features/F004-adaptive-superplan-workflow.md) | `complete` | 2026-07-17 |
+| `F005` | [Prompt for Worktree on Important Git Changes](features/F005-prompt-for-worktree-on-important-git-changes.md) | `draft` | 2026-07-20 |
 
 ### Bugfix Plans
 
