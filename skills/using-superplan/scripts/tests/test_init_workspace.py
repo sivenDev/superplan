@@ -6,7 +6,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import ExitStack
+from dataclasses import replace
 from pathlib import Path
+from unittest.mock import patch
 
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "init_workspace.py"
@@ -44,32 +47,60 @@ def create_superpowers_install(skills_dir: Path) -> None:
         write(skills_dir / name / "SKILL.md", f"# {name}\n")
 
 
-def create_gpt56_install(root: Path, *, model: str = "gpt-5.6") -> tuple[Path, Path]:
+def create_gpt56_install(
+    root: Path, *, model: str = "gpt-5.6"
+) -> tuple[Path, Path, object]:
     state_root = root / "profile-state"
+    staging_source = root / "profile-source-staging"
+    staging_skills = staging_source / "skills" / "superpowers"
+    for name in PROFILES.GPT56_PROFILE.skills:
+        write(
+            staging_skills / name / "SKILL.md",
+            f"---\nname: {name}\ndescription: test {name}\n---\n",
+        )
+    subprocess.run(["git", "init", "-q", str(staging_source)], check=True)
+    subprocess.run(
+        ["git", "-C", str(staging_source), "config", "user.email", "test@example.com"],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(staging_source), "config", "user.name", "Test"],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(staging_source), "add", "."], check=True)
+    subprocess.run(
+        ["git", "-C", str(staging_source), "commit", "-q", "-m", "fixture"],
+        check=True,
+    )
+    revision = subprocess.run(
+        ["git", "-C", str(staging_source), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    profile = replace(PROFILES.GPT56_PROFILE, revision=revision)
     source_root = (
         state_root
         / "dependencies"
         / "superpowers-gpt-5.6"
-        / PROFILES.GPT56_REVISION
+        / revision
     )
+    source_root.parent.mkdir(parents=True)
+    staging_source.rename(source_root)
     source_skills = source_root / "skills" / "superpowers"
     skills_dir = root / ".test-agent" / "gpt56-skills"
     skills_dir.mkdir(parents=True)
     links: dict[str, str] = {}
-    for name in PROFILES.GPT56_PROFILE.skills:
+    for name in profile.skills:
         source = source_skills / name
-        write(
-            source / "SKILL.md",
-            f"---\nname: {name}\ndescription: test {name}\n---\n",
-        )
         (skills_dir / name).symlink_to(source, target_is_directory=True)
         links[name] = str(source.resolve())
     manifest = {
         "schema_version": PROFILES.MANIFEST_SCHEMA_VERSION,
         "profile": "gpt56",
         "model": model,
-        "repository": PROFILES.GPT56_REPOSITORY,
-        "revision": PROFILES.GPT56_REVISION,
+        "repository": profile.repository,
+        "revision": profile.revision,
         "source_dir": str(source_root.resolve()),
         "skills_dir": str(skills_dir.resolve()),
         "skills": links,
@@ -79,7 +110,17 @@ def create_gpt56_install(root: Path, *, model: str = "gpt-5.6") -> tuple[Path, P
         state_root / PROFILES.MANIFEST_FILENAME,
         json.dumps(manifest, indent=2) + "\n",
     )
-    return state_root, skills_dir
+    return state_root, skills_dir, profile
+
+
+def run_with_profile(profile: object, argv: list[str]) -> int:
+    active_profiles = MODULE._load("superpowers_profiles")
+    targets = {id(module): module for module in (PROFILES, active_profiles)}
+    with ExitStack() as stack:
+        for target in targets.values():
+            stack.enter_context(patch.object(target, "GPT56_PROFILE", profile))
+            stack.enter_context(patch.dict(target.PROFILES, {"gpt56": profile}))
+        return MODULE.run(argv)
 
 
 class InitWorkspaceTests(unittest.TestCase):
@@ -204,9 +245,10 @@ class InitWorkspaceTests(unittest.TestCase):
     def test_init_accepts_valid_gpt56_profile(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            state_root, skills_dir = create_gpt56_install(root)
+            state_root, skills_dir, profile = create_gpt56_install(root)
 
-            code = MODULE.run(
+            code = run_with_profile(
+                profile,
                 [
                     "--root",
                     str(root),
@@ -228,9 +270,10 @@ class InitWorkspaceTests(unittest.TestCase):
     def test_init_auto_detects_active_profile_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            state_root, skills_dir = create_gpt56_install(root)
+            state_root, skills_dir, profile = create_gpt56_install(root)
 
-            code = MODULE.run(
+            code = run_with_profile(
+                profile,
                 [
                     "--root",
                     str(root),
@@ -275,10 +318,11 @@ class InitWorkspaceTests(unittest.TestCase):
     def test_init_rejects_profile_link_drift_before_writing_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            state_root, skills_dir = create_gpt56_install(root)
+            state_root, skills_dir, profile = create_gpt56_install(root)
             (skills_dir / "writing-skills").unlink()
 
-            code = MODULE.run(
+            code = run_with_profile(
+                profile,
                 [
                     "--root",
                     str(root),

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -125,6 +126,131 @@ def _read_manifest(path: Path) -> tuple[dict[str, object] | None, tuple[str, ...
     return data, ()
 
 
+def _git_output(source_dir: Path, *arguments: str) -> tuple[str | None, str | None]:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(source_dir), *arguments],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        return None, str(exc)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        return None, detail or f"git exited with status {result.returncode}"
+    return result.stdout.strip(), None
+
+
+def _skill_name(skill_file: Path) -> str | None:
+    try:
+        lines = skill_file.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    if not lines or lines[0] != "---":
+        return None
+    names: list[str] = []
+    for line in lines[1:]:
+        if line == "---":
+            break
+        if line.startswith("name:"):
+            names.append(line.removeprefix("name:").strip())
+    return names[0] if len(names) == 1 else None
+
+
+def _validate_profile_source(
+    source_path: Path, *, state_root: Path, profile: object
+) -> tuple[str, ...]:
+    errors: list[str] = []
+    source_absolute = source_path.absolute()
+    source_dir = source_absolute.resolve()
+    expected_source = (
+        state_root.expanduser().resolve()
+        / "dependencies"
+        / "superpowers-gpt-5.6"
+        / profile.revision
+    )
+    if source_absolute != expected_source:
+        errors.append(
+            "manifest source is outside the expected dependency cache path: "
+            f"expected {expected_source}, got {source_absolute}"
+        )
+    else:
+        current = state_root.expanduser().resolve()
+        for part in source_absolute.relative_to(current).parts:
+            current /= part
+            if current.is_symlink():
+                if current == source_absolute:
+                    errors.append(
+                        f"manifest source path must not be a symlink: {current}"
+                    )
+                else:
+                    errors.append(
+                        "manifest source cache path must not contain symlinks: "
+                        f"{current}"
+                    )
+                break
+
+    git_root, git_error = _git_output(source_dir, "rev-parse", "--show-toplevel")
+    if git_error is not None or git_root is None:
+        errors.append(f"manifest source is not a valid Git checkout: {source_dir}")
+        return tuple(errors)
+    if Path(git_root).resolve() != source_dir.resolve():
+        errors.append(f"manifest source is not the Git checkout root: {source_dir}")
+
+    revision, revision_error = _git_output(source_dir, "rev-parse", "HEAD")
+    if revision_error is not None or revision is None:
+        errors.append(f"could not inspect manifest source HEAD: {source_dir}")
+    elif revision != profile.revision:
+        errors.append(
+            f"manifest source HEAD mismatch: expected {profile.revision}, got {revision}"
+        )
+
+    status, status_error = _git_output(
+        source_dir, "status", "--porcelain", "--untracked-files=all"
+    )
+    if status_error is not None or status is None:
+        errors.append(f"could not inspect manifest source checkout: {source_dir}")
+    elif status:
+        errors.append(f"manifest source checkout has changes:\n{status}")
+
+    skills_root = source_dir / "skills" / "superpowers"
+    if skills_root.is_symlink() or not skills_root.is_dir():
+        errors.append(f"manifest source skills root is invalid: {skills_root}")
+        return tuple(errors)
+    discovered = {
+        child.name
+        for child in skills_root.iterdir()
+        if child.is_dir() or child.is_symlink()
+    }
+    if discovered != set(profile.skills):
+        errors.append(
+            "manifest source skill inventory mismatch: "
+            f"expected {sorted(profile.skills)}, got {sorted(discovered)}"
+        )
+
+    for name in profile.skills:
+        skill_dir = skills_root / name
+        skill_file = skill_dir / "SKILL.md"
+        if skill_dir.is_symlink():
+            errors.append(
+                f"manifest source skill directory must not be a symlink: {skill_dir}"
+            )
+        if not skill_dir.is_dir():
+            errors.append(f"manifest source skill directory is missing: {skill_dir}")
+            continue
+        if skill_file.is_symlink() or not skill_file.is_file():
+            errors.append(f"manifest source skill file boundary is invalid: {skill_file}")
+            continue
+        actual_name = _skill_name(skill_file)
+        if actual_name != name:
+            errors.append(
+                "manifest source frontmatter name mismatch: "
+                f"expected {name}, got {actual_name}"
+            )
+    return tuple(errors)
+
+
 def _check_profile_installation(
     *,
     profile: object,
@@ -196,13 +322,20 @@ def _check_profile_installation(
             )
 
     raw_source_dir = manifest.get("source_dir")
-    source_dir = (
-        Path(raw_source_dir).expanduser().resolve()
+    source_path = (
+        Path(raw_source_dir).expanduser()
         if isinstance(raw_source_dir, str) and raw_source_dir
         else None
     )
+    source_dir = source_path.resolve() if source_path is not None else None
     if source_dir is None or not source_dir.is_dir():
         errors.append(f"manifest source directory is missing: {raw_source_dir}")
+    elif source_path is not None:
+        errors.extend(
+            _validate_profile_source(
+                source_path, state_root=state_root, profile=profile
+            )
+        )
 
     raw_links = manifest.get("skills")
     links = raw_links if isinstance(raw_links, dict) else {}

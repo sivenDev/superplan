@@ -112,13 +112,34 @@ def resolve_skills_dir(explicit: Path | None, *, home: Path) -> Path:
 
 
 def _validate_repository(source_dir: Path, profile: object) -> None:
+    if source_dir.is_symlink():
+        raise InstallError(f"Dependency checkout path must not be a symlink: {source_dir}")
+    git_root = _run(
+        ["git", "-C", str(source_dir), "rev-parse", "--show-toplevel"]
+    ).stdout.strip()
+    if Path(git_root).resolve() != source_dir.resolve():
+        raise InstallError(f"Dependency path is not the Git checkout root: {source_dir}")
     revision = _run(["git", "-C", str(source_dir), "rev-parse", "HEAD"]).stdout.strip()
     if revision != profile.revision:
         raise InstallError(
             f"Dependency revision mismatch: expected {profile.revision}, got {revision}"
         )
+    status = _run(
+        [
+            "git",
+            "-C",
+            str(source_dir),
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+        ]
+    ).stdout.strip()
+    if status:
+        raise InstallError(f"Dependency checkout has changes:\n{status}")
 
     skills_root = source_dir / "skills" / "superpowers"
+    if skills_root.is_symlink():
+        raise InstallError(f"Invalid skills root boundary: {skills_root}")
     discovered = {
         child.name
         for child in skills_root.iterdir()
@@ -132,7 +153,10 @@ def _validate_repository(source_dir: Path, profile: object) -> None:
         )
 
     for name in profile.skills:
-        skill_file = skills_root / name / "SKILL.md"
+        skill_dir = skills_root / name
+        skill_file = skill_dir / "SKILL.md"
+        if skill_dir.is_symlink() or not skill_dir.is_dir():
+            raise InstallError(f"Invalid skill directory boundary: {skill_dir}")
         if skill_file.is_symlink() or not skill_file.is_file():
             raise InstallError(f"Invalid skill file boundary: {skill_file}")
         actual_name = _skill_name(skill_file)
@@ -155,6 +179,18 @@ def _validate_repository(source_dir: Path, profile: object) -> None:
     except subprocess.CalledProcessError as exc:
         detail = (exc.stderr or exc.stdout or str(exc)).strip()
         raise InstallError(f"External context-budget validation failed: {detail}") from exc
+    status = _run(
+        [
+            "git",
+            "-C",
+            str(source_dir),
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+        ]
+    ).stdout.strip()
+    if status:
+        raise InstallError(f"Context-budget validator changed the checkout:\n{status}")
 
 
 def _clone_and_validate(profile: object, destination: Path) -> None:
@@ -228,26 +264,35 @@ def _read_json(path: Path) -> dict[str, object] | None:
 
 
 def _already_active(
-    *, manifest_path: Path, options: InstallOptions, profile: object, skills_dir: Path
+    *,
+    manifest_path: Path,
+    options: InstallOptions,
+    profile: object,
+    skills_dir: Path,
+    source_dir: Path,
 ) -> InstallResult | None:
+    profiles = _load("superpowers_profiles")
     manifest = _read_json(manifest_path)
     if manifest is None:
         return None
     if (
-        manifest.get("profile") != profile.name
+        manifest.get("schema_version") != profiles.MANIFEST_SCHEMA_VERSION
+        or manifest.get("profile") != profile.name
         or manifest.get("model") != options.model
         or manifest.get("repository") != profile.repository
         or manifest.get("revision") != profile.revision
         or manifest.get("skills_dir") != str(skills_dir)
+        or manifest.get("source_dir") != str(source_dir)
     ):
         return None
-    raw_source = manifest.get("source_dir")
-    if not isinstance(raw_source, str):
+    raw_skills = manifest.get("skills")
+    if not isinstance(raw_skills, dict) or set(raw_skills) != set(profile.skills):
         return None
-    source_dir = Path(raw_source).resolve()
     for name in profile.skills:
         target = skills_dir / name
         expected = source_dir / "skills" / "superpowers" / name
+        if raw_skills.get(name) != str(expected.resolve()):
+            return None
         if not target.is_symlink() or target.resolve() != expected.resolve():
             return None
     for name in profile.removed_skills:
@@ -278,6 +323,92 @@ def _inject(fail_after: str | None, point: str) -> None:
         raise InstallError(f"Injected failure after {point}")
 
 
+def _validate_manifest_paths(manifest_path: Path) -> None:
+    manifest_temp = manifest_path.with_name(f".{manifest_path.name}.tmp")
+    if manifest_path.is_symlink() or (
+        manifest_path.exists() and not manifest_path.is_file()
+    ):
+        raise InstallError(f"Unsafe manifest path: {manifest_path}")
+    if _path_exists(manifest_temp):
+        raise InstallError(f"Unsafe manifest path: {manifest_temp}")
+
+
+def _validate_dependency_cache_path(source_dir: Path, state_root: Path) -> None:
+    current = state_root
+    relative_parts = source_dir.relative_to(state_root).parts
+    for part in relative_parts[:-1]:
+        current /= part
+        if current.is_symlink():
+            raise InstallError(
+                f"Dependency cache path must not contain symlinks: {current}"
+            )
+
+
+def _rollback_activation(
+    *,
+    manifest_path: Path,
+    previous_manifest: bytes | None,
+    manifest_published: bool,
+    created_links: list[Path],
+    moved: list[tuple[Path, Path]],
+    backup_dir: Path | None,
+    source_published: bool,
+    source_dir: Path,
+    skills_dir_created: bool,
+    skills_dir: Path,
+    state_root_created: bool,
+    state_root: Path,
+) -> tuple[str, ...]:
+    errors: list[str] = []
+
+    def attempt(label: str, operation: Callable[[], None]) -> None:
+        try:
+            operation()
+        except Exception as exc:
+            errors.append(f"{label}: {exc}")
+
+    manifest_temp = manifest_path.with_name(f".{manifest_path.name}.tmp")
+    if manifest_temp.is_file() or manifest_temp.is_symlink():
+        attempt("remove temporary manifest", manifest_temp.unlink)
+    if manifest_published:
+        if manifest_path.is_file() or manifest_path.is_symlink():
+            attempt("remove active manifest", manifest_path.unlink)
+        if previous_manifest is not None:
+            def restore_manifest() -> None:
+                manifest_path.parent.mkdir(parents=True, exist_ok=True)
+                manifest_path.write_bytes(previous_manifest)
+
+            attempt("restore previous manifest", restore_manifest)
+
+    for target in reversed(created_links):
+        if target.is_symlink() or target.exists():
+            attempt(f"remove activated link {target}", target.unlink)
+    for original, backup_path in reversed(moved):
+        if _path_exists(backup_path):
+            def restore_skill(
+                original_path: Path = original, backup: Path = backup_path
+            ) -> None:
+                original_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(backup), str(original_path))
+
+            attempt(f"restore skill {original}", restore_skill)
+
+    if backup_dir is not None:
+        attempt("remove empty backup skills directory", lambda: _remove_empty(backup_dir / "skills"))
+        attempt("remove empty backup directory", lambda: _remove_empty(backup_dir))
+        attempt("remove empty backups root", lambda: _remove_empty(backup_dir.parent))
+    if source_published and source_dir.exists():
+        attempt("remove published dependency", lambda: shutil.rmtree(source_dir))
+        attempt("remove empty revision parent", lambda: _remove_empty(source_dir.parent))
+        attempt("remove empty dependency parent", lambda: _remove_empty(source_dir.parent.parent))
+        attempt("remove empty dependencies root", lambda: _remove_empty(source_dir.parent.parent.parent))
+    if skills_dir_created:
+        attempt("remove empty skills directory", lambda: _remove_empty(skills_dir))
+    if state_root_created:
+        attempt("remove empty state root", lambda: _remove_empty(state_root))
+    return tuple(errors)
+
+
 def install_profile(
     options: InstallOptions,
     *,
@@ -301,6 +432,8 @@ def install_profile(
         / selected.revision
     )
     manifest_path = state_root / profiles.MANIFEST_FILENAME
+    _validate_manifest_paths(manifest_path)
+    _validate_dependency_cache_path(source_dir, state_root)
 
     if source_dir.is_dir():
         _validate_repository(source_dir, selected)
@@ -309,6 +442,7 @@ def install_profile(
             options=options,
             profile=selected,
             skills_dir=skills_dir,
+            source_dir=source_dir,
         )
         if active is not None:
             return active
@@ -354,6 +488,7 @@ def install_profile(
     )
     backup_dir = state_root / "backups" / timestamp if conflicts else None
     previous_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
+    manifest_published = False
     moved: list[tuple[Path, Path]] = []
     created_links: list[Path] = []
     source_published = False
@@ -405,36 +540,29 @@ def install_profile(
         manifest_temp = manifest_path.with_name(f".{manifest_path.name}.tmp")
         manifest_temp.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         os.replace(manifest_temp, manifest_path)
+        manifest_published = True
         _inject(fail_after, "manifest")
     except Exception as exc:
-        if manifest_path.exists():
-            manifest_path.unlink()
-        if previous_manifest is not None:
-            manifest_path.parent.mkdir(parents=True, exist_ok=True)
-            manifest_path.write_bytes(previous_manifest)
-        for target in reversed(created_links):
-            if target.is_symlink() or target.exists():
-                target.unlink()
-        for original, backup_path in reversed(moved):
-            original.parent.mkdir(parents=True, exist_ok=True)
-            if _path_exists(backup_path):
-                shutil.move(str(backup_path), str(original))
-        if backup_dir is not None:
-            _remove_empty(backup_dir / "skills")
-            _remove_empty(backup_dir)
-            _remove_empty(backup_dir.parent)
-        if source_published and source_dir.exists():
-            shutil.rmtree(source_dir)
-            _remove_empty(source_dir.parent)
-            _remove_empty(source_dir.parent.parent)
-            _remove_empty(source_dir.parent.parent.parent)
-        if skills_dir_created:
-            _remove_empty(skills_dir)
-        if state_root_created:
-            _remove_empty(state_root)
-        if isinstance(exc, InstallError):
+        rollback_errors = _rollback_activation(
+            manifest_path=manifest_path,
+            previous_manifest=previous_manifest,
+            manifest_published=manifest_published,
+            created_links=created_links,
+            moved=moved,
+            backup_dir=backup_dir,
+            source_published=source_published,
+            source_dir=source_dir,
+            skills_dir_created=skills_dir_created,
+            skills_dir=skills_dir,
+            state_root_created=state_root_created,
+            state_root=state_root,
+        )
+        message = str(exc)
+        if rollback_errors:
+            message += "\nRollback errors:\n- " + "\n- ".join(rollback_errors)
+        if isinstance(exc, InstallError) and not rollback_errors:
             raise
-        raise InstallError(str(exc)) from exc
+        raise InstallError(message) from exc
     finally:
         if temporary is not None:
             temporary.cleanup()

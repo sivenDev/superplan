@@ -46,10 +46,17 @@ def create_profile_repository(
     validator_exit: int = 0,
     malformed_skill: str | None = None,
     extra_skill: str | None = None,
+    symlink_skill: str | None = None,
 ) -> tuple[Path, object]:
     repository = root / "profile-repository"
     skills_root = repository / "skills" / "superpowers"
     for name in PROFILES.GPT56_PROFILE.skills:
+        if name == symlink_skill:
+            external_skill = root / f"external-{name}"
+            write_skill(external_skill, name)
+            (skills_root / name).parent.mkdir(parents=True, exist_ok=True)
+            (skills_root / name).symlink_to(external_skill, target_is_directory=True)
+            continue
         frontmatter_name = "wrong-name" if name == malformed_skill else name
         write_skill(skills_root / name, frontmatter_name)
     if extra_skill is not None:
@@ -233,6 +240,8 @@ class InstallSuperpowersProfileTests(unittest.TestCase):
             state_root.mkdir()
             manifest_path = state_root / PROFILES.MANIFEST_FILENAME
             manifest_path.write_text('{"previous": true}\n', encoding="utf-8")
+            manifest_alias = state_root / "previous-manifest-hardlink.json"
+            manifest_alias.hardlink_to(manifest_path)
 
             with self.assertRaisesRegex(INSTALLER.InstallError, "Injected failure"):
                 INSTALLER.install_profile(
@@ -249,6 +258,7 @@ class InstallSuperpowersProfileTests(unittest.TestCase):
             self.assertEqual(
                 manifest_path.read_text(encoding="utf-8"), '{"previous": true}\n'
             )
+            self.assertTrue(manifest_path.samefile(manifest_alias))
 
     def test_same_revision_install_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -261,6 +271,139 @@ class InstallSuperpowersProfileTests(unittest.TestCase):
             self.assertEqual(second.status, "already-active")
             self.assertEqual(second.source_dir, first.source_dir)
             self.assertEqual(second.backup_dir, first.backup_dir)
+
+    def test_tampered_cached_checkout_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            _, profile = create_profile_repository(root)
+            first = INSTALLER.install_profile(options(root), profile=profile)
+            skill_file = (
+                first.source_dir
+                / "skills"
+                / "superpowers"
+                / "brainstorming"
+                / "SKILL.md"
+            )
+            skill_file.write_text(
+                skill_file.read_text(encoding="utf-8") + "tampered\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(INSTALLER.InstallError, "checkout has changes"):
+                INSTALLER.install_profile(options(root), profile=profile)
+
+    def test_symlinked_cached_checkout_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            _, profile = create_profile_repository(root)
+            first = INSTALLER.install_profile(options(root), profile=profile)
+            external_checkout = root / "external-checkout"
+            first.source_dir.rename(external_checkout)
+            first.source_dir.symlink_to(external_checkout, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                INSTALLER.InstallError, "checkout path must not be a symlink"
+            ):
+                INSTALLER.install_profile(
+                    options(root, replace_existing=True), profile=profile
+                )
+
+    def test_symlinked_dependency_cache_ancestor_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            _, profile = create_profile_repository(root)
+            first = INSTALLER.install_profile(options(root), profile=profile)
+            dependencies = first.source_dir.parent.parent
+            external_dependencies = root / "external-dependencies"
+            dependencies.rename(external_dependencies)
+            dependencies.symlink_to(external_dependencies, target_is_directory=True)
+            manifest_path = root / "state" / PROFILES.MANIFEST_FILENAME
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["skills"] = {
+                name: str(
+                    (
+                        first.source_dir
+                        / "skills"
+                        / "superpowers"
+                        / name
+                    ).resolve()
+                )
+                for name in profile.skills
+            }
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                INSTALLER.InstallError, "cache path must not contain symlinks"
+            ):
+                INSTALLER.install_profile(options(root), profile=profile)
+
+    def test_symlinked_source_skill_directory_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            _, profile = create_profile_repository(
+                root, symlink_skill="writing-skills"
+            )
+
+            with self.assertRaisesRegex(
+                INSTALLER.InstallError, "skill directory boundary"
+            ):
+                INSTALLER.install_profile(options(root), profile=profile)
+
+            self.assertFalse((root / "state").exists())
+
+    def test_incomplete_manifest_is_not_treated_as_already_active(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            _, profile = create_profile_repository(root)
+            INSTALLER.install_profile(options(root), profile=profile)
+            manifest_path = root / "state" / PROFILES.MANIFEST_FILENAME
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest.pop("schema_version")
+            manifest.pop("skills")
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            result = INSTALLER.install_profile(
+                options(root, replace_existing=True), profile=profile
+            )
+
+            self.assertEqual(result.status, "installed")
+            repaired = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(repaired["schema_version"], PROFILES.MANIFEST_SCHEMA_VERSION)
+            self.assertEqual(set(repaired["skills"]), set(profile.skills))
+
+    def test_non_file_manifest_path_is_rejected_before_activation(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            _, profile = create_profile_repository(root)
+            original = root / "active-skills" / "using-superpowers"
+            write_skill(original, "using-superpowers")
+            manifest_path = root / "state" / PROFILES.MANIFEST_FILENAME
+            manifest_path.mkdir(parents=True)
+
+            with self.assertRaisesRegex(INSTALLER.InstallError, "Unsafe manifest path"):
+                INSTALLER.install_profile(
+                    options(root, replace_existing=True), profile=profile
+                )
+
+            self.assertTrue(original.is_dir())
+            self.assertFalse(original.is_symlink())
+            self.assertFalse((root / "state" / "backups").exists())
+
+    def test_preexisting_manifest_temp_file_is_rejected_and_preserved(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            _, profile = create_profile_repository(root)
+            manifest_path = root / "state" / PROFILES.MANIFEST_FILENAME
+            manifest_temp = manifest_path.with_name(f".{manifest_path.name}.tmp")
+            write(manifest_temp, "user-owned temp file\n")
+
+            with self.assertRaisesRegex(INSTALLER.InstallError, "Unsafe manifest path"):
+                INSTALLER.install_profile(options(root), profile=profile)
+
+            self.assertEqual(
+                manifest_temp.read_text(encoding="utf-8"), "user-owned temp file\n"
+            )
+            self.assertFalse((root / "active-skills").exists())
 
     def test_ambiguous_existing_installations_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
