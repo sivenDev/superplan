@@ -56,3 +56,10 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-20
 
 开始 Superplan 流程时，先检查当前项目是否存在重要的 Git 变更；若存在，在继续 intake、规划或实现前询问用户是否要在当前项目中新建 worktree 执行后续流程。需要明确“重要变更”的判定、用户选择留在当前工作区时的行为，以及不重要的噪声变更不应触发询问。
+
+## F006: Support GPT-5.6 Superpowers profile installation
+
+- status: proposed
+- created: 2026-07-20
+
+为 Superplan 增加 GPT-5.6 专用 Superpowers profile 的安装与兼容流程：从 eagleagentic/superpowers-gpt-5.6 克隆外部依赖，在安装 Superplan 时选择并激活该 profile，使依赖检查、初始化和后续工作流能够使用其 13 个 skills 与 Codex 原生子代理能力。当前范围只支持 gpt-5.6；obra 官方 Superpowers、其他模型、运行时热切换和多 profile 通用化均延后。外部仓库不 vendoring 到 Superplan。
