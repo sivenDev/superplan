@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 
 
@@ -52,6 +54,57 @@ class RecordHumanRequestTests(unittest.TestCase):
             self.assertIn("## F001: Dark mode", content)
             self.assertIn("- status: proposed", content)
             self.assertIn("- created: 2026-05-29", content)
+
+    def test_explicit_accepted_status_is_rendered(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            (root / "docs").mkdir()
+
+            code = MODULE.run(
+                [
+                    "--root",
+                    str(root),
+                    "--type",
+                    "feature",
+                    "--title",
+                    "Approved intake",
+                    "--status",
+                    "accepted",
+                    "--date",
+                    "2026-07-21",
+                ]
+            )
+            self.assertEqual(code, 0)
+
+            content = (root / "docs" / "superplan" / "human" / "features.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("## F001: Approved intake", content)
+            self.assertIn("- status: accepted", content)
+            self.assertNotIn("- status: proposed", content)
+
+    def test_unsupported_status_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            (root / "docs").mkdir()
+
+            with redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as context:
+                    MODULE.run(
+                        [
+                            "--root",
+                            str(root),
+                            "--type",
+                            "feature",
+                            "--title",
+                            "Invalid status",
+                            "--status",
+                            "done",
+                        ]
+                    )
+
+            self.assertEqual(context.exception.code, 2)
+            self.assertFalse((root / "docs" / "superplan" / "human" / "features.md").exists())
 
     def test_second_feature_increments_to_f002(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

@@ -31,17 +31,35 @@ Use the recorder rather than editing numbering manually:
 
 ```bash
 python3 <using-superplan-root>/scripts/record_human_request.py \
-  --type feature --title "<title>" [--body "<description>"]
+  --type feature --title "<title>" [--body "<description>"] \
+  [--status proposed|accepted]
 
 python3 <using-superplan-root>/scripts/record_human_request.py \
-  --type bug --title "<title>" [--body "<symptom / reproduction>"]
+  --type bug --title "<title>" [--body "<symptom / reproduction>"] \
+  [--status proposed|accepted]
 ```
+
+The recorder defaults to `proposed`. Use `--status accepted` only when all of
+these are true:
+
+- The human explicitly authorized recording the request and proceeding to
+  planning.
+- The extracted title and body faithfully represent the request without adding
+  material assumptions.
+- Scope, constraints, acceptance, and workspace decisions contain no material
+  ambiguity that requires a human answer.
+
+Direct acceptance applies only to the human request. It never approves an
+implementation plan.
 
 ## Workflow
 
 1. Extract a short title and only useful request details.
-2. Run the matching recorder; it appends the next id with `status: proposed`.
-3. Stop and ask the human to review the entry. Do not debug, plan, or implement.
-4. Continue only after human confirmation changes the entry to `accepted`.
+2. Apply the direct-accept conditions. If all pass, record `accepted` and enter
+   planning. Otherwise record the default `proposed` status.
+3. For `proposed`, stop and ask the human to review the entry. Do not debug,
+   plan, or implement until confirmation changes it to `accepted`.
+4. For `accepted`, continue through the selected route and still present the
+   resulting draft implementation plan for separate human approval.
 
 Intake records intent only; it never creates plans or code.

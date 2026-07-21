@@ -137,6 +137,8 @@ class InitWorkspaceTests(unittest.TestCase):
                         str(root),
                         "--superpowers-skills-dir",
                         str(skills_dir),
+                        "--superpowers-state-root",
+                        str(root / "profile-state"),
                         "--no-default-superpowers-search",
                     ]
                 ),
@@ -172,6 +174,8 @@ class InitWorkspaceTests(unittest.TestCase):
                         str(root),
                         "--superpowers-skills-dir",
                         str(skills_dir),
+                        "--superpowers-state-root",
+                        str(root / "profile-state"),
                         "--no-default-superpowers-search",
                     ]
                 ),
@@ -188,6 +192,8 @@ class InitWorkspaceTests(unittest.TestCase):
                         str(root),
                         "--superpowers-skills-dir",
                         str(skills_dir),
+                        "--superpowers-state-root",
+                        str(root / "profile-state"),
                         "--no-default-superpowers-search",
                     ]
                 ),
@@ -216,6 +222,8 @@ class InitWorkspaceTests(unittest.TestCase):
                     str(root),
                     "--superpowers-skills-dir",
                     str(skills_dir),
+                    "--superpowers-state-root",
+                    str(root / "profile-state"),
                     "--no-default-superpowers-search",
                 ],
                 capture_output=True,
@@ -230,7 +238,15 @@ class InitWorkspaceTests(unittest.TestCase):
             root = Path(tempdir)
 
             self.assertEqual(
-                MODULE.run(["--root", str(root), "--no-default-superpowers-search"]),
+                MODULE.run(
+                    [
+                        "--root",
+                        str(root),
+                        "--superpowers-state-root",
+                        str(root / "profile-state"),
+                        "--no-default-superpowers-search",
+                    ]
+                ),
                 1,
             )
             self.assertFalse((root / "docs" / "superplan").exists())

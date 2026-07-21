@@ -186,23 +186,41 @@ def commit_and_retarget_profile(
 class CheckSuperpowersTests(unittest.TestCase):
     def test_check_passes_with_valid_skills_dir(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
-            skills_dir = Path(tempdir) / "skills"
+            root = Path(tempdir)
+            skills_dir = root / "skills"
             create_superpowers_install(skills_dir)
 
             output = io.StringIO()
             with redirect_stdout(output):
-                code = MODULE.run(["--skills-dir", str(skills_dir), "--no-default-search"])
+                code = MODULE.run(
+                    [
+                        "--state-root",
+                        str(root / "state"),
+                        "--skills-dir",
+                        str(skills_dir),
+                        "--no-default-search",
+                    ]
+                )
 
             self.assertEqual(code, 0)
             self.assertIn("Superpowers installation found", output.getvalue())
 
     def test_check_fails_with_install_guidance_when_missing(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
-            skills_dir = Path(tempdir) / "skills"
+            root = Path(tempdir)
+            skills_dir = root / "skills"
 
             output = io.StringIO()
             with redirect_stdout(output):
-                code = MODULE.run(["--skills-dir", str(skills_dir), "--no-default-search"])
+                code = MODULE.run(
+                    [
+                        "--state-root",
+                        str(root / "state"),
+                        "--skills-dir",
+                        str(skills_dir),
+                        "--no-default-search",
+                    ]
+                )
 
             self.assertEqual(code, 1)
             rendered = output.getvalue()
@@ -211,13 +229,20 @@ class CheckSuperpowersTests(unittest.TestCase):
 
     def test_check_detects_plugin_root(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
-            plugin_root = Path(tempdir) / "superpowers"
+            root = Path(tempdir)
+            plugin_root = root / "superpowers"
             create_superpowers_install(plugin_root / "skills")
 
             output = io.StringIO()
             with redirect_stdout(output):
                 code = MODULE.run(
-                    ["--superpowers-root", str(plugin_root), "--no-default-search"]
+                    [
+                        "--state-root",
+                        str(root / "state"),
+                        "--superpowers-root",
+                        str(plugin_root),
+                        "--no-default-search",
+                    ]
                 )
 
             self.assertEqual(code, 0)

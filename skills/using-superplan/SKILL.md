@@ -11,21 +11,34 @@ execution, verification, progress, and commit rules.
 
 ## Prerequisite and Initialization
 
-Verify Superpowers:
+Verify Superpowers during installation, initialization, diagnostics, or when no
+still-fresh dependency evidence exists:
 
 ```bash
 python3 <using-superplan-root>/scripts/check_superpowers.py
 ```
 
-For GPT-5.6, install the pinned profile when needed, then restart Codex or open a
-new chat:
+Do not repeat this check for every routed task while the active profile,
+manifest, skill locations, and relevant environment remain unchanged.
+
+For GPT-5.6, inspect the resolved installation before any activation:
+
+```bash
+python3 <using-superplan-root>/scripts/install_superpowers_profile.py \
+  --model gpt-5.6 --dry-run
+```
+
+If replacement is required, show the resolved target and conflicts and obtain
+explicit human approval before running:
 
 ```bash
 python3 <using-superplan-root>/scripts/install_superpowers_profile.py \
   --model gpt-5.6 --replace-existing
 ```
 
-The installer supports `gpt-5.6` and `gpt-5.6-*` only.
+For a conflict-free install, rerun without `--replace-existing`. The installer
+supports `gpt-5.6` and `gpt-5.6-*` only; after activation, restart Codex or open
+a new chat.
 
 When asked to initialize Superplan, run:
 

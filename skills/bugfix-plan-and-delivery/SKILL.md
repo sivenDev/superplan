@@ -11,8 +11,10 @@ Read `../using-superplan/references/delivery-loop.md`, then apply:
 - Output: `docs/superplan/plans/bugs/`
 - Plan type: `bugfix`
 
-For an unrecorded bug, execute `../using-superplan/references/intake-spec.md` and
-stop for review. Plan only an accepted entry; skip intake when it already exists.
+For an unrecorded bug, execute the adaptive decision in
+`../using-superplan/references/intake-spec.md`: stop when it records `proposed`,
+or continue to debugging and planning when its direct-accept conditions record
+`accepted`. Plan only an accepted entry; skip intake when it already exists.
 
 Before proposing a fix, use `systematic-debugging` to confirm the symptom,
 reproduction path, and root-cause area. Stay in debugging if the root cause cannot

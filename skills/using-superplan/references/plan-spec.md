@@ -58,8 +58,11 @@ Normal flow is:
 
 `draft -> approved -> in_progress -> complete`
 
-- Human approval is required for `draft -> approved`; never implement from
-  `draft`.
+- Human approval is required to leave `draft`; never implement from `draft`.
+- Persist `approved` when approved work is queued. When execution starts in the
+  same continuation as approval, persist `in_progress` directly and regenerate
+  the index once; the human approval event remains required even when its
+  transient status is not separately written.
 - Use `blocked` only while execution cannot proceed; return to `in_progress`
   when resolved and explain the blocker in the plan.
 - Use `superseded` for a retained plan replaced by another plan and name the
@@ -135,7 +138,15 @@ or policy boundaries when file paths alone are insufficient.
 
 ## Plan-Set Validation
 
-After any plan change, review the full related set for overlap, independence,
-clarity, and accurate dependencies, then run:
+Review the full related set for overlap, independence, clarity, and accurate
+dependencies when plans are added, removed, renamed, or split, or when Scope,
+Architecture, Exit Criteria, task Files, or `depends_on` changes. These changes
+can alter delivery boundaries or sequencing.
+
+Checkboxes, routine status/progress updates, and evidence notes require only
+validation of the affected plan plus the generated index. Do not reopen the full
+related set when delivery structure is unchanged.
+
+After either class of plan change, run:
 
 `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`

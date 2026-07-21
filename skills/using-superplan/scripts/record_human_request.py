@@ -20,6 +20,7 @@ CONFIG = {
     "feature": {"filename": "features.md", "prefix": "F", "heading": "# Features"},
     "bug": {"filename": "bugs.md", "prefix": "B", "heading": "# Bugs"},
 }
+HUMAN_STATUSES = ("proposed", "accepted")
 
 ENTRY_PATTERN = re.compile(r"^##\s+([A-Za-z])(\d+)(?:@[A-Za-z0-9._-]+)?:", re.MULTILINE)
 
@@ -104,11 +105,17 @@ def normalize_body_text(body: str) -> str:
     return body.replace("\\r\\n", "\n").replace("\\n", "\n")
 
 
-def render_entry(entry_id: str, title: str, body: str | None, date: str) -> str:
+def render_entry(
+    entry_id: str,
+    title: str,
+    body: str | None,
+    date: str,
+    status: str = "proposed",
+) -> str:
     lines = [
         f"## {entry_id}: {title}",
         "",
-        "- status: proposed",
+        f"- status: {status}",
         f"- created: {date}",
         "",
     ]
@@ -131,6 +138,12 @@ def run(argv: list[str] | None = None) -> int:
     parser.add_argument("--type", required=True, choices=sorted(CONFIG), help="Request kind")
     parser.add_argument("--title", required=True, help="Short entry title")
     parser.add_argument("--body", default="", help="Optional description body")
+    parser.add_argument(
+        "--status",
+        choices=HUMAN_STATUSES,
+        default="proposed",
+        help="Initial request status. Defaults to proposed.",
+    )
     parser.add_argument(
         "--root",
         default=None,
@@ -159,7 +172,7 @@ def run(argv: list[str] | None = None) -> int:
     content = path.read_text(encoding="utf-8") if path.exists() else ""
 
     entry_id = next_id(content, config["prefix"]) + id_qualifier(root)
-    entry = render_entry(entry_id, title, args.body, args.date)
+    entry = render_entry(entry_id, title, args.body, args.date, args.status)
     updated = append_entry(content, config["heading"], entry)
 
     path.parent.mkdir(parents=True, exist_ok=True)

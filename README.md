@@ -46,11 +46,15 @@ See [docs/install.md](docs/install.md) for the full flow.
 The short version for GPT-5.6:
 
 1. Install this repository as a plugin/skill bundle from the repository root.
-2. Run `install_superpowers_profile.py --model gpt-5.6 --replace-existing`.
-3. Restart Codex or open a new chat, then select GPT-5.6 with `/model` or launch
+2. Run `install_superpowers_profile.py --model gpt-5.6 --dry-run` and review the
+   resolved skills directory and conflicts.
+3. For a clean target, rerun without `--dry-run`. If replacement is required,
+   explicitly approve the resolved target and conflicts before rerunning with
+   `--replace-existing`.
+4. Restart Codex or open a new chat, then select GPT-5.6 with `/model` or launch
    Codex with `--model gpt-5.6`.
-4. Run `check_superpowers.py --model gpt-5.6`.
-5. Initialize the target repository and use `$using-superplan` as the entry skill.
+5. Run `check_superpowers.py --model gpt-5.6`.
+6. Initialize the target repository and use `$using-superplan` as the entry skill.
 
 If your harness only supports raw skill installation from GitHub paths, install **all** bundled skills under `skills/`. Do not install only `skills/using-superplan`, because it routes to the companion skills in the same bundle.
 
@@ -80,6 +84,14 @@ The approved Superplan plan is the persisted design and execution artifact. Plan
 record outcomes, exact files, important boundaries, and evidence without copying
 the complete future diff. Small and medium tasks default to one capable agent;
 subagents are reserved for genuinely independent slices or high-risk review.
+
+Human approval remains the gate out of `draft`. Approved work that stays queued
+is persisted as `approved`; work starting immediately can persist `in_progress`
+directly and refresh the index once. Full related-plan review is reserved for
+structural changes, while routine progress updates use local plan/index checks.
+Still-current safety, dependency, and test evidence is reused until relevant
+workspace, file, or environment state changes. The canonical verification matrix
+selects checks by artifact type and risk.
 
 Task-level commit messages include the plan id when one exists, linking the human
 request and plan to the actual implementation in Git.

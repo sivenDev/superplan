@@ -27,6 +27,12 @@ Before intake, plan/status changes, or implementation edits:
 Non-Git workspaces continue without this prompt. Unexpected Git inspection
 failures must be resolved before workflow mutation.
 
+Workspace-safety evidence may be reused during the same routed task while its
+supporting state remains unchanged. Reinspect when the branch or worktree
+changes, the human or an external tool makes relevant changes, unexpected
+non-task Git changes appear, or files/environment facts supporting the earlier
+decision change.
+
 ## Superpowers Composition
 
 For `docs/superplan/**` work, Superplan owns the persisted request, design, plan,
@@ -57,27 +63,45 @@ profile when uncertainty could change required evidence.
   applicable, run focused and full regression checks, and add independent review
   when separation improves evidence.
 
+## Evidence and Verification
+
+Reuse successful evidence when it still proves the same claim against unchanged
+relevant state. Later mutations invalidate only evidence affected by those
+mutations; metadata-only progress edits do not invalidate unchanged code-test
+results. Recheck dependencies only for initialization, installation,
+diagnostics, unresolved dependency state, or after the model, profile manifest,
+skill locations, or other supporting environment changes.
+
+Select focused and final checks from `verification-matrix.md`, combining rows
+when a change spans artifact types and escalating for the selected risk profile.
+Before completion, every material claim must have current evidence, but repeated
+commands that prove no changed claim add no value.
+
 ## Delivery
 
-1. Run Workspace Safety, inspect recent commits and `docs/superplan/plans`, and
-   preserve unrelated work.
+1. Establish or reuse still-fresh Workspace Safety evidence, inspect recent
+   commits and `docs/superplan/plans`, and preserve unrelated work.
 2. Read the route's source under `docs/superplan/human/` and apply its bookkeeping
    rules.
 3. Confirm scope, constraints, acceptance, non-goals, and risk. Run required
    route discovery such as `systematic-debugging` before planning a bugfix.
 4. Read `plan-spec.md`, create the smallest independently verifiable plan set,
    and start new plans at `status: draft`.
-5. Review the full related plan set for overlap, boundaries, and real
-   `depends_on` relationships. Present it and stop for human approval.
-6. Human approval is the `draft -> approved` gate. Never implement before it.
-   After approval, move plans through `approved -> in_progress` and execute in
-   dependency order.
+5. For structural plan changes, review the full related plan set for overlap,
+   boundaries, and real `depends_on` relationships. For routine status,
+   checkbox, or evidence-note updates, validate only the affected plan and
+   generated index. Present every new or structurally revised draft and stop for
+   human approval.
+6. Human approval is the gate out of `draft`; never implement before it. Persist
+   `approved` when approved work will remain queued. If execution starts in the
+   same continuation, persist `in_progress` directly and refresh the index once,
+   then execute in dependency order.
 7. During implementation, run focused checks for the selected risk profile. Bug
    fixes keep a behavior-level regression proving the reproduced failure. Clean
    directly related redundancy without widening scope.
-8. After the implementation state is final, obtain fresh completion evidence and
-   run the relevant full regression once. Then mark the human entry and plan
-   complete and refresh the index with:
+8. After the implementation state is final, obtain current completion evidence
+   selected from `verification-matrix.md` and run any relevant full regression
+   once. Then mark the human entry and plan complete and refresh the index with:
 
    `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`
 

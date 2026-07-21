@@ -70,3 +70,10 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-21
 
 基于当前 Codex/GPT-5.6 的原生能力，整体审计 bundled skills、共享 references 与必要的界面元数据；删除无效、重复、解释性过强且模型已具备的说明，合并重复规则，保留 Superplan 的人工审批、工作区安全、风险分级、可追踪计划、验证和交付门禁。必要时同步测试与文档，确保精简后触发边界和脚本行为不退化。
+
+## F008: 优化 Superplan 流程状态与验证逻辑
+
+- status: done
+- created: 2026-07-21
+
+在保留实施计划审批、重要 Git 变更 worktree 授权、bug 根因/回归以及 human-plan-test-Git 追踪的前提下，优化流程逻辑：对明确且无歧义的新请求支持自适应 intake，减少 proposed/accepted 往返；批处理 approved 到 in_progress 及计划索引写入；仅在新增、拆分、范围或依赖变化时审查完整计划集；在工作区状态未变化时复用安全与依赖检查证据；按变更文件类型选择确定性验证矩阵；GPT-5.6 profile 替换必须先 dry-run 并取得明确授权；增加针对触发、intake、worktree、安全门和验证选择的行为级 skill 测试。

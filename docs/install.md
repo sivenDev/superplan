@@ -45,7 +45,10 @@ duplicate same-name skills ambiguously.
 
 ## 3. Install and activate the pinned profile
 
-After reviewing the dry-run, activate the profile:
+After reviewing the dry-run, a conflict-free target can be activated by rerunning
+the command without `--dry-run` or `--replace-existing`. If conflicts require
+replacement, explicitly approve the resolved skills directory and every listed
+conflict before activating with:
 
 ```bash
 python3 <using-superplan-root>/scripts/install_superpowers_profile.py \
