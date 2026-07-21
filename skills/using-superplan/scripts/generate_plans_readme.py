@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+from workspace_paths import resolve_existing_workspace
+
 
 SCRIPT_COMMAND = (
     "python3 <using-superplan-root>/scripts/generate_plans_readme.py"
@@ -71,13 +73,6 @@ def source_id_from_plan_id(plan_id: str) -> str:
     if split_match:
         qualifier = split_match.group(1)
     return f"{source_prefix}@{qualifier}"
-
-
-def detect_repo_root(start: Path) -> Path:
-    for candidate in [start, *start.parents]:
-        if (candidate / "docs" / "superplan" / "plans").is_dir():
-            return candidate
-    raise ValueError(f"unable to locate repository root from {start}")
 
 
 @dataclass(frozen=True)
@@ -389,7 +384,7 @@ def run(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--root",
         default=None,
-        help="Repository root. Defaults to the nearest ancestor of the current directory containing docs/superplan/plans.",
+        help="Repository root. Defaults to the Git top-level or nearest existing Superplan ancestor.",
     )
     parser.add_argument(
         "--write",
@@ -404,7 +399,7 @@ def run(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        root = Path(args.root).resolve() if args.root else detect_repo_root(Path.cwd())
+        root = Path(args.root).resolve() if args.root else resolve_existing_workspace(Path.cwd())
     except ValueError as exc:
         print(exc)
         return 1

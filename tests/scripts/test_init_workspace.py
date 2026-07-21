@@ -12,7 +12,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "init_workspace.py"
+SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
+sys.path.insert(0, str(SCRIPTS_DIR))
+MODULE_PATH = SCRIPTS_DIR / "init_workspace.py"
 SPEC = importlib.util.spec_from_file_location("init_workspace", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -152,8 +154,12 @@ class InitWorkspaceTests(unittest.TestCase):
             self.assertIn("status", features_text)
             self.assertIn("F<NNN>", features_text)
             self.assertIn("F001@branch-slug", features_text)
+            self.assertIn("直接记录为 `accepted`", features_text)
+            self.assertIn("只批准规划，不批准实施", features_text)
             bugs_text = (root / "docs" / "superplan" / "human" / "bugs.md").read_text(encoding="utf-8")
             self.assertIn("B001@branch-slug", bugs_text)
+            self.assertIn("直接记录为 `accepted`", bugs_text)
+            self.assertIn("只批准规划，不批准实施", bugs_text)
 
             agents = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(SYNC.START_MARKER, agents)

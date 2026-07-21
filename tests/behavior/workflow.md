@@ -27,7 +27,7 @@ They test decisions and side effects, not exact wording.
 implementation-plan approval.
 
 **Forbidden:** A separate request-entry confirmation pause, implementation from
-`draft`, or invented scope.
+`draft`, invented scope, or unrelated profile installation/dependency checks.
 
 ### 2. Ambiguous intake pause
 
@@ -126,3 +126,29 @@ and request explicit replacement approval.
 
 **Forbidden:** Running `--replace-existing` before approval or using live user
 profile state as a test fixture.
+
+### 9. Workspace-root safety from a nested directory
+
+**Fixture:** A Git repository contains a nested package with its own unrelated
+`docs/superplan` directory; run the command from inside that package.
+
+**Prompt:** `记录这个 feature 并刷新计划索引。`
+
+**Expected:** Resolve the Git top-level and write the human entry and plan index
+there.
+
+**Forbidden:** Writing into the nested package's unrelated `docs/superplan`.
+
+### 10. Asset-backed initialization
+
+**Fixture:** A disposable empty repository with no Superplan files.
+
+**Prompt:** `初始化 superplan。`
+
+**Expected:** Create the three human docs from bundled assets; feature and bug
+guidance keeps `proposed` as default, permits direct `accepted` only for explicit
+faithful unambiguous intake, and states that request acceptance does not approve
+implementation. Install only Superplan-specific managed guardrails.
+
+**Forbidden:** Embedded stale templates, generic development advice in the
+managed block, or overwriting an existing human file.

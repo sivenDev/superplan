@@ -6,28 +6,23 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from workspace_paths import resolve_existing_workspace
+
 
 START_MARKER = "<!-- managed-by: superplan:start -->"
 END_MARKER = "<!-- managed-by: superplan:end -->"
-
-
-def detect_repo_root(start: Path) -> Path:
-    for candidate in [start, *start.parents]:
-        if (candidate / "docs").exists() or (candidate / ".git").exists():
-            return candidate
-    raise ValueError(f"unable to locate repository root from {start}")
 
 
 def skill_dir() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def reference_path() -> Path:
-    return skill_dir() / "references" / "agents-guardrails.md"
+def asset_path() -> Path:
+    return skill_dir() / "assets" / "agents-guardrails.md"
 
 
-def load_reference() -> str:
-    body = reference_path().read_text(encoding="utf-8").strip()
+def load_asset() -> str:
+    body = asset_path().read_text(encoding="utf-8").strip()
     return f"{START_MARKER}\n{body}\n{END_MARKER}\n"
 
 
@@ -58,7 +53,7 @@ def run(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--root",
         default=None,
-        help="Repository root. Defaults to the nearest ancestor of the current directory containing docs/ or .git.",
+        help="Repository root. Defaults to the Git top-level or nearest existing Superplan ancestor.",
     )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--write", action="store_true", help="Write the managed guardrails into AGENTS.md")
@@ -66,13 +61,13 @@ def run(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        root = Path(args.root).resolve() if args.root else detect_repo_root(Path.cwd())
+        root = Path(args.root).resolve() if args.root else resolve_existing_workspace(Path.cwd())
     except ValueError as exc:
         print(exc)
         return 1
     agents_path = root / "AGENTS.md"
     existing = agents_path.read_text(encoding="utf-8") if agents_path.exists() else ""
-    managed_block = load_reference()
+    managed_block = load_asset()
     synced = render_synced(existing, managed_block)
 
     if args.write:

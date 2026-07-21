@@ -7,7 +7,9 @@ import unittest
 from pathlib import Path
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "sync_agents_guardrails.py"
+SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
+sys.path.insert(0, str(SCRIPTS_DIR))
+MODULE_PATH = SCRIPTS_DIR / "sync_agents_guardrails.py"
 SPEC = importlib.util.spec_from_file_location("sync_agents_guardrails", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
@@ -30,7 +32,7 @@ class SyncAgentsGuardrailsTests(unittest.TestCase):
             content = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(MODULE.START_MARKER, content)
             self.assertIn("# Workflow Guardrails", content)
-            self.assertIn("# Development Rules", content)
+            self.assertNotIn("# Development Rules", content)
             self.assertIn(MODULE.END_MARKER, content)
 
     def test_write_prepends_managed_block_without_destroying_existing_content(self) -> None:

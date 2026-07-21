@@ -31,10 +31,13 @@ adaptation of obra/superpowers, not code vendored into this repository.
 │   ├── plugin.json
 │   └── marketplace.json
 ├── skills/
-│   ├── using-superplan/
+│   ├── using-superplan/        # runtime scripts, references, and output assets
 │   ├── project-bootstrap-from-prd/
 │   ├── feature-plan-and-delivery/
 │   └── bugfix-plan-and-delivery/
+├── tests/
+│   ├── scripts/                # repository unit tests
+│   └── behavior/               # fresh-context workflow scenarios
 └── docs/
     └── install.md
 ```
@@ -121,7 +124,7 @@ may use paths relative to the repository root.
 
 ## Development
 
-- Unit tests: `python3 -m unittest discover -s skills/using-superplan/scripts/tests`
+- Unit tests: `python3 -m unittest discover -s tests/scripts`
 - Codex plugin manifest validation: use the `plugin-creator` validator from your local Codex skill installation against the repository root
 
 Repository license: `MIT`.

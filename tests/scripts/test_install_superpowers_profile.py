@@ -10,7 +10,7 @@ from dataclasses import replace
 from pathlib import Path
 
 
-SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
 CLI_PATH = SCRIPTS_DIR / "install_superpowers_profile.py"
 
 

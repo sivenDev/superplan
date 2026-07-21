@@ -4,8 +4,9 @@ This is the canonical workflow for all Superplan routes. Specialized skills only
 define their input, output, plan type, and route-specific safeguards.
 
 `<using-superplan-root>` means the installed `skills/using-superplan/` directory.
-Bundled scripts detect the repository root from the current directory and fail
-outside it; use `--root <path>` to target another repository explicitly.
+Existing-workspace commands prefer the Git top-level, then an existing
+`docs/superplan` ancestor; initialization may fall back to its starting
+directory. Use `--root <path>` to choose a target explicitly.
 
 ## Workspace Safety
 
@@ -114,8 +115,7 @@ record executable proof, and Git records the delivered diff.
 
 ## Managed Guardrails
 
-The canonical project guardrails live in `agents-guardrails.md`. Install or
-refresh them with:
+Install or refresh the bundled project guardrails with:
 
 `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`
 

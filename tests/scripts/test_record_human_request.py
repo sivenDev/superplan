@@ -10,7 +10,9 @@ from contextlib import redirect_stderr
 from pathlib import Path
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "record_human_request.py"
+SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
+sys.path.insert(0, str(SCRIPTS_DIR))
+MODULE_PATH = SCRIPTS_DIR / "record_human_request.py"
 SPEC = importlib.util.spec_from_file_location("record_human_request", MODULE_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

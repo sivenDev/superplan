@@ -14,7 +14,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "check_superpowers.py"
+SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
+MODULE_PATH = SCRIPTS_DIR / "check_superpowers.py"
 GPT56_REVISION = "aa973775906c8761a78019aaa21e4f0ccd987925"
 GPT56_REPOSITORY = "https://github.com/eagleagentic/superpowers-gpt-5.6.git"
 GPT56_SKILLS = (

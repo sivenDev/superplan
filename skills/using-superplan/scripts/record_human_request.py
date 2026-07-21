@@ -15,6 +15,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from workspace_paths import resolve_existing_workspace
+
 
 CONFIG = {
     "feature": {"filename": "features.md", "prefix": "F", "heading": "# Features"},
@@ -23,13 +25,6 @@ CONFIG = {
 HUMAN_STATUSES = ("proposed", "accepted")
 
 ENTRY_PATTERN = re.compile(r"^##\s+([A-Za-z])(\d+)(?:@[A-Za-z0-9._-]+)?:", re.MULTILINE)
-
-
-def detect_repo_root(start: Path) -> Path:
-    for candidate in [start, *start.parents]:
-        if (candidate / "docs").exists() or (candidate / ".git").exists():
-            return candidate
-    raise ValueError(f"unable to locate repository root from {start}")
 
 
 def human_path(root: Path, kind: str) -> Path:
@@ -147,7 +142,7 @@ def run(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--root",
         default=None,
-        help="Repository root. Defaults to the nearest ancestor of the current directory containing docs/ or .git.",
+        help="Repository root. Defaults to the Git top-level or nearest existing Superplan ancestor.",
     )
     parser.add_argument(
         "--date",
@@ -162,7 +157,7 @@ def run(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        root = Path(args.root).resolve() if args.root else detect_repo_root(Path.cwd())
+        root = Path(args.root).resolve() if args.root else resolve_existing_workspace(Path.cwd())
     except ValueError as exc:
         print(exc)
         return 1

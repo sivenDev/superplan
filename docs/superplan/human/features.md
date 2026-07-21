@@ -77,3 +77,10 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-21
 
 在保留实施计划审批、重要 Git 变更 worktree 授权、bug 根因/回归以及 human-plan-test-Git 追踪的前提下，优化流程逻辑：对明确且无歧义的新请求支持自适应 intake，减少 proposed/accepted 往返；批处理 approved 到 in_progress 及计划索引写入；仅在新增、拆分、范围或依赖变化时审查完整计划集；在工作区状态未变化时复用安全与依赖检查证据；按变更文件类型选择确定性验证矩阵；GPT-5.6 profile 替换必须先 dry-run 并取得明确授权；增加针对触发、intake、worktree、安全门和验证选择的行为级 skill 测试。
+
+## F009: 优化 Superplan P0/P1 结构与运行时说明
+
+- status: done
+- created: 2026-07-21
+
+处理已确认的 P0/P1：将初始化 human 模板资产化并与自适应 intake 对齐；统一已有工作区与初始化目标的 root 解析规则；把 GPT-5.6 profile 安装细节改为按需 reference；删除 managed guardrails 中通用 AI 开发原则；将脚本单元测试和 workflow behavior 场景移出运行时 skill 目录。继续在当前 worktree，保留并精确隔离 AGENTS.md 非 managed 用户改动。非目标：P2 human-plan 状态强校验、安装器/计划生成器大规模拆分、历史 spec 清理。
