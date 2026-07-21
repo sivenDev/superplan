@@ -6,19 +6,15 @@
 4. For work routed through Superplan, the approved plan, delivery-loop risk profile, and artifact-aware verification matrix are the project-level authority for persisted artifacts, testing, verification, delegation, and task-level traceability. Reuse unaffected evidence instead of rerunning unchanged checks.
 <!-- managed-by: superplan:end -->
 
-# Superplan Repository
+# 第一规范
 
-- This repository packages `superplan` as a Codex/Claude-compatible plugin bundle with skills under `skills/`.
-- `skills/using-superplan` is the main entry skill. The other bundled skills are required companions and should ship together.
-- Superplan depends on `superpowers`. Keep the dependency explicit in docs and scripts; do not vendor Superpowers skills into this repository.
-- In skill and reference docs, use the placeholder `<using-superplan-root>` for bundled script paths instead of hard-coding local install paths.
-- Validate script behavior with `python3 -m unittest discover -s skills/using-superplan/scripts/tests`.
-
+1. skill 说明要精简，不用啰嗦重复，与 AI 能力重复部分不需要写，只要增加微小说明即可。
+2. 不要为了优化而优化，如果优化收益低，应该拒绝优化，正确是第一优化原则。
 
 <claude-mem-context>
 # Memory Context
 
-# [superplan] recent context, 2026-07-01 7:53pm GMT+8
+# [superplan] recent context, 2026-07-21 11:52am GMT+8
 
 No previous sessions found.
 </claude-mem-context>
