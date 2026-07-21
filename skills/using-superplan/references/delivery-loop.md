@@ -25,6 +25,10 @@ Before intake, plan/status changes, or implementation edits:
    declined, continue in place while preserving unrelated work and staging exact
    task paths or hunks.
 
+An older committed baseline does not itself create a request-id collision:
+linked-worktree intake uses the recorder's branch-qualified id. Treat possible
+same-file merge conflicts as a separate risk.
+
 Non-Git workspaces continue without this prompt. Unexpected Git inspection
 failures must be resolved before workflow mutation.
 

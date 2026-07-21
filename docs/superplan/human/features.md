@@ -84,3 +84,10 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-21
 
 处理已确认的 P0/P1：将初始化 human 模板资产化并与自适应 intake 对齐；统一已有工作区与初始化目标的 root 解析规则；把 GPT-5.6 profile 安装细节改为按需 reference；删除 managed guardrails 中通用 AI 开发原则；将脚本单元测试和 workflow behavior 场景移出运行时 skill 目录。继续在当前 worktree，保留并精确隔离 AGENTS.md 非 managed 用户改动。非目标：P2 human-plan 状态强校验、安装器/计划生成器大规模拆分、历史 spec 清理。
+
+## F010: Clarify worktree numbering composition
+
+- status: done
+- created: 2026-07-21
+
+补充 dirty-worktree 安全门与 linked-worktree 编号规则的组合场景：当主工作区存在未提交 F044、隔离 worktree 从 F043 基线开始时，新需求应使用 F044@branch，而不是误判为编号冲突；继续原工作区时才使用 F045。增加最小权威说明和行为测试，不修改现有编号算法，不重复扩写规则。
