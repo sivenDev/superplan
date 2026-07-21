@@ -6,7 +6,7 @@
 
 | Type | Plans | Complete |
 | --- | --- | --- |
-| `feature` | 6 | 6 |
+| `feature` | 7 | 7 |
 | `bugfix` | 1 | 1 |
 
 ## Plan Groups
@@ -21,6 +21,7 @@
 | `F004` | [Adaptive Superplan Workflow for High-Capability Models](features/F004-adaptive-superplan-workflow.md) | `complete` | 2026-07-17 |
 | `F005` | [Prompt for Worktree on Important Git Changes](features/F005-prompt-for-worktree-on-important-git-changes.md) | `complete` | 2026-07-20 |
 | `F006` | [GPT-5.6 Superpowers Profile Installation](features/F006-gpt56-superpowers-profile-installation.md) | `complete` | 2026-07-20 |
+| `F007` | [Streamline Superplan Skills for High-Capability Models](features/F007-streamline-superplan-skills.md) | `complete` | 2026-07-21 |
 
 ### Bugfix Plans
 

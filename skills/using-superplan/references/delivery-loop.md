@@ -1,170 +1,98 @@
 # Delivery Loop
 
-This reference is the single source of truth for the shared workflow used by all
-Superplan skills (`$using-superplan`, `$project-bootstrap-from-prd`,
-`$feature-plan-and-delivery`, `$bugfix-plan-and-delivery`).
+This is the canonical workflow for all Superplan routes. Specialized skills only
+define their input, output, plan type, and route-specific safeguards.
 
-Each specialized skill provides only its input document, output directory, plan
-type, and route-specific safeguards.
+`<using-superplan-root>` means the installed `skills/using-superplan/` directory.
+Bundled scripts detect the repository root from the current directory and fail
+outside it; use `--root <path>` to target another repository explicitly.
 
-## Execution Model
+## Workspace Safety
 
-Bundled script paths use the `<using-superplan-root>` placeholder for the
-installed `skills/using-superplan/` directory.
+Before intake, plan/status changes, or implementation edits:
 
-Every script detects the target repository root by walking up from the current
-working directory. If the current directory is not inside the target repository,
-the script fails instead of writing elsewhere. Pass `--root <path>` to target a
-repository explicitly.
+1. In a Git workspace, inspect `git status` and enough staged, unstaged, and
+   relevant untracked diff context to understand existing work.
+2. Treat changes as important when the requested work could overwrite them, mix
+   them into its commit, or conflict during integration. Ignore timestamp-only
+   metadata, caches, logs, and safely reproducible noise unless consequential.
+3. If important changes exist, explain the concrete risk and ask whether to move
+   subsequent Superplan work to a new worktree. Resolve this before mutation;
+   never infer consent or automatically stash, commit, or create a worktree.
+4. If accepted, use `using-git-worktrees`, start from the committed baseline,
+   leave the original worktree untouched, and resume the same route there. If
+   declined, continue in place while preserving unrelated work and staging exact
+   task paths or hunks.
 
-## Workspace Safety Check
-
-Before intake records a request, planning creates or changes artifacts, or
-implementation edits the repository, inspect the current workspace for Git
-changes that could interfere with the requested work.
-
-1. If the workspace is a Git repository, inspect `git status` plus enough staged,
-   unstaged, and relevant untracked diff context to understand the changes. Do
-   not treat a dirty status alone as sufficient evidence.
-2. Use semantic judgment to classify changes as important when their content
-   could be overwritten by the requested work, accidentally staged or committed
-   with it, or create a merge conflict during integration. Timestamp-only
-   metadata, caches, logs, and safely reproducible generated noise do not trigger
-   the prompt unless the surrounding context makes them consequential.
-3. When important Git changes exist, summarize the concrete risk and ask the
-   human whether subsequent Superplan work should move to a new isolated
-   worktree. Resolve this choice before request intake, plan creation or status
-   changes, and implementation edits. Never infer consent or automatically stash,
-   commit, or move the existing changes.
-4. If the human accepts, invoke `using-git-worktrees`, create the isolated
-   workspace from the committed repository baseline, leave the original
-   worktree untouched, and resume the same Superplan route there. Uncommitted
-   changes remain only in the original worktree.
-5. If the human declines, continue in the current worktree while preserving
-   unrelated changes and staging only exact task paths or hunks.
-
-Non-Git workspaces continue without a worktree prompt. If Git inspection fails
-unexpectedly in a Git workspace, surface the failure and resolve it before any
-workflow mutation instead of assuming the workspace is clean.
+Non-Git workspaces continue without this prompt. Unexpected Git inspection
+failures must be resolved before workflow mutation.
 
 ## Superpowers Composition
 
-For work routed through `docs/superplan/**`, Superplan owns the persisted request,
-design, execution plan, and progress artifacts.
+For `docs/superplan/**` work, Superplan owns the persisted request, design, plan,
+and progress artifacts.
 
-- Use `brainstorming` only when material ambiguity remains in scope,
-  constraints, acceptance criteria, non-goals, or architecture. Do not repeat a
-  full design cycle when the human input is already explicit enough to plan.
-- Use the reasoning discipline from `writing-plans`, but write only the approved
-  Superplan plan format from `plan-spec.md`. Do not create parallel
-  `docs/superpowers/specs` or `docs/superpowers/plans` artifacts unless the human
-  explicitly requests them.
-- Project instructions and the selected Superplan risk profile determine the
-  required testing, verification, and delegation depth when generic process
-  defaults would add work without improving evidence.
+- Use `brainstorming` only for material ambiguity in scope, constraints,
+  acceptance, non-goals, or architecture.
+- Use `writing-plans` reasoning, but write only the Superplan format from
+  `plan-spec.md`; do not create parallel Superpowers specs or plans unless asked.
+- Project instructions and the selected risk profile control testing,
+  verification, delegation, and traceability depth.
 
 ## Risk Profiles
 
-Risk profiles are planning guidance, not frontmatter fields and not
-generator-enforced schema. When the correct profile is not obvious, explain the
-choice in the plan's Architecture or Verification text. Prefer the more
-conservative profile when uncertainty is material.
+Risk is planning guidance, not plan frontmatter. Prefer the more conservative
+profile when uncertainty could change required evidence.
 
-### Low risk
+- **Low:** Documentation, configuration, templates, or isolated mechanical work
+  without meaningful runtime impact. Use the smallest validator or smoke check;
+  new unit tests are not required by default. Use one agent unless work has truly
+  independent slices.
+- **Standard:** Bounded behavior changes with understood local impact. Test
+  observable acceptance behavior, use focused checks while iterating, and run
+  the relevant full regression once after implementation stabilizes. Default to
+  one agent; delegate only independent slices with explicit verification.
+- **High:** Security, concurrency, migration, data-integrity, public-contract,
+  complex-defect, or broad uncertain work. Keep strict test-first/debugging where
+  applicable, run focused and full regression checks, and add independent review
+  when separation improves evidence.
 
-Use for documentation, configuration, templates, and isolated mechanical
-changes with no meaningful runtime behavior impact.
+## Delivery
 
-- Do not require new unit tests by default.
-- Use the smallest relevant validator, structural check, smoke check, or
-  existing focused test.
-- Use one capable agent unless the work contains genuinely independent slices.
+1. Run Workspace Safety, inspect recent commits and `docs/superplan/plans`, and
+   preserve unrelated work.
+2. Read the route's source under `docs/superplan/human/` and apply its bookkeeping
+   rules.
+3. Confirm scope, constraints, acceptance, non-goals, and risk. Run required
+   route discovery such as `systematic-debugging` before planning a bugfix.
+4. Read `plan-spec.md`, create the smallest independently verifiable plan set,
+   and start new plans at `status: draft`.
+5. Review the full related plan set for overlap, boundaries, and real
+   `depends_on` relationships. Present it and stop for human approval.
+6. Human approval is the `draft -> approved` gate. Never implement before it.
+   After approval, move plans through `approved -> in_progress` and execute in
+   dependency order.
+7. During implementation, run focused checks for the selected risk profile. Bug
+   fixes keep a behavior-level regression proving the reproduced failure. Clean
+   directly related redundancy without widening scope.
+8. After the implementation state is final, obtain fresh completion evidence and
+   run the relevant full regression once. Then mark the human entry and plan
+   complete and refresh the index with:
 
-### Standard risk
+   `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`
 
-Use for bounded behavior changes and normal features with local, understood
-impact.
+   Do not rerun unchanged code tests after metadata-only progress updates.
+9. Create a task-level commit whose message includes the plan id. Stage only task
+   changes.
 
-- Test observable acceptance behavior rather than every new function or method.
-- Run focused verification while iterating.
-- Run the relevant full regression command once after the implementation state
-  is final.
-- Default to one capable agent. Use subagents only for multiple independent
-  slices with explicit ownership and verification boundaries.
+The human entry records intent, the plan records outcomes and evidence, tests
+record executable proof, and Git records the delivered diff.
 
-### High risk
+## Managed Guardrails
 
-Use for security, concurrency, migrations, data integrity, public API
-compatibility, complex defects, or broad changes with uncertain impact.
+The canonical project guardrails live in `agents-guardrails.md`. Install or
+refresh them with:
 
-- Keep strict test-first development where applicable.
-- Use systematic root-cause investigation for defects.
-- Run focused and full regression checks.
-- Add independent review or subagents when separation improves evidence quality.
+`python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`
 
-## Delivery Loop
-
-1. Run the workspace safety check above, then inspect recent commits and current
-   progress in `docs/superplan/plans`. Identify the exact request and preserve
-   unrelated work.
-2. Read the route's input document under `docs/superplan/human/` and respect its
-   bookkeeping rules.
-3. Confirm scope, constraints, acceptance criteria, non-goals, and the risk
-   profile. Invoke `brainstorming` only for material unresolved choices. Run
-   route-specific discovery such as `systematic-debugging` before planning a bug
-   fix.
-4. Read `plan-spec.md`, then use `writing-plans` to create the route's Superplan
-   plan. Plans use result-oriented tasks, a traceable change map, and executable
-   verification without copying complete implementation code or mechanical
-   2–5 minute steps. New plans start at `status: draft`.
-5. Review the full related plan set. Remove overlap, clarify boundaries, and
-   express real sequencing with `depends_on` until every plan can stand on its
-   own.
-6. Present the plan set to the human and stop for approval. Human approval is the
-   `draft -> approved` gate; never implement before it.
-7. After approval, move the plan through `approved -> in_progress` and execute in
-   dependency order. Default small and medium work to one capable agent. When
-   the platform provides native delegation, use it only for genuinely
-   independent slices or high-risk review where the extra boundary improves
-   evidence; Superplan does not require a bundled dispatch skill.
-8. During implementation, run focused checks appropriate to the selected risk
-   profile. For defects, keep a behavior-level regression that proves the
-   reproduced failure. Clean directly related redundancy without widening scope.
-9. After the implementation state is final, run the relevant full regression and
-   completion checks once. Then update the human input, plan status, and generated
-   plan index with
-   `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`.
-   Do not rerun unchanged code tests solely because plan status or generated
-   index files changed. Create a task-level commit whose message includes the plan
-   id when one exists.
-
-## Traceability
-
-Traceability is layered rather than duplicated inside plans:
-
-- the human entry records why the work exists;
-- the plan records intended outcomes, boundaries, files, important symbols, and
-  verification;
-- tests and validators record executable evidence;
-- Git records the actual implementation through diffs, history, and blame.
-
-Task-level commit messages include the plan id, for example
-`feat(F004): apply adaptive verification policy`, so future agents can use
-`git log --grep F004` and `git show` to recover the delivered change.
-
-## Global Rules
-
-- Never implement before a reviewed plan exists and the human explicitly
-  approves execution.
-- Every executable plan under `docs/superplan/plans/**` follows `plan-spec.md`.
-- Plans stay independent, clear, and non-overlapping; review the full related
-  plan set after every plan change.
-- Feature and bugfix plan ids encode their source human entry, including any
-  branch qualifier and split suffix.
-- The canonical project guardrails live in `agents-guardrails.md`. Install or
-  refresh them with
-  `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`, then
-  verify with the same command using `--check`.
-- Before claiming completion, obtain fresh evidence for the final implementation
-  state. Reuse that evidence after metadata-only progress updates when the tested
-  code state has not changed.
+Verify with the same command using `--check`.

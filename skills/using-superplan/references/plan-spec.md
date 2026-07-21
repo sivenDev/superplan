@@ -1,57 +1,29 @@
 # Plan Document Spec
 
-This reference defines the canonical plan format for repositories that use
-`docs/superplan/plans/**` as the execution-plan workspace.
+This is the canonical format for executable plans under
+`docs/superplan/plans/**`; it does not apply to the generated plan index or human
+input files.
 
-It applies to executable project plans, not to derived index files such as
-`docs/superplan/plans/README.md`.
+## Placement and Identity
 
-Bundled script paths are relative to the `skills/using-superplan/` directory.
-
-## Scope
-
-Applies to:
-
-- `docs/superplan/plans/*.md`
-- `docs/superplan/plans/features/**/*.md`
-- `docs/superplan/plans/bugs/**/*.md`
-
-Does not apply to:
-
-- `docs/superplan/plans/README.md`
-- human input docs such as `docs/superplan/human/*.md`
-- one-off discussion notes
-
-## Core Principles
-
-- One plan serves one clear delivery boundary.
-- Once approved, a plan must be directly executable.
-- Plans should stay independent whenever possible; real dependencies must be explicit.
-- Plan documents exist to guide execution, not to preserve historical logs.
-- Keep only information that affects current decisions.
-- Record intended outcomes, boundaries, files, important symbols, and evidence;
-  let Git record the exact implementation.
-- Do not duplicate complete implementation or test code in a plan unless a short
-  snippet is necessary to define a public contract or a non-obvious algorithm.
-
-## File Naming
-
-- Mainline plans at the root use ordered prefixes such as `01-*.md`, `02-*.md`
-- Feature plans live under `docs/superplan/plans/features/`
-- Bugfix plans live under `docs/superplan/plans/bugs/`
-- If one feature or bug needs multiple plans, create a subdirectory first, then continue using ordered filenames inside it
+- Mainline plans use ordered filenames such as `01-*.md` under
+  `docs/superplan/plans/`.
+- Feature and bugfix plans live under `plans/features/` and `plans/bugs/`.
+- Use a topic subdirectory before splitting one request into multiple plans.
+- One plan owns one independently verifiable delivery boundary. Express real
+  sequencing with `depends_on`; do not hide it in prose.
 
 ## Frontmatter
 
-Every plan must include frontmatter:
+Every plan starts with:
 
-```md
+```yaml
 ---
 id: "01"
 title: "Minimal Local Kernel"
 type: "required"
-status: "complete"
-summary: "One sentence describing what this plan delivers."
+status: "draft"
+summary: "One sentence describing the delivered result."
 source: "docs/superplan/human/prd.md"
 created: "2026-05-29"
 order: 1
@@ -60,64 +32,42 @@ parent: ""
 ---
 ```
 
-Field rules:
+- `id`: Stable and unique. Mainline `required`/`future` ids match their numeric
+  filename prefix. Feature/bugfix ids encode the matching human entry: `F001`,
+  `B001`, branch-qualified `F001@feature-x`, or split forms such as `F001-01`
+  and `F001@feature-x-01`.
+- `title`: Specific human-readable title.
+- `type`: `required`, `future`, `feature`, or `bugfix`.
+- `status`: `draft`, `approved`, `in_progress`, `blocked`, `complete`,
+  or `superseded`.
+- `summary`: One sentence used by the generated index.
+- `source`: Requirement source, normally under `docs/superplan/human/`.
+- `created`: Stable `YYYY-MM-DD` creation date.
+- `order`: Required for ordered mainline execution.
+- `depends_on`: Existing plan ids only; the graph must be acyclic, and a
+  `complete` plan cannot depend on an incomplete plan.
+- `parent`: Topic parent when a feature or bugfix uses a subdirectory; otherwise
+  empty.
 
-- `id`
-  Stable, unique plan identifier. The format depends on type:
-  - `required`/`future` (PRD-derived): ordered numeric ids matching the filename prefix, e.g. `01`, `02`.
-  - `feature`/`bugfix`: the id encodes its source human entry. Use `F001` / `B001` for a single plan, or `F001-01`, `F001-02` when one entry is split into several plans. If the source entry is branch-qualified because it was recorded from a linked worktree, use ids such as `F001@feature-x` or split ids such as `F001@feature-x-01`. The source entry is the leading `F<NNN>` / `B<NNN>` prefix plus any `@branch-slug` qualifier before the optional split suffix; there is no separate `source_id` field. The source id must match an existing entry in the matching human doc.
-- `title`
-  Human-readable plan title. Do not use empty labels such as "plan 1".
-- `type`
-  Allowed values:
-  - `required`
-  - `future`
-  - `feature`
-  - `bugfix`
-- `status`
-  Allowed values (exact; the index generator fails on unknown variants such as `completed`):
-  - `draft`
-  - `approved`
-  - `in_progress`
-  - `blocked`
-  - `complete`
-  - `superseded`
-  See the status state machine below.
-- `summary`
-  One sentence for index display.
-- `source`
-  Requirement source file, typically under `docs/superplan/human/*.md`.
-- `created`
-  Creation date in `YYYY-MM-DD`. Required. Stable once set; do not rewrite on later edits.
-- `order`
-  Required when the plan participates in ordered execution. Mainline plans must set it. Used as a tiebreaker for execution order; real sequencing is expressed with `depends_on`.
-- `depends_on`
-  List of plan ids this plan truly depends on. Empty list when there is none. Referenced ids must exist, the graph must be acyclic, and a `complete` plan may not depend on a non-`complete` plan.
-- `parent`
-  Used only when a feature or bug plan belongs to a parent topic directory.
+Feature and bugfix ids must match an existing source entry in the corresponding
+human file.
 
-## Status State Machine
+## Status Flow
 
-Normal flow:
+Normal flow is:
 
-```
-draft -> approved -> in_progress -> complete
-```
+`draft -> approved -> in_progress -> complete`
 
-- `draft` — written but not yet approved by the human.
-- `approved` — the human approved execution. This is the gate: do not move a plan to `in_progress` unless it was `approved` first.
-- `in_progress` — actively being implemented.
-- `complete` — delivered and verified.
-- `blocked` — cannot proceed; record why in the plan body. Returns to `in_progress` once unblocked.
-- `superseded` — replaced by another plan; kept for history. Reference the replacement.
+- Human approval is required for `draft -> approved`; never implement from
+  `draft`.
+- Use `blocked` only while execution cannot proceed; return to `in_progress`
+  when resolved and explain the blocker in the plan.
+- Use `superseded` for a retained plan replaced by another plan and name the
+  replacement.
 
-The index generator validates allowed values and dependency-status consistency, but it cannot observe the human approval event. Treat the `draft -> approved` transition as a hard process gate.
+## Required Body
 
-## Required Body Structure
-
-All project plans use one body template:
-
-```md
+```markdown
 # <Title> Plan
 
 **Goal:** ...
@@ -141,148 +91,51 @@ All project plans use one body template:
 **Verification:**
 - `...`
 
-- [ ] Result-oriented step 1 ...
-- [ ] Result-oriented step 2 ...
+- [ ] Result-oriented step ...
 
 ## References
 - `...`
 ```
 
-## Section Rules
+Body fields describe only current execution decisions:
 
-### Goal
+- `Goal`: one-sentence project gain.
+- `Scope`: exact delivery boundary and user-visible result where applicable.
+- `Non-Goals`: explicit scope exclusions; required.
+- `Architecture`: decisions affecting boundaries or implementation direction,
+  not mechanical steps.
+- `Baseline`: current facts required to execute the plan.
+- `Exit Criteria`: observable completion conditions.
+- `References`: only direct inputs to this plan.
 
-One sentence describing what the project gains when this plan is complete.
+## Task Contract
 
-### Scope
+Each task must have a result-oriented title, `Outcome`, explicit `Files`, a
+`Change Map`, executable `Verification`, and checkboxes. Name important symbols
+or policy boundaries when file paths alone are insufficient.
 
-State the exact boundary owned by this plan. If one sentence cannot explain it,
-the plan likely still needs splitting.
+- Split work by independently verifiable delivery boundaries, not equal size.
+- Keep dependency order explicit.
+- Test observable acceptance behavior; do not require a test per function.
+- Apply the risk profile from `delivery-loop.md` to testing and verification.
+- Omit implementation bodies, brainstorming transcripts, checkpoint history,
+  unrelated lists, artificial microsteps, and repeated checks against unchanged
+  implementation state.
+- Let Git record the exact delivered diff; the plan records intended outcomes,
+  boundaries, and evidence.
 
-### Non-Goals
+## Type Rules
 
-Mandatory section. It prevents scope growth by naming what this plan will not do.
+- `required`: current mainline capability; set `order`, `created`, and executable
+  sequencing.
+- `future`: deferred extension; still define goal, non-goals, and exit criteria.
+- `feature`: make user-visible acceptance explicit in Scope or Exit Criteria.
+- `bugfix`: add `Reproduction` and `Root Cause` after Baseline, and name the
+  behavior-level regression or verification proving the defect is fixed.
 
-### Architecture
+## Plan-Set Validation
 
-Describe only the design decisions that affect boundaries, decomposition, or
-implementation direction. Do not turn this section into step-by-step execution prose.
+After any plan change, review the full related set for overlap, independence,
+clarity, and accurate dependencies, then run:
 
-### Baseline
-
-Describe the current facts that matter to this plan. Do not dump full history or
-checkpoint logs.
-
-### Exit Criteria
-
-State completion criteria, not process. They should be verifiable.
-
-### References
-
-List only references that directly influence this plan.
-
-## Task Rules
-
-Each task must include:
-
-- clear `Outcome`
-- explicit `Files`
-- a `Change Map` naming the important file, symbol, boundary, or policy section
-  changes when they are not obvious from `Files`
-- executable `Verification`
-- checkbox steps
-
-Additional requirements:
-
-- task titles describe results, not vague actions
-- one task serves one delivery boundary
-- if a task requires too much hidden context, split it further
-- if a task cannot be independently verified, split it further
-- steps describe behavior-level or result-level progress, not mandatory 2–5
-  minute mechanics
-- do not split test writing and implementation into separate delivery tasks only
-  to restate a red-green cycle
-- test observable acceptance behavior rather than requiring a separate test for
-  every new function or method
-
-## Risk and Verification
-
-Risk profiles are defined in `delivery-loop.md`. They are guidance, not
-frontmatter fields.
-
-- When the profile is not obvious, record the selection and its consequences in
-  Architecture or task Verification text.
-- Low-risk plans may use validators, structural checks, smoke checks, or existing
-  focused tests without adding new unit tests.
-- Standard-risk plans use behavior-level acceptance tests, focused iteration,
-  and one relevant final regression run.
-- High-risk plans retain strict test-first, debugging, review, and regression
-  depth appropriate to their impact.
-- Do not repeat the same verification command in several steps unless the tested
-  state materially changes between runs.
-
-## Traceability
-
-Plans describe intended changes; Git describes delivered changes.
-
-- The human entry provides the request id and intent.
-- Each task provides an outcome, exact files, important boundaries, and evidence.
-- Task-level commit messages include the plan id when one exists, for example
-  `feat(F004): apply adaptive verification policy`.
-- Future agents recover exact changes through `git log --grep <plan-id>`,
-  `git show`, and `git blame`, rather than relying on copied code in the plan.
-
-## Type-Specific Rules
-
-### required
-
-- For current mainline project capabilities
-- Must set `order`
-- Must be ready for sequential execution
-
-### future
-
-- For future extensions
-- Can be slightly coarser than `required`
-- Still must define `Goal`, `Non-Goals`, and `Exit Criteria`
-
-### feature
-
-Must make the user-visible result or acceptance explicit in `Scope` or `Exit Criteria`.
-
-### bugfix
-
-In addition to the common template, include:
-
-- `**Reproduction:** ...`
-- `**Root Cause:** ...`
-
-Place them after `Baseline` and before `Exit Criteria`.
-
-## Independence Rules
-
-- If two plans share many files and the boundary is unclear, the split failed.
-- If a plan cannot be executed directly after approval, it is not ready.
-- When a real sequencing dependency exists, express it with `depends_on` instead of hiding it in prose.
-- Split by delivery boundary, not by trying to equalize change size.
-
-## Content to Avoid
-
-Do not put these into plans:
-
-- long checkpoint histories
-- status matrices already covered by README
-- implementation lists unrelated to the plan boundary
-- brainstorming transcripts
-- process-maintenance documents disguised as project plans
-- complete implementation or test bodies that merely duplicate the future diff
-- mechanical microsteps such as separate plan items for writing a test, watching
-  it fail, writing code, and watching it pass
-- repeated verification commands against an unchanged implementation state
-
-## Workflow Rules
-
-- New or updated plans must follow this reference.
-- After writing a plan, review the full related plan set for independence and clarity.
-- After changing plan metadata, refresh the generated index:
-  - `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`
+`python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`

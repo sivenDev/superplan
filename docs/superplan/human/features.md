@@ -63,3 +63,10 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-20
 
 为 Superplan 增加 GPT-5.6 专用 Superpowers profile 的安装与兼容流程：从 eagleagentic/superpowers-gpt-5.6 克隆外部依赖，在安装 Superplan 时选择并激活该 profile，使依赖检查、初始化和后续工作流能够使用其 13 个 skills 与 Codex 原生子代理能力。当前范围只支持 gpt-5.6；obra 官方 Superpowers、其他模型、运行时热切换和多 profile 通用化均延后。外部仓库不 vendoring 到 Superplan。
+
+## F007: 精简高能力模型下的 Superplan skills
+
+- status: done
+- created: 2026-07-21
+
+基于当前 Codex/GPT-5.6 的原生能力，整体审计 bundled skills、共享 references 与必要的界面元数据；删除无效、重复、解释性过强且模型已具备的说明，合并重复规则，保留 Superplan 的人工审批、工作区安全、风险分级、可追踪计划、验证和交付门禁。必要时同步测试与文档，确保精简后触发边界和脚本行为不退化。

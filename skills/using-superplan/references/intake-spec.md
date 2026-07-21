@@ -1,89 +1,47 @@
 # Intake Spec
 
-This reference defines how new human-authored feature and bug requests are
-captured into `docs/superplan/human/features.md` and `docs/superplan/human/bugs.md` before they
-enter the delivery loop.
+This is the canonical capture contract for new feature and bug requests before
+they enter planning.
 
-It is shared by `$feature-plan-and-delivery` and `$bugfix-plan-and-delivery`.
+## When to Run Intake
 
-Bundled script paths use `<using-superplan-root>` for the installed
-`skills/using-superplan/` directory.
+Run intake when the human proposes a new item rather than referencing an existing
+entry id or description. Feature examples include "新建 feature" and "新增功能";
+bug examples include "新建 bug" and "报个缺陷".
 
-## When Intake Triggers
+If the request already exists in the matching human file, skip intake and enter
+the delivery loop.
 
-Run intake when the human is proposing a brand-new item rather than pointing at
-an already-recorded one. Typical triggers:
+## Record Contract
 
-- Feature: "新建 feature", "feature: ...", "新增功能 ...", "add a feature ...".
-- Bug: "新建 bug", "bug: ...", "报个缺陷 ...", "report a bug ...".
+Entries live in `docs/superplan/human/features.md` or `bugs.md`, one ascending
+`## <id>: <title>` section per item, with `status` and `created` fields plus an
+optional body.
 
-If the human references an existing entry id (for example `F003`, `F003@feature-x`,
-or `B002`) or an existing description already in the file, skip intake and go
-straight to the delivery loop.
+- Feature ids use `F`; bug ids use `B`; numeric parts are zero-padded and never
+  reused.
+- The next number is the maximum existing numeric part plus one.
+- In a linked worktree, append the sanitized branch slug, for example
+  `F003@feature-x`. The recorder guards suffixes that could be confused with plan
+  split ids.
+- Human statuses are `proposed -> accepted -> done`; they are independent of plan
+  statuses.
 
-## File Structure
+Use the recorder rather than editing numbering manually:
 
-Both files share the same layout. One entry per `##` section, in ascending id
-order. Newest entries are appended at the end.
+```bash
+python3 <using-superplan-root>/scripts/record_human_request.py \
+  --type feature --title "<title>" [--body "<description>"]
 
-```md
-# Features
-
-## F001: <short title>
-
-- status: proposed
-- created: 2026-05-29
-
-<optional description lines>
-
-## F002: <short title>
-
-- status: accepted
-- created: 2026-05-29
-
-<optional description lines>
-
-## F003@feature-x: <short title recorded from a linked worktree>
-
-- status: proposed
-- created: 2026-05-29
+python3 <using-superplan-root>/scripts/record_human_request.py \
+  --type bug --title "<title>" [--body "<symptom / reproduction>"]
 ```
 
-`docs/superplan/human/bugs.md` uses the same shape with heading `# Bugs` and `B`-prefixed ids.
+## Workflow
 
-## Numbering Rule
+1. Extract a short title and only useful request details.
+2. Run the matching recorder; it appends the next id with `status: proposed`.
+3. Stop and ask the human to review the entry. Do not debug, plan, or implement.
+4. Continue only after human confirmation changes the entry to `accepted`.
 
-- Ids are per-file, sequential, and stable. They are never reused or renumbered.
-- Feature ids use prefix `F`; bug ids use prefix `B`.
-- The numeric part is zero-padded to 3 digits: `F001`, `F002`, ... `B001`, `B002`.
-- The next id is `max(existing numeric suffix) + 1`, or `001` when the file has no entries.
-- When intake runs from a linked git worktree, append the current branch slug to
-  the generated id, for example `F003@feature-x` or `B002@fix-crash`. The numeric
-  part still follows the same per-file sequence.
-- Branch slugs replace unsupported characters with `-`. If the slug would end in
-  `-\d+`, append `-branch` so plan split suffixes such as `-01` stay unambiguous.
-
-## Status Lifecycle (human docs)
-
-These statuses track the human-doc lifecycle and are independent of plan
-frontmatter `status` values in `plan-spec.md`.
-
-- `proposed` — just recorded by intake, waiting for human review.
-- `accepted` — human reviewed and confirmed; ready to plan.
-- `done` — delivered; kept for history.
-
-## Intake Workflow
-
-1. Recognize a new-item trigger and extract a short title (and optional description).
-2. Append a new entry with the next id and `status: proposed` using the recorder:
-   - `python3 <using-superplan-root>/scripts/record_human_request.py --type feature --title "<title>" [--body "<description>"]`
-   - Use `--type bug` for bugs. The command prints the new id.
-3. Stop and ask the human to review the recorded entry. Do not start planning yet.
-4. After the human confirms (entry moves to `status: accepted`), continue with the
-   skill's normal delivery loop using that entry as the source.
-
-## Notes
-
-- Intake only records intent; it never writes plans or code.
-- Keep titles short and specific. Put detail in the optional body, not the title.
-- One trigger records one entry. Batch multiple items as separate entries.
+Intake records intent only; it never creates plans or code.

@@ -1,34 +1,23 @@
 ---
 name: project-bootstrap-from-prd
-description: Use when first-time project development starts from docs/superplan/human/prd.md and the work must be clarified, split into progressive plans, reviewed, approved, and only then implemented
+description: Use when first-time project development starts from docs/superplan/human/prd.md and needs clarified, reviewed, approved mainline plans before implementation
 ---
 
 # Project Bootstrap from PRD
 
-## Overview
-
-Turn a rough `docs/superplan/human/prd.md` into a clear, approved execution path. This skill owns the first-project flow from requirement clarification through reviewed plans and gated implementation.
-
-Bundled script paths use `<using-superplan-root>` for the installed
-`skills/using-superplan/` directory.
-
-## Specialization
-
-This skill specializes the shared delivery loop. Read `../using-superplan/references/delivery-loop.md` first, then apply these settings:
+Read `../using-superplan/references/delivery-loop.md`, then apply:
 
 - Input: `docs/superplan/human/prd.md`
-- Output: `docs/superplan/plans/` (mainline plans with ordered prefixes such as `01-*.md`, `02-*.md`)
-- Plan type: `required` (use `future` for clearly deferred extensions)
-- Extra steps:
-  - Before planning, read `../using-superplan/references/agents-guardrails.md`. If `AGENTS.md` is missing the managed workflow guardrails, run `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`.
-  - The PRD stays as the source of intent. Use `brainstorming` only when material scope, constraint, acceptance, non-goal, or architecture choices remain unresolved.
+- Output: ordered mainline plans under `docs/superplan/plans/`
+- Plan type: `required`; use `future` only for explicitly deferred extensions
 
-## Type-Specific Rules
+Keep the PRD as the source of intent. Resolve material ambiguity before planning;
+plans translate the accepted intent rather than replace it.
 
-- The PRD stays as the source of intent. Plans translate it into executable steps; they do not replace it.
-- First-project setup should install the canonical workflow guardrails into `AGENTS.md` unless the repository already has an explicitly stronger policy.
-- Each plan must have a single clear goal, explicit files, verification steps, and a meaningful completion boundary.
-- If a plan cannot be executed and verified independently, split it further.
-- Select the low, standard, or high risk guidance from the shared delivery loop for each independently deliverable slice and scale its tests and verification accordingly.
-- Default planning and execution to one capable agent. Use subagents only when multiple slices have clear interfaces and independent acceptance boundaries, or when high-risk review benefits from an independent context.
-- Mainline `required` plans use ordered numeric ids (`01`, `02`), must set `order` and `created`, and be ready for sequential execution. Express real ordering with `depends_on`.
+Before planning, read `../using-superplan/references/agents-guardrails.md`. If the
+managed workflow block is missing, run:
+
+`python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`
+
+Follow `../using-superplan/references/plan-spec.md` for ids, ordering,
+dependencies, content, and verification.

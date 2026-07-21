@@ -1,45 +1,23 @@
 ---
 name: feature-plan-and-delivery
-description: Use when a feature is recorded in docs/superplan/human/features.md and the work must be translated into reviewed plans under docs/superplan/plans/features before implementation begins
+description: Use for new or recorded feature requests managed through docs/superplan/human/features.md that require intake when needed, reviewed feature plans, approval, and verified delivery
 ---
 
 # Feature Plan and Delivery
 
-## Overview
-
-Turn a requested feature into a reviewed implementation plan, then execute only after approval. This skill is for feature work that starts from `docs/superplan/human/features.md` or an equivalent feature note in the same workflow.
-
-Bundled script paths use `<using-superplan-root>` for the installed
-`skills/using-superplan/` directory.
-
-## Intake
-
-When the human proposes a brand-new feature (for example "新建 feature", "feature: ...", "新增功能 ...") instead of pointing at an already-recorded entry, run intake first. Read `../using-superplan/references/intake-spec.md`, then:
-
-1. Extract a short title (and optional description) from the request.
-2. Record it into `docs/superplan/human/features.md` with the next id and `status: proposed`:
-   - `python3 <using-superplan-root>/scripts/record_human_request.py --type feature --title "<title>" [--body "<description>"]`
-3. Stop and ask the human to review the recorded entry. Do not start planning.
-4. After the human confirms (entry becomes `status: accepted`), continue with the delivery loop below using that entry as the source.
-
-If the human references an existing entry, skip intake and go straight to the delivery loop.
-
-## Specialization
-
-This skill specializes the shared delivery loop. Read `../using-superplan/references/delivery-loop.md` first, then apply these settings:
+Read `../using-superplan/references/delivery-loop.md`, then apply:
 
 - Input: `docs/superplan/human/features.md`
-- Output: `docs/superplan/plans/features/` (create a feature-specific subdirectory when the feature needs multiple plans)
+- Output: `docs/superplan/plans/features/`
 - Plan type: `feature`
-- Extra steps: run intake first when the request is a new feature (see Intake above).
 
-## Type-Specific Rules
+For an unrecorded feature, execute
+`../using-superplan/references/intake-spec.md` and stop for review. Plan only an
+accepted entry; skip intake when the request already exists.
 
-- Feature plans belong in `docs/superplan/plans/features/`.
-- Every feature plan id must encode its source entry: use `F001` for a single plan, `F001@branch-slug` when the accepted entry is branch-qualified from a linked worktree, or `F001-01`, `F001@branch-slug-01` when split. Set `created` to today's date.
-- Prefer one plan per independently testable slice.
-- Select the shared low, standard, or high risk guidance for each slice. Test observable user acceptance behavior rather than requiring a separate test for every implementation function.
-- Default bounded feature planning and execution to one capable agent. Use subagents only for multiple independent slices with clear ownership and verification boundaries, or for high-risk review.
-- Make the user-visible result or acceptance explicit in `Scope` or `Exit Criteria`.
-- If a feature touches shared infrastructure, call out the shared boundary explicitly instead of hiding it inside a feature-only plan.
-- If material feature scope or architecture choices remain unresolved, stay in `brainstorming` before continuing.
+Use a feature-specific subdirectory only when one request needs multiple
+independently deliverable plans. Make user-visible acceptance explicit and name
+shared infrastructure boundaries rather than hiding them inside feature prose.
+
+Follow `../using-superplan/references/plan-spec.md` for ids, content,
+dependencies, and verification.
