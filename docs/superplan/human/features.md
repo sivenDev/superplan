@@ -91,10 +91,3 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-21
 
 补充 dirty-worktree 安全门与 linked-worktree 编号规则的组合场景：当主工作区存在未提交 F044、隔离 worktree 从 F043 基线开始时，新需求应使用 F044@branch，而不是误判为编号冲突；继续原工作区时才使用 F045。增加最小权威说明和行为测试，不修改现有编号算法，不重复扩写规则。
-
-## F011: Auto-remove completed task worktrees
-
-- status: done
-- created: 2026-07-27
-
-Add a concise managed guardrail that authorizes removing a task-created worktree after completion without another confirmation when nothing must be preserved, while keeping its branch.

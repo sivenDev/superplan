@@ -6,7 +6,7 @@
 
 | Type | Plans | Complete |
 | --- | --- | --- |
-| `feature` | 11 | 11 |
+| `feature` | 10 | 10 |
 | `bugfix` | 1 | 1 |
 
 ## Plan Groups
@@ -25,7 +25,6 @@
 | `F008` | [Optimize Superplan Workflow State and Verification](features/F008-optimize-workflow-state-and-verification.md) | `complete` | 2026-07-21 |
 | `F009` | [Optimize Superplan Runtime Skill Structure](features/F009-optimize-runtime-skill-structure.md) | `complete` | 2026-07-21 |
 | `F010` | [Clarify Worktree Numbering Composition](features/F010-clarify-worktree-numbering-composition.md) | `complete` | 2026-07-21 |
-| `F011` | [Auto-Remove Completed Task Worktrees](features/F011-auto-remove-completed-task-worktrees.md) | `complete` | 2026-07-27 |
 
 ### Bugfix Plans
 
