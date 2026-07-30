@@ -27,17 +27,20 @@ optional body.
 - Human statuses are `proposed -> accepted -> done`; they are independent of plan
   statuses.
 
-Use the recorder rather than editing numbering manually:
+Use the canonical request command rather than editing numbering manually:
 
 ```bash
-python3 <using-superplan-root>/scripts/record_human_request.py \
+python3 <using-superplan-root>/scripts/human_requests.py record \
   --type feature --title "<title>" [--body "<description>"] \
   [--status proposed|accepted]
 
-python3 <using-superplan-root>/scripts/record_human_request.py \
+python3 <using-superplan-root>/scripts/human_requests.py record \
   --type bug --title "<title>" [--body "<symptom / reproduction>"] \
   [--status proposed|accepted]
 ```
+
+`record_human_request.py` remains a compatibility entry point. Use
+`human_requests.py set-status --id <id> --status <status>` for lifecycle updates.
 
 The recorder defaults to `proposed`. Use `--status accepted` only when all of
 these are true:
@@ -54,12 +57,14 @@ implementation plan.
 
 ## Workflow
 
-1. Extract a short title and only useful request details.
-2. Apply the direct-accept conditions. If all pass, record `accepted` and enter
+1. Run `human_requests.py validate`, then use `summary`, filtered `list`, and
+   exact `show` to select existing state without loading the whole registry.
+2. Extract a short title and only useful request details for a new request.
+3. Apply the direct-accept conditions. If all pass, record `accepted` and enter
    planning. Otherwise record the default `proposed` status.
-3. For `proposed`, stop and ask the human to review the entry. Do not debug,
+4. For `proposed`, stop and ask the human to review the entry. Do not debug,
    plan, or implement until confirmation changes it to `accepted`.
-4. For `accepted`, continue through the selected route and still present the
+5. For `accepted`, continue through the selected route and still present the
    resulting draft implementation plan for separate human approval.
 
 Intake records intent only; it never creates plans or code.

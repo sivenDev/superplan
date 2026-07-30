@@ -27,12 +27,13 @@ and generates the plan index.
 2. Run `init_workspace.py --check`. Continue when current; after workspace
    safety, use `--migrate` for an older/missing schema. Stop on newer or malformed
    schemas.
-3. Read the matching human input:
-   - `docs/superplan/human/prd.md` for first project development
-   - `docs/superplan/human/features.md` for feature delivery
-   - `docs/superplan/human/bugs.md` for bug fixing
+3. For features or bugs, use `human_requests.py validate`, then
+   `summary`/`list` and `show --id <id>`; read a whole registry only for repair
+   or cross-entry analysis. Read `prd.md` directly for first project development.
 4. Before creating or structurally revising a plan, read
-   `references/plan-spec.md`.
+   `references/plan-spec.md`, validate all metadata, inspect `--catalog`, and
+   search all statuses for related source, dependency, scope, or artifact
+   candidates. Read the changed plan and discovered related closure in full.
 5. If generated guardrails are stale, migrate through `init_workspace.py` after
    workspace safety rather than editing the managed block manually.
 

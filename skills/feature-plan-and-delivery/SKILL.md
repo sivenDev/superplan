@@ -14,7 +14,8 @@ Read `../using-superplan/references/delivery-loop.md`, then apply:
 For an unrecorded feature, execute the adaptive decision in
 `../using-superplan/references/intake-spec.md`: stop when it records `proposed`,
 or continue to planning when its direct-accept conditions record `accepted`.
-Plan only an accepted entry; skip intake when the request already exists.
+Use the canonical summary/list/show commands to select existing state. Plan only
+an accepted entry; skip intake when the request already exists.
 
 Use a feature-specific subdirectory only when one request needs multiple
 independently deliverable plans. Make user-visible acceptance explicit and name

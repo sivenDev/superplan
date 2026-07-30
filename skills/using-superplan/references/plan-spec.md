@@ -138,10 +138,17 @@ or policy boundaries when file paths alone are insufficient.
 
 ## Plan-Set Validation
 
-Review the full related set for overlap, independence, clarity, and accurate
-dependencies when plans are added, removed, renamed, or split, or when Scope,
-Architecture, Exit Criteria, task Files, or `depends_on` changes. These changes
-can alter delivery boundaries or sequencing.
+When plans are added, removed, renamed, split, or structurally changed, first
+run exhaustive global validation and inspect the complete compact catalog:
+
+`python3 <using-superplan-root>/scripts/generate_plans_readme.py --catalog`
+
+Use `--active`, `--status`, `--source-id`, and `--depends-on` filters plus
+`--search <text>` or `--artifact <path>` candidate discovery. Searches include
+completed and superseded plans unless explicitly filtered. Read the changed plan
+and every discovered related plan in full; expand the closure when those plans
+reveal further source, dependency, scope, or artifact relationships. Review that
+closure for overlap, independence, clarity, and accurate dependencies.
 
 Checkboxes, routine status/progress updates, and evidence notes require only
 validation of the affected plan plus the generated index. Do not reopen the full

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
 
@@ -32,7 +34,14 @@ def plan(
     created: str = "2026-01-01",
     depends_on: str = "[]",
     summary: str = "Summary.",
+    source: str | None = None,
+    body: str = "",
 ) -> str:
+    if source is None:
+        source = {
+            "feature": "docs/superplan/human/features.md",
+            "bugfix": "docs/superplan/human/bugs.md",
+        }.get(plan_type, "docs/superplan/human/prd.md")
     lines = [
         "---",
         f'id: "{plan_id}"',
@@ -41,6 +50,7 @@ def plan(
         f'status: "{status}"',
         f'created: "{created}"',
         f'summary: "{summary}"',
+        f'source: "{source}"',
     ]
     if order is not None:
         lines.append(f"order: {order}")
@@ -48,12 +58,19 @@ def plan(
     lines.append("---")
     lines.append(f"# {title}")
     lines.append("")
+    lines.append(body)
     return "\n".join(lines)
 
 
 class GeneratePlansReadmeTests(unittest.TestCase):
     def _plans_dir(self, root: Path) -> Path:
         return root / "docs" / "superplan" / "plans"
+
+    def run_cli(self, argv: list[str]) -> tuple[int, str]:
+        output = io.StringIO()
+        with redirect_stdout(output):
+            code = MODULE.run(argv)
+        return code, output.getvalue()
 
     def test_generate_readme_includes_groups_order_and_created(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -126,6 +143,7 @@ title: "First Plan"
 type: "required"
 status: "draft"
 summary: "Summary."
+source: "docs/superplan/human/prd.md"
 order: 1
 ---
 # First Plan
@@ -152,6 +170,29 @@ order: 1
 
             write(plans_dir / "features" / "F999-01.md", plan(plan_id="F999-01", title="Feat2", plan_type="feature", status="draft"))
             self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 1)
+
+    def test_feature_source_file_must_match_type_and_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(root / "docs" / "superplan" / "human" / "features.md", "# Features\n\n## F001: Known\n")
+            write(
+                plans_dir / "features" / "F001.md",
+                plan(
+                    plan_id="F001",
+                    title="Wrong source",
+                    plan_type="feature",
+                    source="docs/superplan/human/prd.md",
+                ),
+            )
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 1)
+
+            write(
+                plans_dir / "features" / "F001.md",
+                plan(plan_id="F001", title="Missing registry", plan_type="feature"),
+            )
+            (root / "docs" / "superplan" / "human" / "features.md").unlink()
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 1)
 
     def test_depends_on_unknown_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -206,6 +247,20 @@ order: 1
             generated = MODULE.generate_readme(root, plans_dir)
             self.assertIn("| `F001-01` |", generated)
             self.assertIn("| `F001-02` |", generated)
+
+    def test_feature_ids_continue_past_three_digits(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                "# Features\n\n## F1000: Known\n",
+            )
+            write(
+                plans_dir / "features" / "F1000.md",
+                plan(plan_id="F1000", title="Large id", plan_type="feature"),
+            )
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
 
     def test_branch_qualified_feature_plan_validates_against_human_entry(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -273,6 +328,95 @@ order: 1
 
             generated = MODULE.generate_readme(root, plans_dir)
             self.assertNotIn("Traceability", generated)
+
+    def test_catalog_emits_compact_relationship_metadata_without_bodies(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(plans_dir / "01-first.md", plan(plan_id="01", title="First", status="complete", order=1, summary="First summary", body="SECRET BODY"))
+            write(plans_dir / "02-second.md", plan(plan_id="02", title="Second", status="in_progress", order=2, depends_on='["01"]', summary="Second summary"))
+
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 0)
+            self.assertIn("ID\tSTATUS\tTYPE\tSOURCE_ID\tSOURCE\tDEPENDS_ON\tSUMMARY\tPATH", output)
+            self.assertIn("02\tin_progress\trequired\t\tdocs/superplan/human/prd.md\t01\tSecond summary\t02-second.md", output)
+            self.assertNotIn("SECRET BODY", output)
+
+    def test_catalog_filters_active_source_and_dependencies(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(root / "docs" / "superplan" / "human" / "features.md", "# Features\n\n## F001: Known\n")
+            write(plans_dir / "features" / "F001-01.md", plan(plan_id="F001-01", title="Done slice", plan_type="feature", status="complete", source="docs/superplan/human/features.md"))
+            write(plans_dir / "features" / "F001-02.md", plan(plan_id="F001-02", title="Active slice", plan_type="feature", status="in_progress", depends_on='["F001-01"]', source="docs/superplan/human/features.md"))
+
+            code, active = self.run_cli(["--root", str(root), "--catalog", "--active"])
+            self.assertEqual(code, 0)
+            self.assertIn("F001-02", active)
+            self.assertNotIn("F001-01\tcomplete", active)
+
+            code, source = self.run_cli(["--root", str(root), "--catalog", "--source-id", "F001"])
+            self.assertEqual(code, 0)
+            self.assertIn("F001-01", source)
+            self.assertIn("F001-02", source)
+
+            code, dependency = self.run_cli(["--root", str(root), "--catalog", "--depends-on", "F001-01"])
+            self.assertEqual(code, 0)
+            self.assertNotIn("F001-01\tcomplete", dependency)
+            self.assertIn("F001-02", dependency)
+
+    def test_search_and_artifact_discovery_include_completed_plans(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(plans_dir / "01-old.md", plan(plan_id="01", title="Old", status="complete", order=1, body="Historical tokenizer decision\n- Modify: `src/token.py`"))
+            write(plans_dir / "02-new.md", plan(plan_id="02", title="New", status="draft", order=2, body="Unrelated"))
+
+            code, searched = self.run_cli(["--root", str(root), "--search", "tokenizer"])
+            self.assertEqual(code, 0)
+            self.assertIn("01\tcomplete", searched)
+            self.assertNotIn("02\tdraft", searched)
+
+            code, artifact = self.run_cli(["--root", str(root), "--artifact", "src/token.py"])
+            self.assertEqual(code, 0)
+            self.assertIn("01\tcomplete", artifact)
+
+    def test_discovery_still_runs_global_validation_before_filtering(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(plans_dir / "01-good.md", plan(plan_id="01", title="Good", status="draft", order=1))
+            write(plans_dir / "02-bad.md", plan(plan_id="02", title="Bad", status="completed", order=2))
+
+            code, output = self.run_cli(["--root", str(root), "--catalog", "--status", "draft"])
+            self.assertEqual(code, 1)
+            self.assertIn("unknown status 'completed'", output)
+
+    def test_large_search_emits_only_matching_compact_candidates(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            for index in range(1, 151):
+                marker = "needle-in-history" if index == 149 else "unrelated historical body"
+                write(
+                    plans_dir / f"{index:03d}-plan.md",
+                    plan(
+                        plan_id=f"{index:03d}",
+                        title=f"Plan {index}",
+                        status="complete",
+                        order=index,
+                        summary=f"Summary {index}",
+                        body=marker + "\n" + ("detail " * 100),
+                    ),
+                )
+
+            code, output = self.run_cli(
+                ["--root", str(root), "--search", "needle-in-history"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("149\tcomplete", output)
+            self.assertNotIn("148\tcomplete", output)
+            self.assertNotIn("detail detail", output)
 
 
 if __name__ == "__main__":

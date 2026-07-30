@@ -46,15 +46,16 @@ STATUS_TITLES = {
     "complete": "Complete",
     "superseded": "Superseded",
 }
+ACTIVE_STATUSES = {"draft", "approved", "in_progress", "blocked"}
 ORDERED_TYPES = {"required", "future"}
 # Feature/bugfix plan ids encode their source human entry: F001 (single plan),
 # F001-01, F001-02 (when one entry is split into several plans), or
 # branch-qualified equivalents such as F001@feature-x.
 SOURCE_ID_TYPES = {"feature": "F", "bugfix": "B"}
-SOURCE_FROM_ID = re.compile(r"^([FB]\d{3})(?:-\d+)?$")
-QUALIFIED_SOURCE_FROM_ID = re.compile(r"^([FB]\d{3})@([A-Za-z0-9._-]+)$")
+SOURCE_FROM_ID = re.compile(r"^([FB]\d{3,})(?:-\d+)?$")
+QUALIFIED_SOURCE_FROM_ID = re.compile(r"^([FB]\d{3,})@([A-Za-z0-9._-]+)$")
 CREATED_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-HUMAN_ENTRY_PATTERN = re.compile(r"^##\s+([FB]\d{3}(?:@[A-Za-z0-9._-]+)?):", re.MULTILINE)
+HUMAN_ENTRY_PATTERN = re.compile(r"^##\s+([FB]\d{3,}(?:@[A-Za-z0-9._-]+)?):", re.MULTILINE)
 HUMAN_FILES = {"F": "features.md", "B": "bugs.md"}
 
 
@@ -82,6 +83,7 @@ class PlanMetadata:
     plan_type: str
     status: str
     summary: str
+    source: str
     created: str
     path: Path
     order: int | None = None
@@ -140,7 +142,7 @@ def parse_id_list(raw: str) -> tuple[str, ...]:
 
 def load_plan(path: Path) -> PlanMetadata:
     metadata = parse_frontmatter(path)
-    required_keys = {"id", "title", "type", "status", "summary", "created"}
+    required_keys = {"id", "title", "type", "status", "summary", "source", "created"}
     missing = sorted(required_keys - metadata.keys())
     if missing:
         raise ValueError(f"{path}: missing metadata keys: {', '.join(missing)}")
@@ -183,6 +185,7 @@ def load_plan(path: Path) -> PlanMetadata:
         plan_type=plan_type,
         status=status,
         summary=metadata["summary"],
+        source=metadata["source"],
         created=created,
         order=order,
         depends_on=parse_id_list(metadata.get("depends_on", "")),
@@ -279,9 +282,16 @@ def validate_plans(plans: list[PlanMetadata], root: Path) -> None:
         prefix = SOURCE_ID_TYPES.get(plan.plan_type)
         if not prefix:
             continue
+        human_file = f"docs/superplan/human/{HUMAN_FILES[prefix]}"
+        if plan.source != human_file:
+            raise ValueError(
+                f"{plan.path}: {plan.plan_type} source must be '{human_file}', "
+                f"got '{plan.source}'"
+            )
         known = human_ids.get(prefix)
-        if known is not None and plan.source_id not in known:
-            human_file = f"docs/superplan/human/{HUMAN_FILES[prefix]}"
+        if known is None:
+            raise ValueError(f"{plan.path}: source registry '{human_file}' does not exist")
+        if plan.source_id not in known:
             raise ValueError(
                 f"{plan.path}: source entry '{plan.source_id}' (from id '{plan.id}') "
                 f"not found in {human_file}"
@@ -379,6 +389,59 @@ def generate_readme(root: Path, plans_dir: Path) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def filter_plans(
+    plans: list[PlanMetadata],
+    *,
+    active: bool = False,
+    statuses: set[str] | None = None,
+    source_id: str | None = None,
+    depends_on: str | None = None,
+    search: str | None = None,
+    artifact: str | None = None,
+) -> list[PlanMetadata]:
+    selected = plans
+    if active:
+        selected = [plan for plan in selected if plan.status in ACTIVE_STATUSES]
+    if statuses:
+        selected = [plan for plan in selected if plan.status in statuses]
+    if source_id:
+        selected = [
+            plan
+            for plan in selected
+            if plan.source_id == source_id or plan.source == source_id
+        ]
+    if depends_on:
+        selected = [plan for plan in selected if depends_on in plan.depends_on]
+    if search:
+        needle = search.casefold()
+        selected = [
+            plan
+            for plan in selected
+            if needle in plan.path.read_text(encoding="utf-8").casefold()
+        ]
+    if artifact:
+        needle = artifact.replace("\\", "/").casefold()
+        selected = [
+            plan
+            for plan in selected
+            if needle
+            in plan.path.read_text(encoding="utf-8").replace("\\", "/").casefold()
+        ]
+    return selected
+
+
+def render_catalog(plans: Iterable[PlanMetadata], plans_dir: Path) -> str:
+    lines = ["ID\tSTATUS\tTYPE\tSOURCE_ID\tSOURCE\tDEPENDS_ON\tSUMMARY\tPATH"]
+    for plan in plans:
+        relative = plan.path.relative_to(plans_dir).as_posix()
+        dependencies = ",".join(plan.depends_on)
+        lines.append(
+            f"{plan.id}\t{plan.status}\t{plan.plan_type}\t{plan.source_id}\t"
+            f"{plan.source}\t{dependencies}\t{plan.summary}\t{relative}"
+        )
+    return "\n".join(lines) + "\n"
+
+
 def run(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -396,6 +459,33 @@ def run(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Fail if docs/superplan/plans/README.md is stale. When combined with --write, checks the freshly written file.",
     )
+    discovery = parser.add_mutually_exclusive_group()
+    discovery.add_argument(
+        "--catalog",
+        action="store_true",
+        help="Print compact metadata for all matching plans without plan bodies.",
+    )
+    discovery.add_argument(
+        "--search",
+        help="Search full plan text across all statuses and print compact candidates.",
+    )
+    discovery.add_argument(
+        "--artifact",
+        help="Find plans mentioning an artifact path across all statuses.",
+    )
+    parser.add_argument(
+        "--active",
+        action="store_true",
+        help="Filter discovery to draft, approved, in-progress, or blocked plans.",
+    )
+    parser.add_argument(
+        "--status",
+        action="append",
+        choices=STATUS_ORDER,
+        help="Filter discovery by status. Can be repeated.",
+    )
+    parser.add_argument("--source-id", help="Filter discovery by human source id or source path.")
+    parser.add_argument("--depends-on", help="Filter plans with a direct dependency on this id.")
     args = parser.parse_args(argv)
 
     try:
@@ -405,6 +495,38 @@ def run(argv: list[str] | None = None) -> int:
         return 1
     plans_dir = root / "docs" / "superplan" / "plans"
     readme_path = plans_dir / "README.md"
+    discovery_requested = bool(
+        args.catalog
+        or args.search
+        or args.artifact
+        or args.active
+        or args.status
+        or args.source_id
+        or args.depends_on
+    )
+    if discovery_requested and (args.write or args.check):
+        print("discovery options cannot be combined with --write or --check")
+        return 2
+
+    if discovery_requested:
+        try:
+            plans = discover_plans(plans_dir)
+            validate_plans(plans, root)
+            selected = filter_plans(
+                plans,
+                active=args.active,
+                statuses=set(args.status or []),
+                source_id=args.source_id,
+                depends_on=args.depends_on,
+                search=args.search,
+                artifact=args.artifact,
+            )
+        except (OSError, ValueError) as exc:
+            print(exc)
+            return 1
+        print(render_catalog(selected, plans_dir), end="")
+        return 0
+
     try:
         generated = generate_readme(root, plans_dir)
     except ValueError as exc:

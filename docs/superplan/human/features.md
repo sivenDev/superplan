@@ -94,7 +94,7 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 
 ## F012: Progressive Superplan state discovery and script organization
 
-- status: accepted
+- status: done
 - created: 2026-07-30
 
 优化大型 Superplan 工作区的上下文、初始化和运行时脚本结构：将固定版本的 GPT-5.6 Superpowers skills 作为仓库内 `deps/superpowers` 依赖由插件直接暴露，移除 `init_workspace.py` 的用户级 Superpowers 安装检查及对应安装器；在 managed guardrail 中记录 workspace schema 与生成版本，路由自动执行只读兼容检查，并在旧 schema 上进入安全迁移流程。正常任务通过确定性命令读取紧凑 human/plan 目录并按 ID、依赖、source、范围或搜索结果加载相关全文，保留全局元数据验证和完整相关计划审查，避免默认读取累积历史全文。整理 `using-superplan/scripts` 时优先删除失去职责的 profile 脚本，保留仍有价值的公开 CLI，避免用巨型单文件换取表面文件数减少。当前仓库历史中的 F011 已使用后撤销，本条保留该编号并从 F012 继续。

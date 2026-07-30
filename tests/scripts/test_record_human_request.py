@@ -21,6 +21,12 @@ SPEC.loader.exec_module(MODULE)
 
 
 class RecordHumanRequestTests(unittest.TestCase):
+    def test_module_is_a_compatibility_adapter(self) -> None:
+        import human_requests
+
+        self.assertIs(MODULE.next_id, human_requests.next_id)
+        self.assertIs(MODULE.render_entry, human_requests.render_entry)
+
     def make_linked_worktree(self, tempdir: str, branch: str = "feature/safe-01") -> Path:
         root = Path(tempdir) / "repo"
         linked = Path(tempdir) / "linked"

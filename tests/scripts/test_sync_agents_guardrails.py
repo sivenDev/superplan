@@ -36,6 +36,8 @@ class SyncAgentsGuardrailsTests(unittest.TestCase):
                 r"<!-- superplan-workspace: schema=\d+; generated-by=\d+\.\d+\.\d+ -->",
             )
             self.assertIn("# Workflow Guardrails", content)
+            self.assertIn("compact human summaries/exact entries", content)
+            self.assertIn("search all statuses", content)
             self.assertNotIn("# Development Rules", content)
             self.assertIn(MODULE.END_MARKER, content)
 

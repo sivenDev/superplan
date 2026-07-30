@@ -2,7 +2,7 @@
 id: "F012-02"
 title: "Progressive Human and Plan State Discovery"
 type: "feature"
-status: "approved"
+status: "complete"
 summary: "Add token-efficient human and plan discovery while preserving global validation and complete related-plan understanding."
 source: "docs/superplan/human/features.md"
 created: "2026-07-30"
@@ -42,9 +42,9 @@ parent: "F012"
 - Human request CLI help plus large-registry summary/show/validate smoke fixtures
 - `git diff --check -- skills/using-superplan/scripts skills/feature-plan-and-delivery skills/bugfix-plan-and-delivery tests/scripts`
 
-- [ ] Cover active and all-status listing, exact qualified-ID retrieval, status transitions, validation errors, duplicate detection, and unchanged unrelated Markdown.
-- [ ] Keep large-registry summary output proportional to active metadata rather than total historical body size.
-- [ ] Preserve current numbering and linked-worktree qualification behavior through the compatibility recorder.
+- [x] Cover active and all-status listing, exact qualified-ID retrieval, status transitions, validation errors, duplicate detection, and unchanged unrelated Markdown.
+- [x] Keep large-registry summary output proportional to active metadata rather than total historical body size.
+- [x] Preserve current numbering and linked-worktree qualification behavior through the compatibility recorder.
 
 ## Task 2: Preserve plan understanding through compact global discovery and related-plan closure
 
@@ -73,9 +73,9 @@ parent: "F012"
 - `python3 skills/using-superplan/scripts/sync_agents_guardrails.py --check`
 - Applicable large-plan behavior scenarios from `tests/behavior/workflow.md`
 
-- [ ] Emit enough compact metadata to identify source, dependency, summary, status, and path relationships without emitting every plan body.
-- [ ] Keep global validation exhaustive and semantic full-text review iterative over the complete related closure.
-- [ ] Make the injected guardrail concise while leaving operational detail in canonical references.
+- [x] Emit enough compact metadata to identify source, dependency, summary, status, and path relationships without emitting every plan body.
+- [x] Keep global validation exhaustive and semantic full-text review iterative over the complete related closure.
+- [x] Make the injected guardrail concise while leaving operational detail in canonical references.
 
 ## Task 3: Verify and deliver F012-02 as a focused workspace change
 
@@ -98,9 +98,19 @@ parent: "F012"
 - `git diff --check`
 - `git status --short`
 
-- [ ] Obtain current script, skill, progressive-discovery, guardrail, and plan-integrity evidence.
-- [ ] Mark F012-02 and its human entry complete only after both F012 plans have passed their exit criteria.
-- [ ] Create a dedicated F012-02 commit with exact task paths.
+- [x] Obtain current script, skill, progressive-discovery, guardrail, and plan-integrity evidence.
+- [x] Mark F012-02 and its human entry complete only after both F012 plans have passed their exit criteria.
+- [x] Create a dedicated F012-02 commit with exact task paths.
+
+## Implementation Evidence
+
+- Human-request TDD: the new module and CLI modes first failed as absent; the final tests cover bounded summary, active/all listing, exact qualified-id retrieval, forward/idempotent status updates, duplicate/missing/unknown validation, byte-preserving updates, invalid dates, numbering beyond F999, and compatibility-recorder behavior.
+- Large-state fixtures: a 300-entry registry proved summary output remains one compact line, and a 150-plan completed history proved full-text search emits only matching compact candidates without plan bodies.
+- Plan discovery: catalog output includes status, type, source id/path, dependencies, summary, and path; active/status/source/dependency filters and text/artifact searches run only after exhaustive metadata, dependency, source-registry, source-type, cycle, and completion-order validation. Searches include completed plans by default.
+- Regression and smoke evidence: `python3 -m unittest discover -s tests/scripts` passed 68 tests; `py_compile`, registry validation/summary, F012 source and artifact discovery, workspace compatibility, guardrail sync, plan-index write/check, and `git diff --check` passed.
+- Skill and instruction validation: all four Superplan plus 13 bundled Superpowers skills passed `quick_validate.py`. The managed guardrail stays concise; operational closure rules live in the canonical references. Behavior scenarios now cover version migration, large registries, and completed-plan discovery.
+- Script organization: the runtime directory now has seven top-level Python files with distinct responsibilities; `record_human_request.py` is a thin compatibility adapter and no internal package or monolithic merge was introduced solely to reduce the visible count.
+- Contract review: F007-F010 and both F012 plans were reviewed together. A focused final diff review found and fixed two boundary issues before completion: request numbering past F999 and feature/bug source-registry enforcement.
 
 ## References
 - `docs/superplan/human/features.md`

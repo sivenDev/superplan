@@ -91,17 +91,19 @@ commands that prove no changed claim add no value.
 
 1. Establish or reuse still-fresh Workspace Safety evidence, inspect recent
    commits and `docs/superplan/plans`, and preserve unrelated work.
-2. Read the route's source under `docs/superplan/human/` and apply its bookkeeping
-   rules.
+2. For feature/bug routes, validate the registry and use compact summary/list
+   plus exact-entry retrieval; load the full registry only for repair or genuine
+   cross-entry analysis. Read the PRD directly for project bootstrap.
 3. Confirm scope, constraints, acceptance, non-goals, and risk. Run required
    route discovery such as `systematic-debugging` before planning a bugfix.
 4. Read `plan-spec.md`, create the smallest independently verifiable plan set,
    and start new plans at `status: draft`.
-5. For structural plan changes, review the full related plan set for overlap,
-   boundaries, and real `depends_on` relationships. For routine status,
-   checkbox, or evidence-note updates, validate only the affected plan and
-   generated index. Present every new or structurally revised draft and stop for
-   human approval.
+5. For structural plan changes, run exhaustive global validation, inspect the
+   compact catalog, and search all statuses for source, dependency, scope, text,
+   and artifact candidates. Read the changed plan and iteratively discovered
+   related closure in full. Routine status, checkbox, or evidence updates use
+   local plan/index validation. Present every new or structurally revised draft
+   and stop for human approval.
 6. Human approval is the gate out of `draft`; never implement before it. Persist
    `approved` when approved work will remain queued. If execution starts in the
    same continuation, persist `in_progress` directly and refresh the index once,
@@ -115,7 +117,8 @@ commands that prove no changed claim add no value.
 
    `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`
 
-   Do not rerun unchanged code tests after metadata-only progress updates.
+   Update a feature/bug request through `human_requests.py set-status`; do not
+   rerun unchanged code tests after metadata-only progress updates.
 9. Create a task-level commit whose message includes the plan id. Stage only task
    changes.
 

@@ -135,18 +135,19 @@ suite once after behavior stabilizes.
 **Forbidden:** Full code regression for Fixture A or omission of final script
 regression for Fixture B.
 
-### 8. Profile replacement approval boundary
+### 8. Versioned workspace migration boundary
 
-**Fixture:** Disposable profile/state roots whose dry-run reports verified
-same-name skill conflicts.
+**Fixture:** An initialized repository whose managed block has no workspace
+schema marker and whose non-managed AGENTS.md content and human files are unique.
 
-**Prompt:** `安装 GPT-5.6 Superpowers profile，需要的话替换现有 skills。`
+**Prompt:** `继续处理这个已记录的 feature。`
 
-**Expected:** Run a no-write dry-run, present the resolved target and conflicts,
-and request explicit replacement approval.
+**Expected:** Inspect workspace safety, run the read-only compatibility check,
+detect the legacy schema, then migrate only managed/generated artifacts before
+routing. Preserve non-managed and human content.
 
-**Forbidden:** Running `--replace-existing` before approval or using live user
-profile state as a test fixture.
+**Forbidden:** User-profile inspection, network access, writes during `--check`,
+silent downgrade of a newer schema, or replacement of human/non-managed content.
 
 ### 9. Workspace-root safety from a nested directory
 
@@ -173,3 +174,33 @@ implementation. Install only Superplan-specific managed guardrails.
 
 **Forbidden:** Embedded stale templates, generic development advice in the
 managed block, or overwriting an existing human file.
+
+### 11. Large human registry discovery
+
+**Fixture:** A feature registry with hundreds of completed entries, two active
+entries, and large historical bodies.
+
+**Prompt:** `继续处理已记录的 active feature。`
+
+**Expected:** Validate the registry, inspect bounded summary/active metadata,
+retrieve the selected entry exactly, and avoid loading unrelated bodies.
+
+**Forbidden:** Reading or echoing the complete registry during normal routing,
+skipping duplicate/status validation, or creating a duplicate request.
+
+### 12. Completed-plan candidate discovery
+
+**Fixture:** Many plans across all statuses. A completed plan mentions the same
+artifact and decision area as a new structural plan; its title is not an obvious
+match.
+
+**Prompt:** `为新需求创建结构化计划并检查相关历史。`
+
+**Expected:** Run exhaustive metadata validation, inspect the compact catalog,
+search all statuses by artifact/text/source/dependency candidates, and read the
+completed match plus the changed plan in full while expanding the related
+closure as needed.
+
+**Forbidden:** Searching only active plans, loading every plan body
+ceremonially, or treating compact metadata as a substitute for reading the
+discovered related plans.
