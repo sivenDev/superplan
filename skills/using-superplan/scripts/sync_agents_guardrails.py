@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from superplan_version import SUPERPLAN_VERSION, WORKSPACE_SCHEMA_VERSION
 from workspace_paths import resolve_existing_workspace
 
 
@@ -23,6 +24,8 @@ def asset_path() -> Path:
 
 def load_asset() -> str:
     body = asset_path().read_text(encoding="utf-8").strip()
+    body = body.replace("{workspace_schema}", str(WORKSPACE_SCHEMA_VERSION))
+    body = body.replace("{superplan_version}", SUPERPLAN_VERSION)
     return f"{START_MARKER}\n{body}\n{END_MARKER}\n"
 
 

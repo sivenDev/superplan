@@ -1,3 +1,4 @@
+<!-- superplan-workspace: schema={workspace_schema}; generated-by={superplan_version} -->
 # Workflow Guardrails
 1. Before starting any new task, establish fresh workspace-safety evidence and inspect recent progress. Reuse that evidence only while the branch/worktree and relevant Git state remain unchanged. For Superplan-routed work, ask whether to use a new worktree before any mutation when meaningful Git changes risk overwrite, commit mixing, or conflicts; ignore insignificant noise. When the task is done, create a separate commit for that task's changes.
 2. At the start of every task, understand the current progress first; when the task is complete, update the progress accordingly. Plans live under `./docs/superplan/plans`.

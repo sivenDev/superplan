@@ -8,6 +8,11 @@ Existing-workspace commands prefer the Git top-level, then an existing
 `docs/superplan` ancestor; initialization may fall back to its starting
 directory. Use `--root <path>` to choose a target explicitly.
 
+After Workspace Safety, run `init_workspace.py --check` before routed work.
+Continue for a compatible schema, run `--migrate` for older/missing or stale
+generated artifacts, and stop for a newer or malformed schema. Initialization
+and migration are offline and never inspect user-level skill/profile state.
+
 ## Workspace Safety
 
 Before intake, plan/status changes, or implementation edits:
@@ -119,8 +124,10 @@ record executable proof, and Git records the delivered diff.
 
 ## Managed Guardrails
 
-Install or refresh the bundled project guardrails with:
+Initialize or migrate the versioned workspace with:
 
-`python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`
+`python3 <using-superplan-root>/scripts/init_workspace.py [--migrate]`
 
-Verify with the same command using `--check`.
+Verify compatibility without writes with `init_workspace.py --check`. The
+lower-level `sync_agents_guardrails.py` command remains available for repository
+development and exact generated-block validation.

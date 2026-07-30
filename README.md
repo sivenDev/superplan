@@ -1,25 +1,21 @@
 # Superplan
 
-Superplan packages a plan-first delivery workflow for coding agents. It is built as a small plugin/skill bundle that sits on top of Superpowers: Superpowers provides the generic planning, TDD, debugging, and execution workflows; this repository specializes them around `docs/superplan/human/*` and `docs/superplan/plans/*`.
+Superplan packages a plan-first delivery workflow for coding agents. It bundles a pinned Superpowers runtime for generic planning, TDD, debugging, and execution, then specializes it around `docs/superplan/human/*` and `docs/superplan/plans/*`.
 
 The main entry skill is `$using-superplan`. The other skills in `skills/` are bundled companions that it routes into.
 
-## GPT-5.6 Superpowers Profile
+## Bundled GPT-5.6 Superpowers
 
-For Codex running GPT-5.6, Superplan installs the external
+For Codex running GPT-5.6, Superplan vendors the runtime skills from
 [`eagleagentic/superpowers-gpt-5.6`](https://github.com/eagleagentic/superpowers-gpt-5.6)
 profile at the pinned revision
-`aa973775906c8761a78019aaa21e4f0ccd987925`. This is a Codex-native GPT-5.6
-adaptation of obra/superpowers, not code vendored into this repository.
+`aa973775906c8761a78019aaa21e4f0ccd987925` under `deps/superpowers`.
 
-- The installer validates the external repository's exact 13-skill inventory,
-  frontmatter, fixed Git revision, and context-budget script before activation.
-- Existing verified same-name skills are replaced only with
-  `--replace-existing` and are moved to a recoverable timestamped backup.
-- `check_superpowers.py` and `init_workspace.py` validate the active profile
-  manifest and fail on stale revisions or changed links.
-- The installer supports only `gpt-5.6` and `gpt-5.6-*`; it does not select or
-  configure the active Codex model.
+- The lock artifact records the source revision, exact skill inventory, file
+  hashes, and deterministic tree hash.
+- Plugin discovery exposes the four root Superplan skills plus the 13 bundled
+  Superpowers skills without cloning, symlinks, or user-profile changes.
+- Workspace initialization is offline and checks only repository artifacts.
 
 ## Repository Layout
 
@@ -30,6 +26,7 @@ adaptation of obra/superpowers, not code vendored into this repository.
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
+├── deps/superpowers/           # pinned runtime Superpowers skills
 ├── skills/
 │   ├── using-superplan/        # runtime scripts, references, and output assets
 │   ├── project-bootstrap-from-prd/
@@ -46,20 +43,15 @@ adaptation of obra/superpowers, not code vendored into this repository.
 
 See [docs/install.md](docs/install.md) for the full flow.
 
-The short version for GPT-5.6:
+The short version:
 
 1. Install this repository as a plugin/skill bundle from the repository root.
-2. Run `install_superpowers_profile.py --model gpt-5.6 --dry-run` and review the
-   resolved skills directory and conflicts.
-3. For a clean target, rerun without `--dry-run`. If replacement is required,
-   explicitly approve the resolved target and conflicts before rerunning with
-   `--replace-existing`.
-4. Restart Codex or open a new chat, then select GPT-5.6 with `/model` or launch
-   Codex with `--model gpt-5.6`.
-5. Run `check_superpowers.py --model gpt-5.6`.
-6. Initialize the target repository and use `$using-superplan` as the entry skill.
+2. Restart Codex or open a new chat so plugin discovery loads the bundled skills.
+3. Run `init_workspace.py` in the target repository and use `$using-superplan`
+   as the entry skill.
 
-If your harness only supports raw skill installation from GitHub paths, install **all** bundled skills under `skills/`. Do not install only `skills/using-superplan`, because it routes to the companion skills in the same bundle.
+If your harness only supports raw skill installation, install all four skills
+under `skills/` and all 13 runtime skills under `deps/superpowers/`.
 
 ## Bundled Skills
 

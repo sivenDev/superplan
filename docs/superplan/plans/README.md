@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Complete |
-| --- | --- | --- |
-| `feature` | 10 | 10 |
-| `bugfix` | 1 | 1 |
+| Type | Plans | Approved | Complete |
+| --- | --- | --- | --- |
+| `feature` | 12 | 1 | 11 |
+| `bugfix` | 1 | 0 | 1 |
 
 ## Plan Groups
 
@@ -25,6 +25,8 @@
 | `F008` | [Optimize Superplan Workflow State and Verification](features/F008-optimize-workflow-state-and-verification.md) | `complete` | 2026-07-21 |
 | `F009` | [Optimize Superplan Runtime Skill Structure](features/F009-optimize-runtime-skill-structure.md) | `complete` | 2026-07-21 |
 | `F010` | [Clarify Worktree Numbering Composition](features/F010-clarify-worktree-numbering-composition.md) | `complete` | 2026-07-21 |
+| `F012-01` | [Bundled Superpowers and Versioned Workspace Initialization](features/F012/01-bundled-superpowers-and-versioned-workspace.md) | `complete` | 2026-07-30 |
+| `F012-02` | [Progressive Human and Plan State Discovery](features/F012/02-progressive-state-discovery.md) | `approved` | 2026-07-30 |
 
 ### Bugfix Plans
 

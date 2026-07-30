@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
-import json
 import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import ExitStack
-from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -22,7 +19,7 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 SYNC = MODULE._load("sync_agents_guardrails")
-PROFILES = MODULE._load("superpowers_profiles")
+VERSION = MODULE._load("superplan_version")
 
 
 def write(path: Path, content: str) -> None:
@@ -30,336 +27,185 @@ def write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def create_superpowers_install(skills_dir: Path) -> None:
-    required = [
-        "using-superpowers",
-        "brainstorming",
-        "writing-plans",
-        "subagent-driven-development",
-        "executing-plans",
-        "test-driven-development",
-        "systematic-debugging",
-        "verification-before-completion",
-        "requesting-code-review",
-        "receiving-code-review",
-        "using-git-worktrees",
-        "finishing-a-development-branch",
-    ]
-    for name in required:
-        write(skills_dir / name / "SKILL.md", f"# {name}\n")
-
-
-def create_gpt56_install(
-    root: Path, *, model: str = "gpt-5.6"
-) -> tuple[Path, Path, object]:
-    state_root = root / "profile-state"
-    staging_source = root / "profile-source-staging"
-    staging_skills = staging_source / "skills" / "superpowers"
-    for name in PROFILES.GPT56_PROFILE.skills:
-        write(
-            staging_skills / name / "SKILL.md",
-            f"---\nname: {name}\ndescription: test {name}\n---\n",
-        )
-    subprocess.run(["git", "init", "-q", str(staging_source)], check=True)
-    subprocess.run(
-        ["git", "-C", str(staging_source), "config", "user.email", "test@example.com"],
-        check=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(staging_source), "config", "user.name", "Test"],
-        check=True,
-    )
-    subprocess.run(["git", "-C", str(staging_source), "add", "."], check=True)
-    subprocess.run(
-        ["git", "-C", str(staging_source), "commit", "-q", "-m", "fixture"],
-        check=True,
-    )
-    revision = subprocess.run(
-        ["git", "-C", str(staging_source), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    profile = replace(PROFILES.GPT56_PROFILE, revision=revision)
-    source_root = (
-        state_root
-        / "dependencies"
-        / "superpowers-gpt-5.6"
-        / revision
-    )
-    source_root.parent.mkdir(parents=True)
-    staging_source.rename(source_root)
-    source_skills = source_root / "skills" / "superpowers"
-    skills_dir = root / ".test-agent" / "gpt56-skills"
-    skills_dir.mkdir(parents=True)
-    links: dict[str, str] = {}
-    for name in profile.skills:
-        source = source_skills / name
-        (skills_dir / name).symlink_to(source, target_is_directory=True)
-        links[name] = str(source.resolve())
-    manifest = {
-        "schema_version": PROFILES.MANIFEST_SCHEMA_VERSION,
-        "profile": "gpt56",
-        "model": model,
-        "repository": profile.repository,
-        "revision": profile.revision,
-        "source_dir": str(source_root.resolve()),
-        "skills_dir": str(skills_dir.resolve()),
-        "skills": links,
-        "backup_dir": "",
+def snapshot(root: Path) -> dict[str, bytes]:
+    if not root.exists():
+        return {}
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
     }
-    write(
-        state_root / PROFILES.MANIFEST_FILENAME,
-        json.dumps(manifest, indent=2) + "\n",
-    )
-    return state_root, skills_dir, profile
 
 
-def run_with_profile(profile: object, argv: list[str]) -> int:
-    active_profiles = MODULE._load("superpowers_profiles")
-    targets = {id(module): module for module in (PROFILES, active_profiles)}
-    with ExitStack() as stack:
-        for target in targets.values():
-            stack.enter_context(patch.object(target, "GPT56_PROFILE", profile))
-            stack.enter_context(patch.dict(target.PROFILES, {"gpt56": profile}))
-        return MODULE.run(argv)
+def initialized_workspace(root: Path) -> None:
+    code = MODULE.run(["--root", str(root)])
+    if code != 0:
+        raise AssertionError(f"initialization failed with {code}")
 
 
 class InitWorkspaceTests(unittest.TestCase):
-    def test_init_scaffolds_docs_agents_and_plans_index(self) -> None:
+    def test_init_scaffolds_workspace_offline_without_home_or_profile_checks(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            skills_dir = root / ".test-agent" / "skills"
-            create_superpowers_install(skills_dir)
-
-            self.assertEqual(
-                MODULE.run(
-                    [
-                        "--root",
-                        str(root),
-                        "--superpowers-skills-dir",
-                        str(skills_dir),
-                        "--superpowers-state-root",
-                        str(root / "profile-state"),
-                        "--no-default-superpowers-search",
-                    ]
-                ),
-                0,
-            )
+            with patch.object(Path, "home", side_effect=AssertionError("home inspected")):
+                self.assertEqual(MODULE.run(["--root", str(root)]), 0)
 
             for name in ("prd.md", "features.md", "bugs.md"):
                 self.assertTrue((root / "docs" / "superplan" / "human" / name).exists())
-            features_text = (root / "docs" / "superplan" / "human" / "features.md").read_text(encoding="utf-8")
-            self.assertTrue(features_text.startswith("# Features"))
-            self.assertIn("status", features_text)
-            self.assertIn("F<NNN>", features_text)
-            self.assertIn("F001@branch-slug", features_text)
-            self.assertIn("直接记录为 `accepted`", features_text)
-            self.assertIn("只批准规划，不批准实施", features_text)
-            bugs_text = (root / "docs" / "superplan" / "human" / "bugs.md").read_text(encoding="utf-8")
-            self.assertIn("B001@branch-slug", bugs_text)
-            self.assertIn("直接记录为 `accepted`", bugs_text)
-            self.assertIn("只批准规划，不批准实施", bugs_text)
-
             agents = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(SYNC.START_MARKER, agents)
-            self.assertIn("# Workflow Guardrails", agents)
+            self.assertIn(VERSION.workspace_marker(), agents)
+            self.assertIn("# Plans Index", (root / "docs" / "superplan" / "plans" / "README.md").read_text(encoding="utf-8"))
 
-            readme = (root / "docs" / "superplan" / "plans" / "README.md").read_text(encoding="utf-8")
-            self.assertIn("# Plans Index", readme)
-
-    def test_init_is_idempotent_and_preserves_human_edits(self) -> None:
+    def test_init_is_idempotent_and_preserves_human_and_custom_agents_content(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            skills_dir = root / ".test-agent" / "skills"
-            create_superpowers_install(skills_dir)
-            self.assertEqual(
-                MODULE.run(
-                    [
-                        "--root",
-                        str(root),
-                        "--superpowers-skills-dir",
-                        str(skills_dir),
-                        "--superpowers-state-root",
-                        str(root / "profile-state"),
-                        "--no-default-superpowers-search",
-                    ]
-                ),
-                0,
-            )
-
+            initialized_workspace(root)
             features = root / "docs" / "superplan" / "human" / "features.md"
             features.write_text("# Features\n\n## F001: Existing\n", encoding="utf-8")
+            agents = root / "AGENTS.md"
+            agents.write_text(agents.read_text(encoding="utf-8") + "\n## Custom\nkeep me\n", encoding="utf-8")
 
-            self.assertEqual(
-                MODULE.run(
-                    [
-                        "--root",
-                        str(root),
-                        "--superpowers-skills-dir",
-                        str(skills_dir),
-                        "--superpowers-state-root",
-                        str(root / "profile-state"),
-                        "--no-default-superpowers-search",
-                    ]
-                ),
-                0,
-            )
-
-            self.assertEqual(
-                features.read_text(encoding="utf-8"),
-                "# Features\n\n## F001: Existing\n",
-            )
-            self.assertEqual((root / "AGENTS.md").read_text(encoding="utf-8").count(SYNC.START_MARKER), 1)
+            self.assertEqual(MODULE.run(["--root", str(root)]), 0)
+            self.assertEqual(features.read_text(encoding="utf-8"), "# Features\n\n## F001: Existing\n")
+            self.assertIn("## Custom\nkeep me\n", agents.read_text(encoding="utf-8"))
+            self.assertEqual(agents.read_text(encoding="utf-8").count(SYNC.START_MARKER), 1)
 
     def test_init_runs_as_standalone_subprocess(self) -> None:
-        # A subprocess has a clean sys.modules, so this catches the importlib
-        # loader defect where sub-scripts were not registered before exec and
-        # dataclass annotation resolution failed.
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            skills_dir = root / ".test-agent" / "skills"
-            create_superpowers_install(skills_dir)
             result = subprocess.run(
-                [
-                    sys.executable,
-                    str(MODULE_PATH),
-                    "--root",
-                    str(root),
-                    "--superpowers-skills-dir",
-                    str(skills_dir),
-                    "--superpowers-state-root",
-                    str(root / "profile-state"),
-                    "--no-default-superpowers-search",
-                ],
+                [sys.executable, str(MODULE_PATH), "--root", str(root)],
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             self.assertTrue((root / "docs" / "superplan" / "plans" / "README.md").exists())
-            self.assertTrue((root / "docs" / "superplan" / "human" / "prd.md").exists())
 
-    def test_init_fails_when_superpowers_is_missing(self) -> None:
+    def test_help_exposes_only_workspace_options(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--help"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        self.assertIn("--check", result.stdout)
+        self.assertIn("--migrate", result.stdout)
+        for obsolete in ("superpowers", "profile", "model", "state-root", "skills-dir"):
+            self.assertNotIn(obsolete, result.stdout.lower())
+
+    def test_check_current_workspace_is_read_only(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
+            initialized_workspace(root)
+            before = snapshot(root)
+
+            self.assertEqual(MODULE.run(["--root", str(root), "--check"]), 0)
+            self.assertEqual(snapshot(root), before)
+
+    def test_check_missing_or_older_schema_requires_migration_without_writing(self) -> None:
+        cases = [
+            f"{SYNC.START_MARKER}\n# old\n{SYNC.END_MARKER}\n",
+            (
+                f"{SYNC.START_MARKER}\n"
+                f"<!-- superplan-workspace: schema=0; generated-by=0.1.0 -->\n"
+                f"# old\n{SYNC.END_MARKER}\n"
+            ),
+        ]
+        for content in cases:
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as tempdir:
+                root = Path(tempdir)
+                write(root / "AGENTS.md", content)
+                before = snapshot(root)
+                self.assertEqual(MODULE.run(["--root", str(root), "--check"]), 1)
+                self.assertEqual(snapshot(root), before)
+
+    def test_check_rejects_newer_and_malformed_schema_without_writing(self) -> None:
+        cases = [
+            (
+                f"{SYNC.START_MARKER}\n"
+                f"<!-- superplan-workspace: schema={VERSION.WORKSPACE_SCHEMA_VERSION + 1}; generated-by=9.0.0 -->\n"
+                f"# future\n{SYNC.END_MARKER}\n",
+                2,
+            ),
+            (
+                f"{SYNC.START_MARKER}\n"
+                f"<!-- superplan-workspace: schema=nope; generated-by=bad -->\n"
+                f"# broken\n{SYNC.END_MARKER}\n",
+                3,
+            ),
+        ]
+        for content, expected in cases:
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as tempdir:
+                root = Path(tempdir)
+                write(root / "AGENTS.md", content)
+                before = snapshot(root)
+                self.assertEqual(MODULE.run(["--root", str(root), "--check"]), expected)
+                self.assertEqual(snapshot(root), before)
+
+    def test_check_detects_stale_guardrails_but_ignores_generator_version_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            initialized_workspace(root)
+            agents = root / "AGENTS.md"
+            current = agents.read_text(encoding="utf-8")
+            agents.write_text(current.replace("# Workflow Guardrails", "# Stale Guardrails"), encoding="utf-8")
+            self.assertEqual(MODULE.run(["--root", str(root), "--check"]), 1)
+
+            agents.write_text(
+                current.replace(
+                    f"generated-by={VERSION.SUPERPLAN_VERSION}",
+                    "generated-by=0.1.0",
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(MODULE.run(["--root", str(root), "--check"]), 0)
+
+    def test_migrate_updates_only_managed_generated_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(root / "docs" / "superplan" / "human" / "features.md", "# Features\n\nkeep exactly\n")
+            write(
+                root / "AGENTS.md",
+                f"{SYNC.START_MARKER}\nold\n{SYNC.END_MARKER}\n\n## Custom\nkeep exactly\n",
+            )
+
+            self.assertEqual(MODULE.run(["--root", str(root), "--migrate"]), 0)
 
             self.assertEqual(
-                MODULE.run(
-                    [
-                        "--root",
-                        str(root),
-                        "--superpowers-state-root",
-                        str(root / "profile-state"),
-                        "--no-default-superpowers-search",
-                    ]
-                ),
-                1,
+                (root / "docs" / "superplan" / "human" / "features.md").read_text(encoding="utf-8"),
+                "# Features\n\nkeep exactly\n",
             )
-            self.assertFalse((root / "docs" / "superplan").exists())
+            agents = (root / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn(VERSION.workspace_marker(), agents)
+            self.assertIn("## Custom\nkeep exactly\n", agents)
+            self.assertTrue((root / "docs" / "superplan" / "human" / "bugs.md").exists())
 
-    def test_init_can_skip_superpowers_check(self) -> None:
+    def test_migrate_never_downgrades_newer_schema(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-
-            self.assertEqual(MODULE.run(["--root", str(root), "--skip-superpowers-check"]), 0)
-            self.assertTrue((root / "docs" / "superplan" / "plans" / "README.md").exists())
-
-    def test_init_accepts_valid_gpt56_profile(self) -> None:
-        with tempfile.TemporaryDirectory() as tempdir:
-            root = Path(tempdir)
-            state_root, skills_dir, profile = create_gpt56_install(root)
-
-            code = run_with_profile(
-                profile,
-                [
-                    "--root",
-                    str(root),
-                    "--model",
-                    "gpt-5.6",
-                    "--superpowers-profile",
-                    "gpt56",
-                    "--superpowers-state-root",
-                    str(state_root),
-                    "--superpowers-skills-dir",
-                    str(skills_dir),
-                    "--no-default-superpowers-search",
-                ]
+            write(
+                root / "AGENTS.md",
+                f"{SYNC.START_MARKER}\n"
+                f"<!-- superplan-workspace: schema={VERSION.WORKSPACE_SCHEMA_VERSION + 1}; generated-by=9.0.0 -->\n"
+                f"future\n{SYNC.END_MARKER}\n",
             )
+            before = snapshot(root)
+            self.assertEqual(MODULE.run(["--root", str(root), "--migrate"]), 2)
+            self.assertEqual(snapshot(root), before)
 
-            self.assertEqual(code, 0)
-            self.assertTrue((root / "docs" / "superplan" / "human" / "prd.md").is_file())
-
-    def test_init_auto_detects_active_profile_manifest(self) -> None:
+    def test_migrate_preflights_plan_generation_before_any_write(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            state_root, skills_dir, profile = create_gpt56_install(root)
-
-            code = run_with_profile(
-                profile,
-                [
-                    "--root",
-                    str(root),
-                    "--superpowers-state-root",
-                    str(state_root),
-                    "--superpowers-skills-dir",
-                    str(skills_dir),
-                    "--no-default-superpowers-search",
-                ]
+            write(
+                root / "AGENTS.md",
+                f"{SYNC.START_MARKER}\nold\n{SYNC.END_MARKER}\n\n## Custom\nkeep exactly\n",
             )
+            write(root / "docs" / "superplan" / "plans" / "broken.md", "not frontmatter\n")
+            before = snapshot(root)
 
-            self.assertEqual(code, 0)
-            self.assertTrue((root / "docs" / "superplan" / "plans" / "README.md").is_file())
-
-    def test_init_rejects_unsupported_model_before_writing_workspace(self) -> None:
-        with tempfile.TemporaryDirectory() as tempdir:
-            root = Path(tempdir)
-
-            code = MODULE.run(["--root", str(root), "--model", "gpt-5.5"])
-
-            self.assertEqual(code, 2)
-            self.assertFalse((root / "docs" / "superplan").exists())
-
-    def test_init_rejects_model_profile_mismatch_before_writing_workspace(self) -> None:
-        with tempfile.TemporaryDirectory() as tempdir:
-            root = Path(tempdir)
-
-            code = MODULE.run(
-                [
-                    "--root",
-                    str(root),
-                    "--model",
-                    "gpt-5.5",
-                    "--superpowers-profile",
-                    "gpt56",
-                ]
-            )
-
-            self.assertEqual(code, 2)
-            self.assertFalse((root / "docs" / "superplan").exists())
-
-    def test_init_rejects_profile_link_drift_before_writing_workspace(self) -> None:
-        with tempfile.TemporaryDirectory() as tempdir:
-            root = Path(tempdir)
-            state_root, skills_dir, profile = create_gpt56_install(root)
-            (skills_dir / "writing-skills").unlink()
-
-            code = run_with_profile(
-                profile,
-                [
-                    "--root",
-                    str(root),
-                    "--model",
-                    "gpt-5.6",
-                    "--superpowers-state-root",
-                    str(state_root),
-                    "--superpowers-skills-dir",
-                    str(skills_dir),
-                    "--no-default-superpowers-search",
-                ]
-            )
-
-            self.assertEqual(code, 1)
-            self.assertFalse((root / "docs" / "superplan").exists())
+            self.assertEqual(MODULE.run(["--root", str(root), "--migrate"]), 3)
+            self.assertEqual(snapshot(root), before)
 
 
 if __name__ == "__main__":

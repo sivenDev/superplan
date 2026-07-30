@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/eagleagentic/superpowers-gpt-5.6.git",
+  "revision": "aa973775906c8761a78019aaa21e4f0ccd987925",
+  "skills": [
+    "brainstorming",
+    "executing-plans",
+    "finishing-a-development-branch",
+    "receiving-code-review",
+    "requesting-code-review",
+    "systematic-debugging",
+    "test-driven-development",
+    "using-git-worktrees",
+    "using-superpowers",
+    "verification-before-completion",
+    "writing-implementation-logs",
+    "writing-plans",
+    "writing-skills"
+  ],
+  "files": [
+    {
+      "path": "brainstorming/SKILL.md",
+      "sha256": "d0ff929cf6e496e81b4ca3776e895b2609e1816804935937b3085fc58bcee00b"
+    },
+    {
+      "path": "brainstorming/scripts/frame-template.html",
+      "sha256": "6a8a4e58bd6a44b904e2e3c57de774481d909204597e1498de53f1b2fecc4c4e"
+    },
+    {
+      "path": "brainstorming/scripts/helper.js",
+      "sha256": "43c6d69954a46ec34a2a262bcc62a9a7e83e839c739f199cb72646d397c686e3"
+    },
+    {
+      "path": "brainstorming/scripts/server.cjs",
+      "sha256": "2d2961ea8d11f56c5f4c3a1a68d22709efa5d7601a2246d8c880774e7e9e8412"
+    },
+    {
+      "path": "brainstorming/scripts/start-server.sh",
+      "sha256": "84b7cf1028afdfb54679d8b4adcf844df5343d36117a1e2ba0c5c064f8985626"
+    },
+    {
+      "path": "brainstorming/scripts/stop-server.sh",
+      "sha256": "3af6e2d63e9570ce477b9c9c0cb8252cbd8d1dc8a20dc85a075d20620868bfff"
+    },
+    {
+      "path": "brainstorming/visual-companion.md",
+      "sha256": "b8a20a16b241f20a4009b41994d24e7f37daa371d5fff62292b51508f997182c"
+    },
+    {
+      "path": "executing-plans/SKILL.md",
+      "sha256": "f5ad304ddb582b6654c58a97403d8bf351996b9ac50a3eb73a28e9c6f0e0d32e"
+    },
+    {
+      "path": "finishing-a-development-branch/SKILL.md",
+      "sha256": "44939d1dea1e6d0fc4396dbc28653c13736ee9bd7de3e0dd020b0aebeaf8b1ce"
+    },
+    {
+      "path": "receiving-code-review/SKILL.md",
+      "sha256": "376f7975bbe61516fa405e9b81a4ed258be3135cd4eb2f5850894750b525a1c2"
+    },
+    {
+      "path": "requesting-code-review/SKILL.md",
+      "sha256": "1df101f11905b9a7892425621f3be737f05dd6d82ac5671a9cec8edade9bc887"
+    },
+    {
+      "path": "systematic-debugging/SKILL.md",
+      "sha256": "01d39bd786d01bd73c713796f6571a06f1de15854d2b7ffd41a224230c3c91ea"
+    },
+    {
+      "path": "systematic-debugging/condition-based-waiting.md",
+      "sha256": "aaec901a75c245832da90583ad51cae5671acb0238af2b9f2438912cd538492d"
+    },
+    {
+      "path": "systematic-debugging/defense-in-depth.md",
+      "sha256": "73250472b805e6d89b34c81009b412698c5188ddb72a412ee3f24e4de3a1535f"
+    },
+    {
+      "path": "systematic-debugging/find-polluter.sh",
+      "sha256": "16115991cdd052b09679400ecafeaf75ba44a63acac6ebea92fb1fd922395ed5"
+    },
+    {
+      "path": "systematic-debugging/root-cause-tracing.md",
+      "sha256": "ee71f219dcea7afc72e16738b8998992a9c80a043ed3f88a9b270cc8e26b6d9b"
+    },
+    {
+      "path": "test-driven-development/SKILL.md",
+      "sha256": "0a8daa1f9c03af1ce241dfaba6135252669263979c8c54f63009eceb846b2ead"
+    },
+    {
+      "path": "test-driven-development/testing-anti-patterns.md",
+      "sha256": "bf241c009910248a59414344bef16698fb3d3b930dd99ae6b1418847b6ff159f"
+    },
+    {
+      "path": "using-git-worktrees/SKILL.md",
+      "sha256": "d726a80c336383e8a061629e41165af255e48ace90524c1bc8607cabd971924f"
+    },
+    {
+      "path": "using-superpowers/SKILL.md",
+      "sha256": "ceb55ad037852c6cda487261382f4972869669396a2366678df9cd84c39ed8da"
+    },
+    {
+      "path": "verification-before-completion/SKILL.md",
+      "sha256": "edd7f7ca4480710d834d1724b75aabb3304cce8611523f23e38809a523207b85"
+    },
+    {
+      "path": "writing-implementation-logs/SKILL.md",
+      "sha256": "6edc96e8ca08b424b0f9d6e2c23f8bc298c02d73cd5be258438f48e218433217"
+    },
+    {
+      "path": "writing-implementation-logs/agents/openai.yaml",
+      "sha256": "73b65c4bd62e92b25a0d2c6d833ec7026ed01fa839f69664cec338947bf046cd"
+    },
+    {
+      "path": "writing-plans/SKILL.md",
+      "sha256": "21e0bff953a847c2c1d8665f0be3a7f89b05213091ac68e6405853e94397df32"
+    },
+    {
+      "path": "writing-skills/SKILL.md",
+      "sha256": "d488023eefdb34692708726140fa67dcf3b24155d58ab74047c445f1d730e118"
+    }
+  ],
+  "tree_sha256": "bcd69e9f0135bb556c391853b2818a62cb76bf8b8f30847e65863a54bbb48ced"
+}

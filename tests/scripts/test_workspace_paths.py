@@ -94,7 +94,7 @@ class WorkspacePathsTests(unittest.TestCase):
             (nested / "docs" / "superplan").mkdir(parents=True)
 
             commands = [
-                ["init_workspace.py", "--skip-superpowers-check"],
+                ["init_workspace.py"],
                 [
                     "record_human_request.py",
                     "--type",

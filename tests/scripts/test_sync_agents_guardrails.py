@@ -31,6 +31,10 @@ class SyncAgentsGuardrailsTests(unittest.TestCase):
 
             content = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(MODULE.START_MARKER, content)
+            self.assertRegex(
+                content,
+                r"<!-- superplan-workspace: schema=\d+; generated-by=\d+\.\d+\.\d+ -->",
+            )
             self.assertIn("# Workflow Guardrails", content)
             self.assertNotIn("# Development Rules", content)
             self.assertIn(MODULE.END_MARKER, content)

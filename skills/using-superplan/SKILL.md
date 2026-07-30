@@ -12,29 +12,29 @@ risk, approval, verification, progress, and delivery.
 
 ## Setup and Initialization
 
-For installation, dependency diagnosis, profile replacement, or
-profile-sensitive initialization, read `references/profile-setup.md`.
-
 When the human asks to initialize Superplan, run:
 
 `python3 <using-superplan-root>/scripts/init_workspace.py`
 
-Use `--model gpt-5.6` when initialization must validate the active profile. Use
-`--root <path>` for an explicit target. Initialization preserves existing human
-docs, refreshes managed guardrails, and generates the plan index.
+Use `--root <path>` for an explicit target. Initialization is offline and
+workspace-only. It preserves existing human docs, refreshes managed guardrails,
+and generates the plan index.
 
 ## Route Entry
 
 1. Apply the delivery loop's Workspace Safety check; inspect recent commits and
    current plan progress before editing.
-2. Read the matching human input:
+2. Run `init_workspace.py --check`. Continue when current; after workspace
+   safety, use `--migrate` for an older/missing schema. Stop on newer or malformed
+   schemas.
+3. Read the matching human input:
    - `docs/superplan/human/prd.md` for first project development
    - `docs/superplan/human/features.md` for feature delivery
    - `docs/superplan/human/bugs.md` for bug fixing
-3. Before creating or structurally revising a plan, read
+4. Before creating or structurally revising a plan, read
    `references/plan-spec.md`.
-4. If the managed guardrails are missing or stale, run
-   `python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`.
+5. If generated guardrails are stale, migrate through `init_workspace.py` after
+   workspace safety rather than editing the managed block manually.
 
 ## Routing
 
