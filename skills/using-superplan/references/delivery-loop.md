@@ -25,10 +25,10 @@ Before intake, plan/status changes, or implementation edits:
 3. If important changes exist, explain the concrete risk and ask whether to move
    subsequent Superplan work to a new worktree. Resolve this before mutation;
    never infer consent or automatically stash, commit, or create a worktree.
-4. If accepted, use `using-git-worktrees`, start from the committed baseline,
-   leave the original worktree untouched, and resume the same route there. If
-   declined, continue in place while preserving unrelated work and staging exact
-   task paths or hunks.
+4. If accepted, read `worktrees.md`, create or reuse isolation from the committed
+   baseline, leave the original worktree untouched, and resume the same route
+   there. If declined, continue in place while preserving unrelated work and
+   staging exact task paths or hunks.
 
 An older committed baseline does not itself create a request-id collision:
 linked-worktree intake uses the recorder's branch-qualified id. Treat possible
@@ -43,17 +43,20 @@ changes, the human or an external tool makes relevant changes, unexpected
 non-task Git changes appear, or files/environment facts supporting the earlier
 decision change.
 
-## Superpowers Composition
+## Workflow Composition
 
 For `docs/superplan/**` work, Superplan owns the persisted request, design, plan,
 and progress artifacts.
 
-- Use `brainstorming` only for material ambiguity in scope, constraints,
-  acceptance, non-goals, or architecture.
-- Use `writing-plans` reasoning, but write only the Superplan format from
-  `plan-spec.md`; do not create parallel Superpowers specs or plans unless asked.
-- Project instructions and the selected risk profile control testing,
-  verification, delegation, and traceability depth.
+- Resolve only ambiguity that could change scope, acceptance, architecture, or
+  consequential behavior; precise work proceeds without a separate design step.
+- Persist only the Superplan format from `plan-spec.md`; do not create parallel
+  workflow plans or logs unless the human or repository requires them.
+- Execute an approved plan by outcome, adapt mechanics without widening scope,
+  and update the plan only when a material requirement, design, or verification
+  strategy changes.
+- Project instructions and the selected risk profile control test-first work,
+  independent review, delegation, verification, and traceability depth.
 
 ## Risk Profiles
 
@@ -69,9 +72,10 @@ profile when uncertainty could change required evidence.
   the relevant full regression once after implementation stabilizes. Default to
   one agent; delegate only independent slices with explicit verification.
 - **High:** Security, concurrency, migration, data-integrity, public-contract,
-  complex-defect, or broad uncertain work. Keep strict test-first/debugging where
-  applicable, run focused and full regression checks, and add independent review
-  when separation improves evidence.
+  complex-defect, or broad uncertain work. Use test-first/debugging when a
+  trustworthy focused failure distinguishes the change, run focused and full
+  regression checks, and add independent review when separation improves
+  evidence.
 
 ## Evidence and Verification
 
@@ -84,8 +88,9 @@ skill locations, or other supporting environment changes.
 
 Select focused and final checks from `verification-matrix.md`, combining rows
 when a change spans artifact types and escalating for the selected risk profile.
-Before completion, every material claim must have current evidence, but repeated
-commands that prove no changed claim add no value.
+Before completion, map every material claim to current command or inspection
+evidence, inspect failures and meaningful warnings, and compare the final diff
+with acceptance. Repeated commands that prove no changed claim add no value.
 
 ## Delivery
 
@@ -94,8 +99,8 @@ commands that prove no changed claim add no value.
 2. For feature/bug routes, validate the registry and use compact summary/list
    plus exact-entry retrieval; load the full registry only for repair or genuine
    cross-entry analysis. Read the PRD directly for project bootstrap.
-3. Confirm scope, constraints, acceptance, non-goals, and risk. Run required
-   route discovery such as `systematic-debugging` before planning a bugfix.
+3. Confirm scope, constraints, acceptance, non-goals, and risk. Bug routes apply
+   their local debugging reference before planning when the cause is not proven.
 4. Read `plan-spec.md`, create the smallest independently verifiable plan set,
    and start new plans at `status: draft`.
 5. For structural plan changes, run exhaustive global validation, inspect the

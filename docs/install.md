@@ -1,13 +1,10 @@
 # Install Superplan
 
-Install the repository root as a plugin so Codex discovers both component sets:
-
-- four Superplan workflow skills under `skills/`
-- 13 pinned Superpowers runtime skills under `deps/superpowers/`
-
-The Codex manifest adds `deps/superpowers/` as a supplemental skill path; normal
-root discovery still loads `skills/`. No Git clone, user-skill symlink, active
-profile manifest, backup, or `~/.superplan` state is required.
+Install the repository root as a plugin so Codex discovers the four Superplan
+workflow skills under `skills/`. Detailed route behavior lives in conditional
+references inside those skills, so no supplemental runtime, Git clone,
+user-skill symlink, active profile manifest, backup, or `~/.superplan` state is
+required.
 
 After installing or updating the plugin, restart Codex or open a new chat. Then
 initialize a repository from its root:
@@ -36,5 +33,5 @@ python3 <using-superplan-root>/scripts/init_workspace.py --migrate
 A newer workspace schema is never downgraded; update Superplan instead. Use
 `--root <path>` with any command to select a target explicitly.
 
-Harnesses that only support raw skill directories must install all four root
-skills and all 13 directories under `deps/superpowers/`.
+Harnesses that only support raw skill directories must install all four
+directories under `skills/`.

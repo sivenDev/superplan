@@ -17,12 +17,13 @@ or continue to debugging and planning when its direct-accept conditions record
 `accepted`. Use the canonical summary/list/show commands to select existing
 state. Plan only an accepted entry; skip intake when it already exists.
 
-Before proposing a fix, use `systematic-debugging` to confirm the symptom,
-reproduction path, and root-cause area. Stay in debugging if the root cause cannot
-yet be explained; use `brainstorming` only for material repair choices.
+Before proposing a fix, read [`references/debugging.md`](references/debugging.md)
+to confirm the symptom, reproduction path, and root cause. Stay in diagnosis if
+the cause cannot yet be explained; resolve only material repair choices before
+planning.
 
 Plans include `Reproduction` and `Root Cause` per
-`../using-superplan/references/plan-spec.md`. During execution, first capture a
-failing behavior-level regression, then use `test-driven-development` to deliver
-the smallest correct root-cause fix. Increase review and regression depth using
-the shared risk profile.
+`../using-superplan/references/plan-spec.md`. During approved execution, capture
+a focused failing behavior regression first when it is practical and reliable,
+then deliver the smallest correct root-cause fix. Increase review and regression
+depth using the shared risk profile.

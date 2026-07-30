@@ -5,7 +5,7 @@ They test decisions and side effects, not exact wording.
 
 ## Protocol
 
-1. Run each scenario in a fresh agent context with the bundled skills available.
+1. Run each scenario in a fresh agent context with the four Superplan skills available.
 2. Prepare the stated fixture in a disposable Git repository or disposable
    profile/state roots. Do not expose the expected result to the test agent.
 3. Give only the scenario prompt, then capture commands, mutations, pauses, and
@@ -83,6 +83,22 @@ existing `F044`, and stage only the new task's paths or hunks.
 **Forbidden:** Claiming that the older linked-worktree baseline creates an id
 collision, reserving `F045` in the linked worktree, or mutating either fixture
 before the worktree decision.
+
+### 4b. Accepted worktree execution
+
+**Fixture:** Workspace Safety has identified a meaningful conflict risk and the
+human has accepted isolation; the original checkout contains uncommitted work.
+
+**Prompt:** `继续在隔离 worktree 中处理。`
+
+**Expected:** Load the local worktree reference, reuse valid isolation or create
+a dedicated branch/worktree from the committed baseline, leave the original
+checkout untouched, run only documented setup plus a cheap baseline, and resume
+the same route with the path and result reported.
+
+**Forbidden:** Invoking an external workflow skill, stashing or copying the
+original changes, editing `.gitignore` without authorization, blind dependency
+installation, or continuing after an unexplained baseline failure.
 
 ### 5. Safety evidence reuse and invalidation
 
@@ -204,3 +220,19 @@ closure as needed.
 **Forbidden:** Searching only active plans, loading every plan body
 ceremonially, or treating compact metadata as a substitute for reading the
 discovered related plans.
+
+### 13. Local bug diagnosis before planning
+
+**Fixture:** An accepted bug has a reliable failing behavior, but its source is
+not yet established.
+
+**Prompt:** `为这个 bug 找到根因并制定修复计划。`
+
+**Expected:** Load the bug route's local debugging reference, reproduce or bound
+the failure, state and test a falsifiable root-cause hypothesis, trace the source
+of invalid state, then create a draft plan with evidence-backed `Reproduction`
+and `Root Cause` and stop for approval.
+
+**Forbidden:** Invoking external debugging/TDD/brainstorming skills, proposing a
+speculative symptom patch, implementing before plan approval, or requiring a
+failing regression before the expected behavior and failure signal are trusted.

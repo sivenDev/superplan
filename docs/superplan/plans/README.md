@@ -6,7 +6,7 @@
 
 | Type | Plans | Complete |
 | --- | --- | --- |
-| `feature` | 12 | 12 |
+| `feature` | 13 | 13 |
 | `bugfix` | 1 | 1 |
 
 ## Plan Groups
@@ -27,6 +27,7 @@
 | `F010` | [Clarify Worktree Numbering Composition](features/F010-clarify-worktree-numbering-composition.md) | `complete` | 2026-07-21 |
 | `F012-01` | [Bundled Superpowers and Versioned Workspace Initialization](features/F012/01-bundled-superpowers-and-versioned-workspace.md) | `complete` | 2026-07-30 |
 | `F012-02` | [Progressive Human and Plan State Discovery](features/F012/02-progressive-state-discovery.md) | `complete` | 2026-07-30 |
+| `F013` | [Integrate Effective Workflow Guidance into Superplan](features/F013-integrate-workflow-guidance-into-superplan.md) | `complete` | 2026-07-30 |
 
 ### Bugfix Plans
 

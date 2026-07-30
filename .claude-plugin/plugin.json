@@ -1,7 +1,7 @@
 {
   "name": "superplan",
-  "description": "Superplan workflows for docs/superplan-based planning on top of Superpowers",
-  "version": "0.2.0",
+  "description": "Superplan workflows for docs/superplan-based planning and delivery",
+  "version": "0.3.0",
   "author": {
     "name": "siven"
   },

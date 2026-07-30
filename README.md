@@ -1,20 +1,25 @@
 # Superplan
 
-Superplan packages a plan-first delivery workflow for coding agents. It bundles a pinned Superpowers runtime for generic planning, TDD, debugging, and execution, then specializes it around `docs/superplan/human/*` and `docs/superplan/plans/*`.
+Superplan packages a plan-first delivery workflow for coding agents around
+`docs/superplan/human/*` and `docs/superplan/plans/*`.
 
-The main entry skill is `$using-superplan`. The other skills in `skills/` are bundled companions that it routes into.
+The main entry skill is `$using-superplan`. Four route skills stay discoverable;
+detailed debugging, worktree, planning, and verification guidance is loaded from
+their references only when the route needs it.
 
-## Bundled Runtime
+## Focused Skill Set
 
-Superplan includes its required Superpowers runtime directly under
-`deps/superpowers/`. Workspace initialization uses these repository files and
-does not download or install an external profile.
+Superplan exposes only four skills:
 
-- The lock artifact records the source revision, exact skill inventory, file
-  hashes, and deterministic tree hash.
-- Plugin discovery exposes the four root Superplan skills plus the 13 bundled
-  Superpowers skills without cloning, symlinks, or user-profile changes.
-- Workspace initialization is offline and checks only repository artifacts.
+- `using-superplan`: initializes workspaces and routes requests.
+- `project-bootstrap-from-prd`: turns a PRD into reviewed mainline plans.
+- `feature-plan-and-delivery`: plans and delivers accepted features.
+- `bugfix-plan-and-delivery`: diagnoses, plans, and delivers accepted bugs.
+
+The route skills own conditional references for specialized behavior. This keeps
+generic workflow descriptions out of global skill discovery without losing the
+debugging, worktree-safety, test-first, review, or verification boundaries that
+materially affect delivery.
 
 ## Repository Layout
 
@@ -25,9 +30,6 @@ does not download or install an external profile.
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
-├── deps/
-│   ├── superpowers/            # pinned runtime Superpowers skills
-│   └── superpowers.lock.json   # provenance, inventory, and integrity hashes
 ├── skills/
 │   ├── using-superplan/        # runtime scripts, references, and output assets
 │   ├── project-bootstrap-from-prd/
@@ -56,18 +58,8 @@ The short version:
 
 4. Use `$using-superplan` as the entry skill.
 
-The Codex manifest adds `deps/superpowers/` as a supplemental skill path;
-default plugin discovery still loads the four Superplan skills under `skills/`.
-
-If your harness only supports raw skill installation, install all four skills
-under `skills/` and all 13 runtime skills under `deps/superpowers/`.
-
-## Bundled Skills
-
-- `using-superplan`: entry skill; initializes and routes work.
-- `project-bootstrap-from-prd`: turns `docs/superplan/human/prd.md` into reviewed plans.
-- `feature-plan-and-delivery`: turns accepted feature entries into reviewed feature plans.
-- `bugfix-plan-and-delivery`: turns accepted bug entries into reviewed bugfix plans.
+If your harness only supports raw skill installation, install the four
+directories under `skills/`.
 
 ## Versioned Workspaces
 
@@ -75,7 +67,7 @@ Initialized repositories store a machine-readable marker inside the managed
 `AGENTS.md` block:
 
 ```text
-<!-- superplan-workspace: schema=1; generated-by=0.2.0 -->
+<!-- superplan-workspace: schema=1; generated-by=0.3.0 -->
 ```
 
 Check compatibility without writing:
@@ -92,8 +84,8 @@ python3 <using-superplan-root>/scripts/init_workspace.py --migrate
 ```
 
 Initialization and migration are offline and workspace-only. They never inspect
-or change user-level Superpowers profiles, skills, backups, or `~/.superplan`
-state. A newer schema is not downgraded.
+or change user-level profiles, skills, backups, or `~/.superplan` state. A newer
+schema is not downgraded.
 
 ## Progressive State Discovery
 
@@ -151,8 +143,9 @@ testing, verification, and delegation ceremony to every change:
   checks while iterating, and run one relevant final regression after the
   implementation stabilizes.
 - High-risk security, concurrency, migration, compatibility, data-integrity, or
-  complex defect work keeps strict test-first development, debugging, regression,
-  and independent review depth.
+  complex defect work uses test-first development when a trustworthy focused
+  failure distinguishes the change, plus deeper debugging, regression, and
+  independent review.
 
 The approved Superplan plan is the persisted design and execution artifact. Plans
 record outcomes, exact files, important boundaries, and evidence without copying
@@ -181,12 +174,11 @@ overwritten, mixed into the task's commit, or create an integration conflict.
 Timestamp-only metadata, caches, and safely reproducible generated noise are
 ignored unless they are consequential in context.
 
-If the human accepts isolation, Superplan delegates creation to
-`using-git-worktrees`, leaves the original uncommitted changes untouched, and
-resumes the same route from the committed baseline in the new worktree. If the
-human declines, work continues in place with unrelated-change preservation and
-precise staging. Superplan never stashes, commits, or creates a worktree without
-explicit consent.
+If the human accepts isolation, Superplan loads its local worktree reference,
+leaves the original uncommitted changes untouched, and resumes the same route
+from the committed baseline in the new worktree. If the human declines, work
+continues in place with unrelated-change preservation and precise staging.
+Superplan never stashes, commits, or creates a worktree without explicit consent.
 
 ## Path Convention
 
@@ -197,12 +189,8 @@ may use paths relative to the repository root.
 ## Development
 
 - Unit tests: `python3 -m unittest discover -s tests/scripts`
-- Bundled runtime/package contract: `python3 -m unittest discover -s tests/scripts -p 'test_bundled_superpowers.py'`
-- Skill validation: run `quick_validate.py` for all directories under `skills/` and `deps/superpowers/`
-
-The current local `plugin-creator` validator may reject the documented custom
-supplemental `skills` path because it still hard-codes `./skills/`; the bundled
-runtime test verifies the actual manifest path, synchronized versions, exact
-inventory, duplicate-name boundary, and dependency integrity.
+- Plugin package contract: `python3 -m unittest discover -s tests/scripts -p 'test_plugin_package.py'`
+- Skill validation: run `quick_validate.py` for all four directories under `skills/`
+- Codex manifest validation: run the local `plugin-creator` validator against the repository root
 
 Repository license: `MIT`.
