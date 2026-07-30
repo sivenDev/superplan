@@ -1,6 +1,6 @@
 ---
 name: using-superplan
-description: Use when a repository manages requests through docs/superplan/human and docs/superplan/plans and the user wants to start a new project, implement a feature, or fix a bug with reviewed plans and approval gates
+description: Use to initialize, check, or migrate a Superplan workspace, or to route project, feature, and bug work through docs/superplan human requests, reviewed plans, approval gates, and verified delivery
 ---
 
 # Using Superplan
@@ -11,6 +11,9 @@ risk, approval, verification, progress, and delivery.
 `<using-superplan-root>` means this skill's installed directory.
 
 ## Setup and Initialization
+
+Before initialization writes into a Git workspace, apply the delivery loop's
+Workspace Safety check.
 
 When the human asks to initialize Superplan, run:
 

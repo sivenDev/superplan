@@ -118,12 +118,14 @@ with acceptance. Repeated commands that prove no changed claim add no value.
    directly related redundancy without widening scope.
 8. After the implementation state is final, obtain current completion evidence
    selected from `verification-matrix.md` and run any relevant full regression
-   once. Then mark the human entry and plan complete and refresh the index with:
+   once. Mark each delivered plan complete first. For a feature or bug, set its
+   human entry to `done` only after at least one non-superseded related plan
+   exists and every such plan is `complete`; `human_requests.py set-status`
+   enforces this boundary. Then refresh the index with:
 
    `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`
 
-   Update a feature/bug request through `human_requests.py set-status`; do not
-   rerun unchanged code tests after metadata-only progress updates.
+   Do not rerun unchanged code tests after metadata-only progress updates.
 9. Create a task-level commit whose message includes the plan id. Stage only task
    changes.
 

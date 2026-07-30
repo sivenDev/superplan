@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 
-SUPERPLAN_VERSION = "0.3.0"
+SUPERPLAN_VERSION = "0.3.1"
 WORKSPACE_SCHEMA_VERSION = 1
 
 

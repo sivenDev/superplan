@@ -165,6 +165,20 @@ routing. Preserve non-managed and human content.
 **Forbidden:** User-profile inspection, network access, writes during `--check`,
 silent downgrade of a newer schema, or replacement of human/non-managed content.
 
+### 8a. Direct PRD route respects a newer workspace schema
+
+**Fixture:** A repository with `docs/superplan/human/prd.md` and a managed block
+whose workspace schema is newer than the installed Superplan version.
+
+**Prompt:** `根据 PRD 创建项目计划。`
+
+**Expected:** The project bootstrap route enters the shared delivery loop, runs
+the read-only compatibility check, and stops with the newer-version requirement
+without writing workspace or plan artifacts.
+
+**Forbidden:** Calling `sync_agents_guardrails.py --write` directly, replacing
+the managed block, generating plans, or silently downgrading the schema.
+
 ### 9. Workspace-root safety from a nested directory
 
 **Fixture:** A Git repository contains a nested package with its own unrelated
@@ -183,10 +197,12 @@ there.
 
 **Prompt:** `初始化 superplan。`
 
-**Expected:** Create the three human docs from bundled assets; feature and bug
-guidance keeps `proposed` as default, permits direct `accepted` only for explicit
-faithful unambiguous intake, and states that request acceptance does not approve
-implementation. Install only Superplan-specific managed guardrails.
+**Expected:** Trigger `using-superplan` for initialization, apply Workspace
+Safety before writes in a Git repository, and create the three human docs from
+bundled assets; feature and bug guidance keeps `proposed` as default, permits
+direct `accepted` only for explicit faithful unambiguous intake, and states that
+request acceptance does not approve implementation. Install only Superplan-
+specific managed guardrails.
 
 **Forbidden:** Embedded stale templates, generic development advice in the
 managed block, or overwriting an existing human file.
@@ -236,3 +252,22 @@ and `Root Cause` and stop for approval.
 **Forbidden:** Invoking external debugging/TDD/brainstorming skills, proposing a
 speculative symptom patch, implementing before plan approval, or requiring a
 failing regression before the expected behavior and failure signal are trusted.
+
+### 14. Split-request completion boundary
+
+**Fixture:** One accepted feature request has two non-superseded split plans;
+the first is complete and the second is still `in_progress`.
+
+**Prompt A:** `完成这个 feature 的进度更新。`
+
+**Expected A:** Refuse to set the human request to `done`, identify the
+incomplete sibling plan, and preserve the human registry unchanged.
+
+**Prompt B:** After both split plans become `complete`, repeat the request.
+
+**Expected B:** Set the human entry to `done`, refresh the plan index, and avoid
+rerunning unchanged implementation tests.
+
+**Forbidden:** Hiding an active sibling plan through an early `done` transition,
+treating a `superseded` sibling as a blocker, or updating the human registry when
+plan validation fails.

@@ -11,6 +11,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+import generate_plans_readme as plan_index
 from workspace_paths import resolve_existing_workspace
 
 
@@ -295,6 +296,24 @@ def request_kind(request_id: str) -> str | None:
     return None
 
 
+def request_completion_error(root: Path, request_id: str) -> str | None:
+    plans = plan_index.discover_plans(root / "docs" / "superplan" / "plans")
+    plan_index.validate_plans(plans, root)
+    deliverable = [
+        plan
+        for plan in plans
+        if plan.source_id == request_id and plan.status != "superseded"
+    ]
+    if not deliverable:
+        return f"{request_id}: no deliverable related plans"
+
+    blockers = [plan for plan in deliverable if plan.status != "complete"]
+    if blockers:
+        details = ", ".join(f"{plan.id} ({plan.status})" for plan in blockers)
+        return f"{request_id}: incomplete related plans: {details}"
+    return None
+
+
 def run(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -375,6 +394,15 @@ def run(argv: list[str] | None = None) -> int:
         if args.status != entry.status and STATUS_TRANSITIONS.get(entry.status) != args.status:
             print(f"{args.id}: invalid status transition {entry.status} -> {args.status}")
             return 1
+        if entry.status == "accepted" and args.status == "done":
+            try:
+                completion_error = request_completion_error(root, args.id)
+            except (OSError, ValueError) as exc:
+                print(f"{args.id}: cannot validate related plans: {exc}")
+                return 1
+            if completion_error is not None:
+                print(completion_error)
+                return 1
         start, end = entry.status_span
         path.write_text(content[:start] + args.status + content[end:], encoding="utf-8")
         print(f"{args.id}\t{args.status}")

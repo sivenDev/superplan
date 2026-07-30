@@ -43,6 +43,22 @@ def registry(prefix: str = "F") -> str:
     )
 
 
+def plan_document(plan_id: str, status: str) -> str:
+    return (
+        "---\n"
+        f'id: "{plan_id}"\n'
+        f'title: "Plan {plan_id}"\n'
+        'type: "feature"\n'
+        f'status: "{status}"\n'
+        'summary: "Test plan."\n'
+        'source: "docs/superplan/human/features.md"\n'
+        'created: "2026-01-01"\n'
+        "depends_on: []\n"
+        'parent: ""\n'
+        "---\n"
+    )
+
+
 class HumanRequestsTests(unittest.TestCase):
     def run_cli(self, argv: list[str]) -> tuple[int, str]:
         output = io.StringIO()
@@ -95,6 +111,10 @@ class HumanRequestsTests(unittest.TestCase):
             path = root / "docs" / "superplan" / "human" / "features.md"
             original = registry()
             write(path, original)
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe.md",
+                plan_document("F002@branch-safe", "complete"),
+            )
 
             code, output = self.run_cli(
                 ["--root", str(root), "set-status", "--id", "F002@branch-safe", "--status", "done"]
@@ -121,6 +141,75 @@ class HumanRequestsTests(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn("invalid status transition", output)
             self.assertEqual(path.read_text(encoding="utf-8"), original)
+
+    def test_set_status_done_rejects_incomplete_split_plan_without_write(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            original = registry()
+            write(path, original)
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe-01.md",
+                plan_document("F002@branch-safe-01", "complete"),
+            )
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe-02.md",
+                plan_document("F002@branch-safe-02", "in_progress"),
+            )
+
+            code, output = self.run_cli(
+                ["--root", str(root), "set-status", "--id", "F002@branch-safe", "--status", "done"]
+            )
+
+            self.assertEqual(code, 1)
+            self.assertIn("incomplete related plans", output)
+            self.assertIn("F002@branch-safe-02", output)
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+
+    def test_set_status_done_rejects_missing_or_incomplete_single_plan(self) -> None:
+        cases = [(None, "no deliverable related plans"), ("in_progress", "incomplete related plans")]
+        for plan_status, expected in cases:
+            with self.subTest(plan_status=plan_status), tempfile.TemporaryDirectory() as tempdir:
+                root = Path(tempdir)
+                path = root / "docs" / "superplan" / "human" / "features.md"
+                original = registry()
+                write(path, original)
+                if plan_status is not None:
+                    write(
+                        root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe.md",
+                        plan_document("F002@branch-safe", plan_status),
+                    )
+
+                code, output = self.run_cli(
+                    ["--root", str(root), "set-status", "--id", "F002@branch-safe", "--status", "done"]
+                )
+
+                self.assertEqual(code, 1)
+                self.assertIn(expected, output)
+                self.assertEqual(path.read_text(encoding="utf-8"), original)
+
+    def test_set_status_done_ignores_superseded_sibling_after_completed_delivery(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            original = registry()
+            write(path, original)
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe-01.md",
+                plan_document("F002@branch-safe-01", "complete"),
+            )
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe-02.md",
+                plan_document("F002@branch-safe-02", "superseded"),
+            )
+
+            code, output = self.run_cli(
+                ["--root", str(root), "set-status", "--id", "F002@branch-safe", "--status", "done"]
+            )
+
+            self.assertEqual(code, 0)
+            self.assertEqual(output, "F002@branch-safe\tdone\n")
+            self.assertIn("- status: done", path.read_text(encoding="utf-8"))
 
     def test_validate_reports_duplicates_missing_fields_and_unknown_status(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

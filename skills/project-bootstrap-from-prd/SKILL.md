@@ -14,9 +14,8 @@ Read `../using-superplan/references/delivery-loop.md`, then apply:
 Keep the PRD as the source of intent. Resolve material ambiguity before planning;
 plans translate the accepted intent rather than replace it.
 
-If the managed workflow block is missing or stale, run:
-
-`python3 <using-superplan-root>/scripts/sync_agents_guardrails.py --write`
+Use the delivery loop's versioned workspace check and migration boundary; do not
+invoke the lower-level guardrail synchronizer directly.
 
 Follow `../using-superplan/references/plan-spec.md` for ids, ordering,
 dependencies, content, and verification.

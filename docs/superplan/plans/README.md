@@ -7,7 +7,7 @@
 | Type | Plans | Complete |
 | --- | --- | --- |
 | `feature` | 13 | 13 |
-| `bugfix` | 1 | 1 |
+| `bugfix` | 2 | 2 |
 
 ## Plan Groups
 
@@ -34,3 +34,4 @@
 | ID | Plan | Status | Created |
 | --- | --- | --- | --- |
 | `B001` | [Decode Escaped Newlines in Human Request Bodies](bugs/B001-decode-escaped-newlines-in-request-bodies.md) | `complete` | 2026-07-07 |
+| `B002` | [Resolve Superplan Skill Routing and Validation Gaps](bugs/B002-resolve-skill-routing-and-validation-gaps.md) | `complete` | 2026-07-30 |

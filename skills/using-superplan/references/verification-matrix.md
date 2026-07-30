@@ -7,7 +7,7 @@ checks prove the stabilized implementation state once.
 
 | Changed artifacts | Focused iteration | Final evidence |
 | --- | --- | --- |
-| Skill or reference metadata/instructions | Run `quick_validate.py` for each affected skill folder; inspect trigger boundaries and reference ownership against the changed behavior. | Re-run structural validation for affected skills after final edits. When shared references change cross-route behavior, validate all four Superplan skills and execute the applicable scenarios from `tests/behavior/workflow.md`. |
+| Skill or reference metadata/instructions | Run `python3 -m unittest discover -s tests/scripts -p 'test_plugin_package.py'`; inspect trigger boundaries and reference ownership against the changed behavior. | Re-run the self-contained package contract after final edits. When shared references change cross-route behavior, inspect all four Superplan skills and execute the applicable scenarios from `tests/behavior/workflow.md`. |
 | Bundled Python scripts | Run the directly related unittest module and a CLI help/smoke path when its public arguments change. | Run `python3 -m unittest discover -s tests/scripts` once after script behavior stabilizes. |
 | Plugin manifests or packaged skill inventory | Run the focused package-contract test and inspect the discovered root skill set. | Run the full script suite once, validate every shipped skill, and verify synchronized versions plus the absence of stale package paths. |
 | Managed guardrail template | Run `sync_agents_guardrails.py --write`, inspect only the managed hunk, then run `--check`; run its focused tests if sync behavior changed. | Require a clean `--check` result and preserve unrelated `AGENTS.md` content. |

@@ -1,6 +1,6 @@
 {
   "name": "superplan",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Plan-first delivery workflow skills for docs/superplan repositories.",
   "author": {
     "name": "siven"
@@ -10,12 +10,12 @@
   "interface": {
     "displayName": "Superplan",
     "shortDescription": "Plan-first delivery workflows",
-    "longDescription": "Use Superplan to route PRDs, features, and bugs through reviewed docs/superplan plans before implementation. Use $using-superplan as the main entry skill.",
+    "longDescription": "Use Superplan to initialize, check, or migrate workspaces and route PRDs, features, and bugs through reviewed docs/superplan plans before implementation. Use $using-superplan as the main entry skill.",
     "developerName": "zhengxiwan",
     "category": "Coding",
     "capabilities": ["Interactive", "Read", "Write"],
     "defaultPrompt": [
-      "Initialize Superplan in this repository.",
+      "Initialize, check, or migrate Superplan in this repository.",
       "Turn this feature request into a reviewed Superplan plan.",
       "Record this bug and prepare a repair plan."
     ],

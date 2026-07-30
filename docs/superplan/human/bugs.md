@@ -30,3 +30,10 @@
 - created: 2026-07-07
 
 Screenshot symptom: a feature record was generated, but the recorder wrote body newlines as literal \n text in docs/superplan/human/features.md. Expected behavior: recorded feature body text should contain real Markdown line breaks so downstream planning tools can read it normally.
+
+## B002: Resolve Superplan skill routing and validation gaps
+
+- status: done
+- created: 2026-07-30
+
+修复审查确认的四项问题：多计划请求不得提前标记 done；PRD 路由不得绕过版本化 workspace 迁移；using-superplan 元数据必须覆盖初始化、检查和迁移触发；仓库 Skill 验证必须在无外部 PyYAML 假设下可重复执行。
