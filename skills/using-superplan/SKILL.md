@@ -32,7 +32,10 @@ and generates the plan index.
    schemas.
 3. For features or bugs, use `human_requests.py validate`, then
    `summary`/`list` and `show --id <id>`; read a whole registry only for repair
-   or cross-entry analysis. Read `prd.md` directly for first project development.
+   or cross-entry analysis. If validation reports only legacy missing
+   `status`/`created`, preview `migrate-legacy --check` and use `--write` after
+   workspace safety; repair every other error manually. Read `prd.md` directly
+   for first project development.
 4. Before creating or structurally revising a plan, read
    `references/plan-spec.md`, validate all metadata, inspect `--catalog`, and
    search all statuses for related source, dependency, scope, or artifact

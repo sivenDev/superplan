@@ -67,7 +67,7 @@ Initialized repositories store a machine-readable marker inside the managed
 `AGENTS.md` block:
 
 ```text
-<!-- superplan-workspace: schema=1; generated-by=0.3.1 -->
+<!-- superplan-workspace: schema=1; generated-by=0.3.2 -->
 ```
 
 Check compatibility without writing:
@@ -101,6 +101,23 @@ python3 <using-superplan-root>/scripts/human_requests.py show --id F012
 
 It also provides `record` and forward-only `set-status` commands.
 `record_human_request.py` remains as a compatibility adapter.
+
+### Legacy Registry Recovery
+
+Older registries may predate required `status` and `created` fields. Preview the
+evidence-backed repair before writing it:
+
+```bash
+python3 <using-superplan-root>/scripts/human_requests.py migrate-legacy --check
+python3 <using-superplan-root>/scripts/human_requests.py migrate-legacy --write
+```
+
+The command repairs only missing metadata, rejects every other registry error,
+and refuses all writes when a creation date lacks plan or Git evidence. Status
+comes from related plan progress; creation dates prefer the earliest related
+plan and then the request's first Git appearance. Existing request text and
+metadata remain unchanged. `init_workspace.py --migrate` never performs this
+semantic migration, and `record` remains strict until recovery succeeds.
 
 For structural plan work, validate all metadata and inspect compact candidates
 before loading related plan bodies:

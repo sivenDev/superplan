@@ -54,7 +54,7 @@ class PluginPackageTests(unittest.TestCase):
         claude = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
         marketplace = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
 
-        self.assertEqual(version, "0.3.1")
+        self.assertEqual(version, "0.3.2")
         self.assertEqual(load_version_module().WORKSPACE_SCHEMA_VERSION, 1)
         self.assertNotIn("skills", codex)
         self.assertEqual(codex["version"], version)

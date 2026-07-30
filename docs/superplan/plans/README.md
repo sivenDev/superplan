@@ -7,7 +7,7 @@
 | Type | Plans | Complete |
 | --- | --- | --- |
 | `feature` | 13 | 13 |
-| `bugfix` | 2 | 2 |
+| `bugfix` | 3 | 3 |
 
 ## Plan Groups
 
@@ -35,3 +35,4 @@
 | --- | --- | --- | --- |
 | `B001` | [Decode Escaped Newlines in Human Request Bodies](bugs/B001-decode-escaped-newlines-in-request-bodies.md) | `complete` | 2026-07-07 |
 | `B002` | [Resolve Superplan Skill Routing and Validation Gaps](bugs/B002-resolve-skill-routing-and-validation-gaps.md) | `complete` | 2026-07-30 |
+| `B003` | [Add Safe Legacy Registry Migration](bugs/B003-add-safe-legacy-registry-migration.md) | `complete` | 2026-07-31 |

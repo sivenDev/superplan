@@ -37,3 +37,10 @@ Screenshot symptom: a feature record was generated, but the recorder wrote body 
 - created: 2026-07-30
 
 修复审查确认的四项问题：多计划请求不得提前标记 done；PRD 路由不得绕过版本化 workspace 迁移；using-superplan 元数据必须覆盖初始化、检查和迁移触发；仓库 Skill 验证必须在无外部 PyYAML 假设下可重复执行。
+
+## B003: Add safe legacy registry migration
+
+- status: done
+- created: 2026-07-31
+
+为旧版 Superplan human registry 增加显式、可预览的迁移流程：只处理缺失 status/created 的历史条目，dry-run 展示建议值和证据，无法可靠推断时拒绝写入；不让 init_workspace 自动修改 human 数据，不放宽正常 record 的严格校验。

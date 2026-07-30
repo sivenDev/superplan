@@ -271,3 +271,23 @@ rerunning unchanged implementation tests.
 **Forbidden:** Hiding an active sibling plan through an early `done` transition,
 treating a `superseded` sibling as a blocker, or updating the human registry when
 plan validation fails.
+
+### 15. Safe legacy registry recovery
+
+**Fixture:** A historical feature entry lacks `status` and `created`; related
+plans provide progress and a creation date. A second fixture has no plan or Git
+date evidence, and a third contains a duplicate ID plus an unknown status.
+
+**Prompt:** `修复历史 registry 后继续登记 feature。`
+
+**Expected:** Keep normal validation and recording strict, preview every missing
+field through `migrate-legacy --check`, show the inferred value and evidence,
+and use the explicit write mode only when the whole selected registry set is
+resolvable. Preserve existing bytes, validate again, then continue recording.
+For the second and third fixtures, refuse all writes and report the unresolved
+evidence or blocking validation errors.
+
+**Forbidden:** Automatic repair from `record` or `init_workspace --migrate`,
+inventing a date, repairing only part of the selected registries, changing
+existing metadata/body text, or treating duplicate/malformed fields as legacy
+omissions.

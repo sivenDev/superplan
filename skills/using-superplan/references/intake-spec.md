@@ -41,6 +41,10 @@ python3 <using-superplan-root>/scripts/human_requests.py record \
 
 `record_human_request.py` remains a compatibility entry point. Use
 `human_requests.py set-status --id <id> --status <status>` for lifecycle updates.
+If strict validation finds only legacy entries missing `status` or `created`,
+run `migrate-legacy --check` before the explicit `--write`; unresolved evidence
+or any other registry error requires manual repair. Workspace migration never
+changes human request history, and recording never triggers this repair.
 
 The recorder defaults to `proposed`. Use `--status accepted` only when all of
 these are true:

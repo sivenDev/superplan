@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import importlib.util
 import io
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
@@ -43,20 +46,44 @@ def registry(prefix: str = "F") -> str:
     )
 
 
-def plan_document(plan_id: str, status: str) -> str:
+def plan_document(
+    plan_id: str,
+    status: str,
+    *,
+    created: str = "2026-01-01",
+    plan_type: str = "feature",
+) -> str:
+    source = "features.md" if plan_type == "feature" else "bugs.md"
     return (
         "---\n"
         f'id: "{plan_id}"\n'
         f'title: "Plan {plan_id}"\n'
-        'type: "feature"\n'
+        f'type: "{plan_type}"\n'
         f'status: "{status}"\n'
         'summary: "Test plan."\n'
-        'source: "docs/superplan/human/features.md"\n'
-        'created: "2026-01-01"\n'
+        f'source: "docs/superplan/human/{source}"\n'
+        f'created: "{created}"\n'
         "depends_on: []\n"
         'parent: ""\n'
         "---\n"
     )
+
+
+def init_git(root: Path, *, date: str = "2026-01-05T12:00:00+00:00") -> None:
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "add", "."], cwd=root, check=True)
+    env = os.environ.copy()
+    env.update(
+        {
+            "GIT_AUTHOR_NAME": "Superplan Test",
+            "GIT_AUTHOR_EMAIL": "superplan@example.test",
+            "GIT_COMMITTER_NAME": "Superplan Test",
+            "GIT_COMMITTER_EMAIL": "superplan@example.test",
+            "GIT_AUTHOR_DATE": date,
+            "GIT_COMMITTER_DATE": date,
+        }
+    )
+    subprocess.run(["git", "commit", "-qm", "legacy registry"], cwd=root, env=env, check=True)
 
 
 class HumanRequestsTests(unittest.TestCase):
@@ -228,6 +255,189 @@ class HumanRequestsTests(unittest.TestCase):
             self.assertIn("duplicate id F001", output)
             self.assertIn("unknown status 'mystery'", output)
             self.assertIn("missing created", output)
+
+    def test_migrate_legacy_previews_then_writes_only_missing_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            original = (
+                "# Features\n\nintro stays\n\n"
+                "## F001: Legacy request\n\n"
+                "legacy body stays byte-for-byte\n"
+            )
+            write(path, original)
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F001.md",
+                plan_document("F001", "complete", created="2025-12-31"),
+            )
+
+            code, output = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--type", "feature", "--check"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("F001\tstatus\tdone", output)
+            self.assertIn("F001\tcreated\t2025-12-31", output)
+            self.assertIn("plan:F001", output)
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+
+            code, output = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--type", "feature", "--write"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("migrated 1 requests (2 fields)", output)
+            self.assertEqual(
+                path.read_text(encoding="utf-8"),
+                "# Features\n\nintro stays\n\n"
+                "## F001: Legacy request\n\n"
+                "- status: done\n"
+                "- created: 2025-12-31\n\n"
+                "legacy body stays byte-for-byte\n",
+            )
+
+            code, output = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--type", "feature", "--write"]
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(output, "legacy registry is current\n")
+
+    def test_migrate_legacy_infers_status_from_all_deliverable_plan_states(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            original = (
+                "# Features\n\n"
+                "## F001: Complete\n\n- created: 2026-01-01\n\n"
+                "## F002: Active\n\n- created: 2026-01-02\n\n"
+                "## F003: No delivery\n\n- created: 2026-01-03\n"
+            )
+            write(path, original)
+            plans_dir = root / "docs" / "superplan" / "plans" / "features"
+            write(plans_dir / "F001-01.md", plan_document("F001-01", "complete"))
+            write(plans_dir / "F001-02.md", plan_document("F001-02", "complete"))
+            write(plans_dir / "F002.md", plan_document("F002", "blocked"))
+            write(plans_dir / "F003.md", plan_document("F003", "superseded"))
+
+            code, output = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--type", "feature", "--write"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("F001\tstatus\tdone", output)
+            self.assertIn("F002\tstatus\taccepted", output)
+            self.assertIn("F003\tstatus\tproposed", output)
+            migrated = path.read_text(encoding="utf-8")
+            self.assertIn("## F001: Complete\n\n- status: done\n- created:", migrated)
+            self.assertIn("## F002: Active\n\n- status: accepted\n- created:", migrated)
+            self.assertIn("## F003: No delivery\n\n- status: proposed\n- created:", migrated)
+
+    def test_migrate_legacy_created_uses_plan_before_git_history(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            write(
+                path,
+                "# Features\n\n"
+                "## F001: Plan dated\n\n- status: accepted\n\n"
+                "## F002: Git dated\n\n- status: proposed\n",
+            )
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F001.md",
+                plan_document("F001", "in_progress", created="2026-01-02"),
+            )
+            init_git(root, date="2026-01-05T12:00:00+00:00")
+
+            code, output = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--type", "feature", "--check"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("F001\tcreated\t2026-01-02\tplan:F001", output)
+            self.assertIn("F002\tcreated\t2026-01-05\tgit:first-appearance", output)
+
+    def test_migrate_legacy_rejects_unresolved_or_blocking_state_atomically(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            feature_path = root / "docs" / "superplan" / "human" / "features.md"
+            bug_path = root / "docs" / "superplan" / "human" / "bugs.md"
+            feature_original = "# Features\n\n## F001: Resolvable\n\nlegacy\n"
+            bug_original = "# Bugs\n\n## B001: Unresolved date\n\n- status: proposed\n"
+            write(feature_path, feature_original)
+            write(bug_path, bug_original)
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F001.md",
+                plan_document("F001", "complete", created="2026-01-01"),
+            )
+
+            code, output = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--write"]
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("B001\tcreated\tunresolved\tno-plan-or-git-evidence", output)
+            self.assertEqual(feature_path.read_text(encoding="utf-8"), feature_original)
+            self.assertEqual(bug_path.read_text(encoding="utf-8"), bug_original)
+
+            write(
+                bug_path,
+                "# Bugs\n\n"
+                "## B001: Broken\n\n- status: mystery\n"
+                "## B001: Duplicate\n",
+            )
+            code, output = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--check"]
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("unknown status 'mystery'", output)
+            self.assertIn("duplicate id B001", output)
+            self.assertEqual(feature_path.read_text(encoding="utf-8"), feature_original)
+
+    def test_migrate_legacy_rolls_back_an_earlier_registry_on_write_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            feature_path = root / "features.md"
+            bug_path = root / "bugs.md"
+            write(feature_path, "feature original\n")
+            write(bug_path, "bug original\n")
+            migrations = [
+                MODULE.RegistryMigration(feature_path, "feature original\n", "feature updated\n"),
+                MODULE.RegistryMigration(bug_path, "bug original\n", "bug updated\n"),
+            ]
+            original_write_text = Path.write_text
+
+            def flaky_write(path: Path, data: str, *args, **kwargs):
+                if path == bug_path and data == "bug updated\n":
+                    raise OSError("simulated second write failure")
+                return original_write_text(path, data, *args, **kwargs)
+
+            with mock.patch.object(Path, "write_text", new=flaky_write):
+                with self.assertRaisesRegex(OSError, "simulated second write failure"):
+                    MODULE.write_registry_migrations(migrations)
+
+            self.assertEqual(feature_path.read_text(encoding="utf-8"), "feature original\n")
+            self.assertEqual(bug_path.read_text(encoding="utf-8"), "bug original\n")
+
+    def test_record_remains_strict_until_legacy_migration_completes(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            write(path, "# Features\n\n## F001: Legacy\n\nbody\n")
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F001.md",
+                plan_document("F001", "complete", created="2026-01-01"),
+            )
+
+            code, output = self.run_cli(
+                ["--root", str(root), "record", "--type", "feature", "--title", "Blocked"]
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("registry validation failed", output)
+
+            code, _ = self.run_cli(
+                ["--root", str(root), "migrate-legacy", "--write"]
+            )
+            self.assertEqual(code, 0)
+            code, output = self.run_cli(
+                ["--root", str(root), "record", "--type", "feature", "--title", "Allowed"]
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(output, "F002\n")
 
     def test_record_supports_qualified_numbering_contract(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

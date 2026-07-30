@@ -34,6 +34,9 @@ ENTRY_PATTERN = re.compile(
 STATUS_PATTERN = re.compile(r"^- status:\s*(\S+)\s*$", re.MULTILINE)
 CREATED_PATTERN = re.compile(r"^- created:\s*(\S+)\s*$", re.MULTILINE)
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+LEGACY_MISSING_ISSUE_PATTERN = re.compile(
+    r"^[^:]+:\s+([FB]\d+(?:@[A-Za-z0-9._-]+)?):\s+missing\s+(status|created)$"
+)
 
 
 @dataclass(frozen=True)
@@ -46,6 +49,21 @@ class HumanRequest:
     start: int
     end: int
     status_span: tuple[int, int] | None
+
+
+@dataclass(frozen=True)
+class MigrationField:
+    request_id: str
+    name: str
+    value: str | None
+    evidence: str
+
+
+@dataclass(frozen=True)
+class RegistryMigration:
+    path: Path
+    original: str
+    updated: str
 
 
 def valid_date(value: str) -> bool:
@@ -225,7 +243,11 @@ def record_request(
     content = path.read_text(encoding="utf-8") if path.exists() else ""
     _, issues = parse_registry(content, kind)
     if issues:
-        return 1, "registry validation failed; run human_requests.py validate"
+        return (
+            1,
+            "registry validation failed; run human_requests.py validate; "
+            "for legacy missing fields, run human_requests.py migrate-legacy --check",
+        )
     config = CONFIG[kind]
     entry_id = next_id(content, config["prefix"]) + id_qualifier(root)
     entry = render_entry(entry_id, clean_title, body, date, status)
@@ -314,6 +336,232 @@ def request_completion_error(root: Path, request_id: str) -> str | None:
     return None
 
 
+def is_legacy_missing_issue(issue: str) -> bool:
+    return LEGACY_MISSING_ISSUE_PATTERN.fullmatch(issue) is not None
+
+
+def infer_legacy_status(
+    request_id: str,
+    plans_by_source: dict[str, list[plan_index.PlanMetadata]],
+) -> tuple[str, str]:
+    deliverable = [
+        plan
+        for plan in plans_by_source.get(request_id, [])
+        if plan.status != "superseded"
+    ]
+    if not deliverable:
+        return "proposed", "no-deliverable-plan"
+    evidence = "plans:" + ",".join(
+        f"{plan.id}={plan.status}" for plan in sorted(deliverable, key=lambda item: item.id)
+    )
+    if all(plan.status == "complete" for plan in deliverable):
+        return "done", evidence
+    return "accepted", evidence
+
+
+def git_first_appearance_date(root: Path, path: Path, request_id: str) -> str | None:
+    try:
+        relative = path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return None
+    output = git_output(
+        root,
+        "log",
+        "--follow",
+        "--reverse",
+        "--format=%as",
+        f"-G^##[[:space:]]+{re.escape(request_id)}:",
+        "--",
+        relative,
+    )
+    if not output:
+        return None
+    candidate = output.splitlines()[0].strip()
+    return candidate if valid_date(candidate) else None
+
+
+def infer_legacy_created(
+    *,
+    root: Path,
+    path: Path,
+    request_id: str,
+    plans_by_source: dict[str, list[plan_index.PlanMetadata]],
+) -> tuple[str | None, str]:
+    related = plans_by_source.get(request_id, [])
+    if related:
+        earliest = min(plan.created for plan in related)
+        sources = ",".join(
+            plan.id for plan in sorted(related, key=lambda item: item.id)
+            if plan.created == earliest
+        )
+        return earliest, f"plan:{sources}"
+    git_date = git_first_appearance_date(root, path, request_id)
+    if git_date is not None:
+        return git_date, "git:first-appearance"
+    return None, "no-plan-or-git-evidence"
+
+
+def insert_missing_metadata(
+    raw: str,
+    *,
+    status: str | None,
+    created: str | None,
+) -> str:
+    if status is not None and created is not None:
+        heading_end = raw.find("\n")
+        insertion = f"\n\n- status: {status}\n- created: {created}"
+        if heading_end == -1:
+            return raw + insertion
+        return raw[:heading_end] + insertion + raw[heading_end:]
+    if status is not None:
+        created_match = CREATED_PATTERN.search(raw)
+        if created_match is None:
+            raise ValueError("cannot place missing status without one created field")
+        return raw[: created_match.start()] + f"- status: {status}\n" + raw[created_match.start() :]
+    if created is not None:
+        status_match = STATUS_PATTERN.search(raw)
+        if status_match is None:
+            raise ValueError("cannot place missing created without one status field")
+        return raw[: status_match.end()] + f"\n- created: {created}" + raw[status_match.end() :]
+    return raw
+
+
+def apply_entry_replacements(
+    content: str,
+    replacements: list[tuple[HumanRequest, str]],
+) -> str:
+    updated = content
+    for entry, raw in sorted(replacements, key=lambda item: item[0].start, reverse=True):
+        end = entry.start + len(entry.raw)
+        updated = updated[: entry.start] + raw + updated[end:]
+    return updated
+
+
+def prepare_legacy_migration(
+    root: Path,
+    kinds: list[str],
+) -> tuple[list[RegistryMigration], list[MigrationField], list[str]]:
+    loaded = [(kind, *load_kind(root, kind)) for kind in kinds]
+    blocking = [
+        issue
+        for _, _, _, _, issues in loaded
+        for issue in issues
+        if not is_legacy_missing_issue(issue)
+    ]
+    if blocking:
+        return [], [], blocking
+
+    affected = [
+        entry
+        for _, _, _, entries, _ in loaded
+        for entry in entries
+        if entry.status is None or entry.created is None
+    ]
+    if not affected:
+        return [], [], []
+
+    plans = plan_index.discover_plans(root / "docs" / "superplan" / "plans")
+    plan_index.validate_plans(plans, root)
+    plans_by_source: dict[str, list[plan_index.PlanMetadata]] = {}
+    for plan in plans:
+        if plan.source_id:
+            plans_by_source.setdefault(plan.source_id, []).append(plan)
+
+    migrations: list[RegistryMigration] = []
+    fields: list[MigrationField] = []
+    for kind, path, content, entries, _ in loaded:
+        replacements: list[tuple[HumanRequest, str]] = []
+        for entry in entries:
+            if entry.status is not None and entry.created is not None:
+                continue
+            status = None
+            created = None
+            if entry.status is None:
+                status, evidence = infer_legacy_status(entry.request_id, plans_by_source)
+                fields.append(MigrationField(entry.request_id, "status", status, evidence))
+            if entry.created is None:
+                created, evidence = infer_legacy_created(
+                    root=root,
+                    path=path,
+                    request_id=entry.request_id,
+                    plans_by_source=plans_by_source,
+                )
+                fields.append(MigrationField(entry.request_id, "created", created, evidence))
+            if entry.created is None and created is None:
+                continue
+            replacements.append(
+                (
+                    entry,
+                    insert_missing_metadata(entry.raw, status=status, created=created),
+                )
+            )
+        updated = apply_entry_replacements(content, replacements)
+        if updated != content:
+            _, updated_issues = parse_registry(updated, kind)
+            if updated_issues:
+                raise ValueError(
+                    f"{path}: migration would remain invalid: {'; '.join(updated_issues)}"
+                )
+            migrations.append(RegistryMigration(path, content, updated))
+    return migrations, fields, []
+
+
+def write_registry_migrations(migrations: list[RegistryMigration]) -> None:
+    for migration in migrations:
+        current = migration.path.read_text(encoding="utf-8")
+        if current != migration.original:
+            raise OSError(f"{migration.path}: registry changed during migration preflight")
+
+    written: list[RegistryMigration] = []
+    try:
+        for migration in migrations:
+            migration.path.write_text(migration.updated, encoding="utf-8")
+            written.append(migration)
+    except OSError as exc:
+        rollback_errors: list[str] = []
+        for migration in reversed(written):
+            try:
+                migration.path.write_text(migration.original, encoding="utf-8")
+            except OSError as rollback_exc:
+                rollback_errors.append(f"{migration.path}: {rollback_exc}")
+        detail = f"; rollback failed: {'; '.join(rollback_errors)}" if rollback_errors else ""
+        raise OSError(f"registry write failed: {exc}{detail}") from exc
+
+
+def run_legacy_migration(root: Path, kinds: list[str], *, write: bool) -> int:
+    try:
+        migrations, fields, blocking = prepare_legacy_migration(root, kinds)
+    except (OSError, ValueError) as exc:
+        print(f"legacy migration preflight failed: {exc}")
+        return 1
+    if blocking:
+        print("\n".join(blocking))
+        return 1
+    if not fields:
+        print("legacy registry is current")
+        return 0
+
+    for field in fields:
+        value = field.value if field.value is not None else "unresolved"
+        print(f"{field.request_id}\t{field.name}\t{value}\t{field.evidence}")
+    unresolved = [field for field in fields if field.value is None]
+    if unresolved:
+        print("legacy migration unresolved; no files written")
+        return 1
+
+    requests = len({field.request_id for field in fields})
+    if not write:
+        print(f"ready {requests} requests ({len(fields)} fields)")
+        return 0
+    try:
+        write_registry_migrations(migrations)
+    except OSError as exc:
+        print(f"legacy migration write failed: {exc}")
+        return 1
+    print(f"migrated {requests} requests ({len(fields)} fields)")
+    return 0
+
+
 def run(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -347,6 +595,15 @@ def run(argv: list[str] | None = None) -> int:
     validate_parser = subparsers.add_parser("validate", help="Validate request registries")
     validate_parser.add_argument("--type", choices=["all", *CONFIG], default="all")
 
+    migrate_parser = subparsers.add_parser(
+        "migrate-legacy",
+        help="Preview or write missing legacy status/created metadata",
+    )
+    migrate_parser.add_argument("--type", choices=["all", *CONFIG], default="all")
+    migrate_mode = migrate_parser.add_mutually_exclusive_group(required=True)
+    migrate_mode.add_argument("--check", action="store_true", help="Preview without writing")
+    migrate_mode.add_argument("--write", action="store_true", help="Write a fully resolved migration")
+
     args = parser.parse_args(argv)
     try:
         root = resolve_root(args.root)
@@ -365,6 +622,13 @@ def run(argv: list[str] | None = None) -> int:
         )
         print(message)
         return code
+
+    if args.command == "migrate-legacy":
+        return run_legacy_migration(
+            root,
+            selected_kinds(args.type),
+            write=args.write,
+        )
 
     if args.command in {"show", "set-status"}:
         kind = request_kind(args.id)
