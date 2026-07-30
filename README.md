@@ -26,7 +26,9 @@ profile at the pinned revision
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
-├── deps/superpowers/           # pinned runtime Superpowers skills
+├── deps/
+│   ├── superpowers/            # pinned runtime Superpowers skills
+│   └── superpowers.lock.json   # provenance, inventory, and integrity hashes
 ├── skills/
 │   ├── using-superplan/        # runtime scripts, references, and output assets
 │   ├── project-bootstrap-from-prd/
@@ -47,8 +49,16 @@ The short version:
 
 1. Install this repository as a plugin/skill bundle from the repository root.
 2. Restart Codex or open a new chat so plugin discovery loads the bundled skills.
-3. Run `init_workspace.py` in the target repository and use `$using-superplan`
-   as the entry skill.
+3. From the target repository, run:
+
+   ```bash
+   python3 <using-superplan-root>/scripts/init_workspace.py
+   ```
+
+4. Use `$using-superplan` as the entry skill.
+
+The Codex manifest adds `deps/superpowers/` as a supplemental skill path;
+default plugin discovery still loads the four Superplan skills under `skills/`.
 
 If your harness only supports raw skill installation, install all four skills
 under `skills/` and all 13 runtime skills under `deps/superpowers/`.
@@ -59,6 +69,76 @@ under `skills/` and all 13 runtime skills under `deps/superpowers/`.
 - `project-bootstrap-from-prd`: turns `docs/superplan/human/prd.md` into reviewed plans.
 - `feature-plan-and-delivery`: turns accepted feature entries into reviewed feature plans.
 - `bugfix-plan-and-delivery`: turns accepted bug entries into reviewed bugfix plans.
+
+## Versioned Workspaces
+
+Initialized repositories store a machine-readable marker inside the managed
+`AGENTS.md` block:
+
+```text
+<!-- superplan-workspace: schema=1; generated-by=0.2.0 -->
+```
+
+Check compatibility without writing:
+
+```bash
+python3 <using-superplan-root>/scripts/init_workspace.py --check
+```
+
+For an older/missing schema or stale generated artifacts, inspect workspace
+safety and migrate explicitly:
+
+```bash
+python3 <using-superplan-root>/scripts/init_workspace.py --migrate
+```
+
+Initialization and migration are offline and workspace-only. They never inspect
+or change user-level Superpowers profiles, skills, backups, or `~/.superplan`
+state. A newer schema is not downgraded.
+
+## Progressive State Discovery
+
+Normal feature and bug routing does not need to load the complete cumulative
+human registry. Use the deterministic request interface instead:
+
+```bash
+python3 <using-superplan-root>/scripts/human_requests.py validate
+python3 <using-superplan-root>/scripts/human_requests.py summary
+python3 <using-superplan-root>/scripts/human_requests.py list --type feature
+python3 <using-superplan-root>/scripts/human_requests.py show --id F012
+```
+
+It also provides `record` and forward-only `set-status` commands.
+`record_human_request.py` remains as a compatibility adapter.
+
+For structural plan work, validate all metadata and inspect compact candidates
+before loading related plan bodies:
+
+```bash
+python3 <using-superplan-root>/scripts/generate_plans_readme.py --catalog
+python3 <using-superplan-root>/scripts/generate_plans_readme.py --active
+python3 <using-superplan-root>/scripts/generate_plans_readme.py --source-id F012
+python3 <using-superplan-root>/scripts/generate_plans_readme.py --depends-on F012-01
+python3 <using-superplan-root>/scripts/generate_plans_readme.py --artifact path/to/file
+python3 <using-superplan-root>/scripts/generate_plans_readme.py --search "decision text"
+```
+
+Catalog and search commands validate the complete plan set first. Searches cover
+all statuses—including completed and superseded plans—unless explicitly
+filtered. Agents then read the changed plan and discovered related closure in
+full; compact metadata does not replace semantic review.
+
+## Runtime Scripts
+
+The top-level Python scripts are organized by workspace responsibility:
+
+- `init_workspace.py`: initialize, check, and migrate versioned workspaces.
+- `human_requests.py`: canonical human request query and mutation interface.
+- `record_human_request.py`: compatibility adapter for the previous recorder CLI.
+- `generate_plans_readme.py`: global plan validation, compact discovery, and index generation.
+- `sync_agents_guardrails.py`: low-level managed guardrail synchronization.
+- `workspace_paths.py`: shared Git/Superplan root resolution.
+- `superplan_version.py`: plugin and workspace schema version contract.
 
 ## Adaptive Workflow
 
@@ -82,8 +162,9 @@ subagents are reserved for genuinely independent slices or high-risk review.
 
 Human approval remains the gate out of `draft`. Approved work that stays queued
 is persisted as `approved`; work starting immediately can persist `in_progress`
-directly and refresh the index once. Full related-plan review is reserved for
-structural changes, while routine progress updates use local plan/index checks.
+directly and refresh the index once. Structural changes use exhaustive global
+validation plus compact candidate discovery followed by full-text review of the
+related closure; routine progress updates use local plan/index checks.
 Still-current safety, dependency, and test evidence is reused until relevant
 workspace, file, or environment state changes. The canonical verification matrix
 selects checks by artifact type and risk.
@@ -117,6 +198,12 @@ may use paths relative to the repository root.
 ## Development
 
 - Unit tests: `python3 -m unittest discover -s tests/scripts`
-- Codex plugin manifest validation: use the `plugin-creator` validator from your local Codex skill installation against the repository root
+- Bundled runtime/package contract: `python3 -m unittest discover -s tests/scripts -p 'test_bundled_superpowers.py'`
+- Skill validation: run `quick_validate.py` for all directories under `skills/` and `deps/superpowers/`
+
+The current local `plugin-creator` validator may reject the documented custom
+supplemental `skills` path because it still hard-codes `./skills/`; the bundled
+runtime test verifies the actual manifest path, synchronized versions, exact
+inventory, duplicate-name boundary, and dependency integrity.
 
 Repository license: `MIT`.
