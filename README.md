@@ -4,12 +4,11 @@ Superplan packages a plan-first delivery workflow for coding agents. It bundles 
 
 The main entry skill is `$using-superplan`. The other skills in `skills/` are bundled companions that it routes into.
 
-## Bundled GPT-5.6 Superpowers
+## Bundled Runtime
 
-For Codex running GPT-5.6, Superplan vendors the runtime skills from
-[`eagleagentic/superpowers-gpt-5.6`](https://github.com/eagleagentic/superpowers-gpt-5.6)
-profile at the pinned revision
-`aa973775906c8761a78019aaa21e4f0ccd987925` under `deps/superpowers`.
+Superplan includes its required Superpowers runtime directly under
+`deps/superpowers/`. Workspace initialization uses these repository files and
+does not download or install an external profile.
 
 - The lock artifact records the source revision, exact skill inventory, file
   hashes, and deterministic tree hash.
