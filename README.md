@@ -67,7 +67,7 @@ Initialized repositories store a machine-readable marker inside the managed
 `AGENTS.md` block:
 
 ```text
-<!-- superplan-workspace: schema=1; generated-by=0.3.2 -->
+<!-- superplan-workspace: schema=1; generated-by=0.4.0 -->
 ```
 
 Check compatibility without writing:
@@ -205,8 +205,14 @@ may use paths relative to the repository root.
 
 ## Development
 
-- Unit tests: `python3 -m unittest discover -s tests/scripts`
-- Plugin and Skill package contract: `python3 -m unittest discover -s tests/scripts -p 'test_plugin_package.py'`
-- Codex manifest validation: run the local `plugin-creator` validator against the repository root
+Superplan supports Python 3.10 through 3.14. Local development and CI use one
+authoritative, standard-library-only verification command:
+
+```bash
+python3 tools/verify_repo.py
+```
+
+Focused unittest modules remain useful while iterating; run the command above
+once after implementation stabilizes.
 
 Repository license: `MIT`.

@@ -105,3 +105,16 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-30
 
 审计当前 `deps/superpowers` 的 13 个 GPT-5.6 workflow skills，将真正改变 Superplan 行为边界的调试、worktree、测试和高风险验证规则精简后并入现有 route-owned references；删除重复于 GPT-5.6、项目 guardrails 或 Superplan delivery loop 的独立 skills、visual companion、依赖目录、lock 和 supplemental plugin discovery。最终只暴露现有四个 Superplan skills，详细规则按场景条件加载；已完成的 human/plan 历史记录保持不变。
+
+## F014: Harden Superplan state integrity and verification
+
+- status: done
+- created: 2026-07-31
+
+目标：优先解决高收益的正确性与交付风险。
+
+范围：统一校验 human registry 与 plan 状态关系；为 registry、workspace migration、guardrail 和 plan index 写入增加并发变化检测、原子替换与多文件失败恢复；提供一个标准库实现的仓库验证入口并接入最小 CI。
+
+验收：非法 human/plan 组合会被全局校验拒绝；关键写入不会静默覆盖并发修改或留下可避免的半完成状态；贡献者和 CI 使用同一条权威命令运行完整检查。
+
+非目标：不增加数据库或向量搜索，不继续压缩 skill 文案，不按文件大小机械拆分脚本，不在本次建设完整的模型行为评测平台。

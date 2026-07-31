@@ -17,6 +17,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+from human_registry import CONFIG as HUMAN_CONFIG
+from human_registry import HumanRequest, load_kind
+from safe_writes import TextUpdate, commit_text_updates, workspace_lock
 from workspace_paths import resolve_existing_workspace
 
 
@@ -55,8 +58,9 @@ SOURCE_ID_TYPES = {"feature": "F", "bugfix": "B"}
 SOURCE_FROM_ID = re.compile(r"^([FB]\d{3,})(?:-\d+)?$")
 QUALIFIED_SOURCE_FROM_ID = re.compile(r"^([FB]\d{3,})@([A-Za-z0-9._-]+)$")
 CREATED_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-HUMAN_ENTRY_PATTERN = re.compile(r"^##\s+([FB]\d{3,}(?:@[A-Za-z0-9._-]+)?):", re.MULTILINE)
-HUMAN_FILES = {"F": "features.md", "B": "bugs.md"}
+LEGACY_MISSING_HUMAN_FIELD = re.compile(r": missing (status|created)$")
+HUMAN_FILES = {config["prefix"]: config["filename"] for config in HUMAN_CONFIG.values()}
+HUMAN_KINDS = {config["prefix"]: kind for kind, config in HUMAN_CONFIG.items()}
 
 
 def source_id_from_plan_id(plan_id: str) -> str:
@@ -211,15 +215,22 @@ def discover_plans(plans_dir: Path) -> list[PlanMetadata]:
     )
 
 
-def load_human_ids(root: Path) -> dict[str, set[str]]:
-    human_dir = root / "docs" / "superplan" / "human"
-    result: dict[str, set[str]] = {}
-    for prefix, filename in HUMAN_FILES.items():
-        path = human_dir / filename
+def load_human_requests(
+    root: Path,
+    *,
+    allow_legacy_missing: bool = False,
+) -> dict[str, dict[str, HumanRequest]]:
+    result: dict[str, dict[str, HumanRequest]] = {}
+    for prefix, kind in HUMAN_KINDS.items():
+        path, _, entries, issues = load_kind(root, kind)
         if not path.exists():
             continue
-        content = path.read_text(encoding="utf-8")
-        result[prefix] = {match.group(1) for match in HUMAN_ENTRY_PATTERN.finditer(content)}
+        blocking = issues
+        if allow_legacy_missing:
+            blocking = [issue for issue in issues if not LEGACY_MISSING_HUMAN_FIELD.search(issue)]
+        if blocking:
+            raise ValueError("\n".join(blocking))
+        result[prefix] = {entry.request_id: entry for entry in entries}
     return result
 
 
@@ -251,7 +262,13 @@ def topological_order(plans: list[PlanMetadata]) -> list[PlanMetadata]:
     return result
 
 
-def validate_plans(plans: list[PlanMetadata], root: Path) -> None:
+def validate_plans(
+    plans: list[PlanMetadata],
+    root: Path,
+    *,
+    enforce_request_states: bool = True,
+    allow_legacy_missing: bool = False,
+) -> None:
     by_id: dict[str, PlanMetadata] = {}
     for plan in plans:
         if plan.id in by_id:
@@ -277,7 +294,11 @@ def validate_plans(plans: list[PlanMetadata], root: Path) -> None:
                         f"(status '{by_id[dep].status}')"
                     )
 
-    human_ids = load_human_ids(root)
+    human_requests = load_human_requests(
+        root,
+        allow_legacy_missing=allow_legacy_missing,
+    )
+    plans_by_source: dict[str, list[PlanMetadata]] = {}
     for plan in plans:
         prefix = SOURCE_ID_TYPES.get(plan.plan_type)
         if not prefix:
@@ -288,7 +309,7 @@ def validate_plans(plans: list[PlanMetadata], root: Path) -> None:
                 f"{plan.path}: {plan.plan_type} source must be '{human_file}', "
                 f"got '{plan.source}'"
             )
-        known = human_ids.get(prefix)
+        known = human_requests.get(prefix)
         if known is None:
             raise ValueError(f"{plan.path}: source registry '{human_file}' does not exist")
         if plan.source_id not in known:
@@ -296,6 +317,36 @@ def validate_plans(plans: list[PlanMetadata], root: Path) -> None:
                 f"{plan.path}: source entry '{plan.source_id}' (from id '{plan.id}') "
                 f"not found in {human_file}"
             )
+        plans_by_source.setdefault(plan.source_id, []).append(plan)
+
+    if not enforce_request_states:
+        return
+
+    for requests in human_requests.values():
+        for request in requests.values():
+            related = plans_by_source.get(request.request_id, [])
+            deliverable = [plan for plan in related if plan.status != "superseded"]
+            if request.status == "proposed" and deliverable:
+                details = ", ".join(
+                    f"{plan.id} ({plan.status})" for plan in sorted(deliverable, key=lambda item: item.id)
+                )
+                raise ValueError(
+                    f"{request.request_id}: proposed request has non-superseded plans: {details}"
+                )
+            if request.status != "done":
+                continue
+            if not deliverable:
+                raise ValueError(
+                    f"{request.request_id}: done request has no non-superseded related plans"
+                )
+            blockers = [plan for plan in deliverable if plan.status != "complete"]
+            if blockers:
+                details = ", ".join(
+                    f"{plan.id} ({plan.status})" for plan in sorted(blockers, key=lambda item: item.id)
+                )
+                raise ValueError(
+                    f"{request.request_id}: done request has incomplete related plans: {details}"
+                )
 
 
 def render_status_summary(plans: Iterable[PlanMetadata]) -> list[str]:
@@ -527,15 +578,34 @@ def run(argv: list[str] | None = None) -> int:
         print(render_catalog(selected, plans_dir), end="")
         return 0
 
+    if args.write:
+        try:
+            with workspace_lock(root):
+                generated = generate_readme(root, plans_dir)
+                original = (
+                    readme_path.read_text(encoding="utf-8")
+                    if readme_path.exists()
+                    else None
+                )
+                commit_text_updates([TextUpdate(readme_path, original, generated)])
+        except (OSError, ValueError) as exc:
+            print(exc)
+            return 1
+        print(f"updated {readme_path}")
+
+        if args.check:
+            current = readme_path.read_text(encoding="utf-8")
+            if current != generated:
+                print(f"stale {readme_path}")
+                return 1
+            print(f"ok {readme_path}")
+        return 0
+
     try:
         generated = generate_readme(root, plans_dir)
-    except ValueError as exc:
+    except (OSError, ValueError) as exc:
         print(exc)
         return 1
-
-    if args.write:
-        readme_path.write_text(generated, encoding="utf-8")
-        print(f"updated {readme_path}")
 
     if args.check:
         current = readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
@@ -543,9 +613,6 @@ def run(argv: list[str] | None = None) -> int:
             print(f"stale {readme_path}")
             return 1
         print(f"ok {readme_path}")
-        return 0
-
-    if args.write:
         return 0
 
     print(generated, end="")

@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 
+from safe_writes import TextUpdate, commit_text_updates, workspace_lock
 from superplan_version import SUPERPLAN_VERSION, WORKSPACE_SCHEMA_VERSION
 from workspace_paths import resolve_initialization_root
 
@@ -50,19 +51,20 @@ def _load(name: str) -> ModuleType:
     return module
 
 
-def scaffold_human_docs(root: Path) -> list[str]:
-    created: list[str] = []
+def human_doc_updates(root: Path) -> list[TextUpdate]:
+    updates: list[TextUpdate] = []
     human_dir = root / "docs" / "superplan" / "human"
-    human_dir.mkdir(parents=True, exist_ok=True)
     for filename in HUMAN_FILES:
         path = human_dir / filename
         if not path.exists():
-            path.write_text(
-                (HUMAN_ASSETS_DIR / filename).read_text(encoding="utf-8"),
-                encoding="utf-8",
+            updates.append(
+                TextUpdate(
+                    path=path,
+                    original=None,
+                    updated=(HUMAN_ASSETS_DIR / filename).read_text(encoding="utf-8"),
+                )
             )
-            created.append(path.as_posix())
-    return created
+    return updates
 
 
 def _normalized_generator_marker(text: str) -> str:
@@ -188,22 +190,31 @@ def inspect_workspace(root: Path) -> WorkspaceCheck:
 def _write_workspace(root: Path) -> int:
     sync = _load("sync_agents_guardrails")
     readme = _load("generate_plans_readme")
-    agents_path = root / "AGENTS.md"
-    existing_agents = agents_path.read_text(encoding="utf-8") if agents_path.exists() else ""
-    plans_dir = root / "docs" / "superplan" / "plans"
-    readme_path = plans_dir / "README.md"
-    existing_readme = readme_path.read_text(encoding="utf-8") if readme_path.exists() else ""
     try:
-        synced_agents = sync.render_synced(existing_agents, sync.load_asset())
-        generated_readme = readme.generate_readme(root, plans_dir)
+        with workspace_lock(root):
+            agents_path = root / "AGENTS.md"
+            existing_agents = (
+                agents_path.read_text(encoding="utf-8") if agents_path.exists() else None
+            )
+            plans_dir = root / "docs" / "superplan" / "plans"
+            readme_path = plans_dir / "README.md"
+            existing_readme = (
+                readme_path.read_text(encoding="utf-8") if readme_path.exists() else None
+            )
+            synced_agents = sync.render_synced(existing_agents or "", sync.load_asset())
+            generated_readme = readme.generate_readme(root, plans_dir)
+            human_updates = human_doc_updates(root)
+            updates = [
+                *human_updates,
+                TextUpdate(agents_path, existing_agents, synced_agents),
+                TextUpdate(readme_path, existing_readme, generated_readme),
+            ]
+            commit_text_updates(updates)
     except (OSError, ValueError) as exc:
         print(f"workspace migration preflight failed: {exc}")
         return CHECK_MALFORMED
 
-    created_docs = scaffold_human_docs(root)
-    agents_path.write_text(synced_agents, encoding="utf-8")
-    plans_dir.mkdir(parents=True, exist_ok=True)
-    readme_path.write_text(generated_readme, encoding="utf-8")
+    created_docs = [update.path.as_posix() for update in human_updates]
     agents_state = "updated" if synced_agents != existing_agents else "unchanged"
     plans_state = "updated" if generated_readme != existing_readme else "unchanged"
 

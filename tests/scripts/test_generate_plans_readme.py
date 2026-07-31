@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
@@ -22,6 +23,16 @@ SPEC.loader.exec_module(MODULE)
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def registry(request_id: str, status: str = "accepted") -> str:
+    noun = "Features" if request_id.startswith("F") else "Bugs"
+    return (
+        f"# {noun}\n\n"
+        f"## {request_id}: Known\n\n"
+        f"- status: {status}\n"
+        "- created: 2026-01-01\n"
+    )
 
 
 def plan(
@@ -123,6 +134,26 @@ class GeneratePlansReadmeTests(unittest.TestCase):
 
             self.assertEqual(MODULE.run(["--root", str(root), "--write", "--check"]), 1)
 
+    def test_write_rejects_readme_changed_after_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            readme = plans_dir / "README.md"
+            write(readme, "original\n")
+            write(plans_dir / "01-first.md", plan(plan_id="01", title="First", order=1))
+            real_commit = MODULE.commit_text_updates
+
+            def conflicting_commit(updates):
+                readme.write_text("external\n", encoding="utf-8")
+                return real_commit(updates)
+
+            with mock.patch.object(MODULE, "commit_text_updates", side_effect=conflicting_commit):
+                code, output = self.run_cli(["--root", str(root), "--write"])
+
+            self.assertEqual(code, 1)
+            self.assertIn("changed since preflight", output)
+            self.assertEqual(readme.read_text(encoding="utf-8"), "external\n")
+
     def test_check_fails_on_unknown_status(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
@@ -164,18 +195,114 @@ order: 1
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
             human = root / "docs" / "superplan" / "human" / "features.md"
-            write(human, "# Features\n\n## F001: Known\n")
+            write(human, registry("F001"))
             write(plans_dir / "features" / "F001-01.md", plan(plan_id="F001-01", title="Feat", plan_type="feature", status="draft"))
             self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 0)
 
             write(plans_dir / "features" / "F999-01.md", plan(plan_id="F999-01", title="Feat2", plan_type="feature", status="draft"))
             self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 1)
 
+    def test_feature_plan_rejects_malformed_source_registry(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                "# Features\n\n## F001: Missing metadata\n",
+            )
+            write(
+                plans_dir / "features" / "F001.md",
+                plan(plan_id="F001", title="Feat", plan_type="feature"),
+            )
+
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+
+            self.assertEqual(code, 1)
+            self.assertIn("features.md: F001: missing status", output)
+            self.assertIn("features.md: F001: missing created", output)
+
+    def test_proposed_request_rejects_non_superseded_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", "proposed"),
+            )
+            write(
+                plans_dir / "features" / "F001.md",
+                plan(plan_id="F001", title="Feat", plan_type="feature"),
+            )
+
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+
+            self.assertEqual(code, 1)
+            self.assertIn("F001: proposed request has non-superseded plans: F001 (draft)", output)
+
+    def test_done_request_requires_complete_deliverable_plans(self) -> None:
+        cases = [
+            ([], "no non-superseded related plans"),
+            (["complete", "in_progress"], "incomplete related plans: F001-02 (in_progress)"),
+        ]
+        for statuses, expected in cases:
+            with self.subTest(statuses=statuses), tempfile.TemporaryDirectory() as tempdir:
+                root = Path(tempdir)
+                plans_dir = self._plans_dir(root)
+                write(
+                    root / "docs" / "superplan" / "human" / "features.md",
+                    registry("F001", "done"),
+                )
+                for index, status in enumerate(statuses, start=1):
+                    write(
+                        plans_dir / "features" / f"F001-{index:02d}.md",
+                        plan(
+                            plan_id=f"F001-{index:02d}",
+                            title=f"Slice {index}",
+                            plan_type="feature",
+                            status=status,
+                        ),
+                    )
+
+                code, output = self.run_cli(["--root", str(root), "--catalog"])
+
+                self.assertEqual(code, 1)
+                self.assertIn(f"F001: done request has {expected}", output)
+
+    def test_valid_transitional_and_terminal_request_states(self) -> None:
+        cases = [
+            ("accepted", ["complete"]),
+            ("done", ["complete", "complete"]),
+            ("proposed", ["superseded"]),
+        ]
+        for request_status, plan_statuses in cases:
+            with self.subTest(request_status=request_status), tempfile.TemporaryDirectory() as tempdir:
+                root = Path(tempdir)
+                plans_dir = self._plans_dir(root)
+                write(
+                    root / "docs" / "superplan" / "human" / "features.md",
+                    registry("F001", request_status),
+                )
+                for index, status in enumerate(plan_statuses, start=1):
+                    write(
+                        plans_dir / "features" / f"F001-{index:02d}.md",
+                        plan(
+                            plan_id=f"F001-{index:02d}",
+                            title=f"Slice {index}",
+                            plan_type="feature",
+                            status=status,
+                        ),
+                    )
+
+                self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
+
     def test_feature_source_file_must_match_type_and_exist(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
-            write(root / "docs" / "superplan" / "human" / "features.md", "# Features\n\n## F001: Known\n")
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001"),
+            )
             write(
                 plans_dir / "features" / "F001.md",
                 plan(
@@ -238,7 +365,7 @@ order: 1
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
             human = root / "docs" / "superplan" / "human" / "features.md"
-            write(human, "# Features\n\n## F001: Known\n")
+            write(human, registry("F001"))
             write(plans_dir / "features" / "f001" / "F001-01.md", plan(plan_id="F001-01", title="A", plan_type="feature", status="complete"))
             write(plans_dir / "features" / "f001" / "F001-02.md", plan(plan_id="F001-02", title="B", plan_type="feature", status="draft"))
 
@@ -254,7 +381,7 @@ order: 1
             plans_dir = self._plans_dir(root)
             write(
                 root / "docs" / "superplan" / "human" / "features.md",
-                "# Features\n\n## F1000: Known\n",
+                registry("F1000"),
             )
             write(
                 plans_dir / "features" / "F1000.md",
@@ -267,7 +394,7 @@ order: 1
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
             human = root / "docs" / "superplan" / "human" / "features.md"
-            write(human, "# Features\n\n## F001@feature-safe-01-branch: Known\n")
+            write(human, registry("F001@feature-safe-01-branch"))
             write(
                 plans_dir / "features" / "F001@feature-safe-01-branch.md",
                 plan(
@@ -287,7 +414,7 @@ order: 1
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
             human = root / "docs" / "superplan" / "human" / "features.md"
-            write(human, "# Features\n\n## F001@feature-safe-01-branch: Known\n")
+            write(human, registry("F001@feature-safe-01-branch"))
             write(
                 plans_dir / "features" / "F001@feature-safe-01-branch-01.md",
                 plan(
@@ -305,7 +432,7 @@ order: 1
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
             human = root / "docs" / "superplan" / "human" / "features.md"
-            write(human, "# Features\n\n## F001@other-branch: Known\n")
+            write(human, registry("F001@other-branch"))
             write(
                 plans_dir / "features" / "F001@feature-safe-01-branch.md",
                 plan(
@@ -323,7 +450,7 @@ order: 1
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
             human = root / "docs" / "superplan" / "human" / "features.md"
-            write(human, "# Features\n\n## F001: Known\n")
+            write(human, registry("F001"))
             write(plans_dir / "features" / "F001-01.md", plan(plan_id="F001-01", title="A", plan_type="feature", status="draft"))
 
             generated = MODULE.generate_readme(root, plans_dir)
@@ -346,7 +473,10 @@ order: 1
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
             plans_dir = self._plans_dir(root)
-            write(root / "docs" / "superplan" / "human" / "features.md", "# Features\n\n## F001: Known\n")
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001"),
+            )
             write(plans_dir / "features" / "F001-01.md", plan(plan_id="F001-01", title="Done slice", plan_type="feature", status="complete", source="docs/superplan/human/features.md"))
             write(plans_dir / "features" / "F001-02.md", plan(plan_id="F001-02", title="Active slice", plan_type="feature", status="in_progress", depends_on='["F001-01"]', source="docs/superplan/human/features.md"))
 

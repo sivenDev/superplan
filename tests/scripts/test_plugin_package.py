@@ -54,7 +54,7 @@ class PluginPackageTests(unittest.TestCase):
         claude = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
         marketplace = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
 
-        self.assertEqual(version, "0.3.2")
+        self.assertEqual(version, "0.4.0")
         self.assertEqual(load_version_module().WORKSPACE_SCHEMA_VERSION, 1)
         self.assertNotIn("skills", codex)
         self.assertEqual(codex["version"], version)
@@ -117,6 +117,20 @@ class PluginPackageTests(unittest.TestCase):
             if "superpowers" in line.lower() or "superworkflow" in line.lower()
         }
         self.assertEqual(stale, {})
+
+    def test_repository_verification_entry_is_authoritative(self) -> None:
+        command = "python3 tools/verify_repo.py"
+        self.assertTrue((ROOT / "tools" / "verify_repo.py").is_file())
+        self.assertIn(command, (ROOT / "README.md").read_text(encoding="utf-8"))
+        self.assertIn(
+            command,
+            (ROOT / "skills" / "using-superplan" / "references" / "verification-matrix.md").read_text(
+                encoding="utf-8"
+            ),
+        )
+        workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        self.assertEqual(workflow.count(command), 1)
+        self.assertIn('python-version: ["3.10", "3.14"]', workflow)
 
 
 if __name__ == "__main__":

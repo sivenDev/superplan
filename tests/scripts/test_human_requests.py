@@ -399,14 +399,17 @@ class HumanRequestsTests(unittest.TestCase):
                 MODULE.RegistryMigration(feature_path, "feature original\n", "feature updated\n"),
                 MODULE.RegistryMigration(bug_path, "bug original\n", "bug updated\n"),
             ]
-            original_write_text = Path.write_text
+            original_replace = os.replace
+            failed = False
 
-            def flaky_write(path: Path, data: str, *args, **kwargs):
-                if path == bug_path and data == "bug updated\n":
+            def flaky_replace(source, destination):
+                nonlocal failed
+                if Path(destination) == bug_path and not failed:
+                    failed = True
                     raise OSError("simulated second write failure")
-                return original_write_text(path, data, *args, **kwargs)
+                return original_replace(source, destination)
 
-            with mock.patch.object(Path, "write_text", new=flaky_write):
+            with mock.patch("safe_writes.os.replace", side_effect=flaky_replace):
                 with self.assertRaisesRegex(OSError, "simulated second write failure"):
                     MODULE.write_registry_migrations(migrations)
 
@@ -462,6 +465,43 @@ class HumanRequestsTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(output, "F004\n")
             self.assertIn("## F004: Fourth", (root / "docs" / "superplan" / "human" / "features.md").read_text(encoding="utf-8"))
+
+    def test_competing_record_processes_preserve_both_requests(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            registry_path = root / "docs" / "superplan" / "human" / "features.md"
+            write(registry_path, "# Features\n")
+            commands = [
+                [
+                    sys.executable,
+                    str(MODULE_PATH),
+                    "--root",
+                    str(root),
+                    "record",
+                    "--type",
+                    "feature",
+                    "--title",
+                    title,
+                    "--date",
+                    "2026-07-31",
+                ]
+                for title in ("Concurrent A", "Concurrent B")
+            ]
+
+            processes = [
+                subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                for command in commands
+            ]
+            results = [process.communicate(timeout=10) for process in processes]
+
+            for process, (_, stderr) in zip(processes, results):
+                self.assertEqual(process.returncode, 0, msg=stderr)
+            self.assertEqual({stdout.strip() for stdout, _ in results}, {"F001", "F002"})
+            content = registry_path.read_text(encoding="utf-8")
+            self.assertIn("## F001:", content)
+            self.assertIn("## F002:", content)
+            self.assertIn("Concurrent A", content)
+            self.assertIn("Concurrent B", content)
 
     def test_numbering_continues_past_three_digits(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

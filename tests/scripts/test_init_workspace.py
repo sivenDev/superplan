@@ -62,12 +62,18 @@ class InitWorkspaceTests(unittest.TestCase):
             root = Path(tempdir)
             initialized_workspace(root)
             features = root / "docs" / "superplan" / "human" / "features.md"
-            features.write_text("# Features\n\n## F001: Existing\n", encoding="utf-8")
+            features.write_text(
+                "# Features\n\n## F001: Existing\n\n- status: proposed\n- created: 2026-07-31\n",
+                encoding="utf-8",
+            )
             agents = root / "AGENTS.md"
             agents.write_text(agents.read_text(encoding="utf-8") + "\n## Custom\nkeep me\n", encoding="utf-8")
 
             self.assertEqual(MODULE.run(["--root", str(root)]), 0)
-            self.assertEqual(features.read_text(encoding="utf-8"), "# Features\n\n## F001: Existing\n")
+            self.assertEqual(
+                features.read_text(encoding="utf-8"),
+                "# Features\n\n## F001: Existing\n\n- status: proposed\n- created: 2026-07-31\n",
+            )
             self.assertIn("## Custom\nkeep me\n", agents.read_text(encoding="utf-8"))
             self.assertEqual(agents.read_text(encoding="utf-8").count(SYNC.START_MARKER), 1)
 
@@ -206,6 +212,25 @@ class InitWorkspaceTests(unittest.TestCase):
 
             self.assertEqual(MODULE.run(["--root", str(root), "--migrate"]), 3)
             self.assertEqual(snapshot(root), before)
+
+    def test_init_rolls_back_earlier_files_when_a_later_replace_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            safe_writes = MODULE._load("safe_writes")
+            real_replace = safe_writes.os.replace
+            replace_count = 0
+
+            def fail_second_replace(source: Path, destination: Path) -> None:
+                nonlocal replace_count
+                replace_count += 1
+                if replace_count == 2:
+                    raise OSError("injected replacement failure")
+                real_replace(source, destination)
+
+            with patch.object(safe_writes.os, "replace", side_effect=fail_second_replace):
+                self.assertEqual(MODULE.run(["--root", str(root)]), 3)
+
+            self.assertEqual(snapshot(root), {})
 
 
 if __name__ == "__main__":

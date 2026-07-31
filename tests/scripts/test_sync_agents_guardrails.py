@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[2] / "skills" / "using-superplan" / "scripts"
@@ -76,6 +77,22 @@ class SyncAgentsGuardrailsTests(unittest.TestCase):
             self.assertEqual(MODULE.run(["--root", str(root), "--check"]), 1)
             self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 0)
             self.assertEqual(MODULE.run(["--root", str(root), "--check"]), 0)
+
+    def test_write_rejects_agents_changed_after_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            agents = root / "AGENTS.md"
+            write(agents, "original\n")
+            real_commit = MODULE.commit_text_updates
+
+            def change_then_commit(updates: list[MODULE.TextUpdate]) -> list[Path]:
+                write(agents, "external change\n")
+                return real_commit(updates)
+
+            with patch.object(MODULE, "commit_text_updates", side_effect=change_then_commit):
+                self.assertEqual(MODULE.run(["--root", str(root), "--write"]), 1)
+
+            self.assertEqual(agents.read_text(encoding="utf-8"), "external change\n")
 
 
 if __name__ == "__main__":

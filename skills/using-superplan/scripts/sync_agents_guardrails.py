@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from safe_writes import TextUpdate, commit_text_updates, workspace_lock
 from superplan_version import SUPERPLAN_VERSION, WORKSPACE_SCHEMA_VERSION
 from workspace_paths import resolve_existing_workspace
 
@@ -69,14 +70,21 @@ def run(argv: list[str] | None = None) -> int:
         print(exc)
         return 1
     agents_path = root / "AGENTS.md"
-    existing = agents_path.read_text(encoding="utf-8") if agents_path.exists() else ""
-    managed_block = load_asset()
-    synced = render_synced(existing, managed_block)
 
     if args.write:
-        agents_path.write_text(synced, encoding="utf-8")
+        try:
+            with workspace_lock(root):
+                original = agents_path.read_text(encoding="utf-8") if agents_path.exists() else None
+                synced = render_synced(original or "", load_asset())
+                commit_text_updates([TextUpdate(agents_path, original, synced)])
+        except (OSError, ValueError) as exc:
+            print(f"guardrail sync failed: {exc}")
+            return 1
         print(f"updated {agents_path}")
         return 0
+
+    existing = agents_path.read_text(encoding="utf-8") if agents_path.exists() else ""
+    synced = render_synced(existing, load_asset())
 
     if args.check:
         if existing != synced:

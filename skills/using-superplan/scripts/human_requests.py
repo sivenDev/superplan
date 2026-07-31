@@ -12,43 +12,28 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import generate_plans_readme as plan_index
+from human_registry import (
+    ACTIVE_STATUSES,
+    CONFIG,
+    CREATED_PATTERN,
+    ENTRY_PATTERN,
+    HUMAN_STATUSES,
+    INITIAL_STATUSES,
+    STATUS_PATTERN,
+    STATUS_TRANSITIONS,
+    HumanRequest,
+    human_path,
+    load_kind,
+    parse_registry,
+    valid_date,
+)
+from safe_writes import TextUpdate, commit_text_updates, workspace_lock
 from workspace_paths import resolve_existing_workspace
 
 
-CONFIG = {
-    "feature": {"filename": "features.md", "prefix": "F", "heading": "# Features"},
-    "bug": {"filename": "bugs.md", "prefix": "B", "heading": "# Bugs"},
-}
-INITIAL_STATUSES = ("proposed", "accepted")
-HUMAN_STATUSES = ("proposed", "accepted", "done")
-ACTIVE_STATUSES = ("proposed", "accepted")
-STATUS_TRANSITIONS = {
-    "proposed": "accepted",
-    "accepted": "done",
-    "done": None,
-}
-ENTRY_PATTERN = re.compile(
-    r"^##\s+([FB])(\d+)(@[A-Za-z0-9._-]+)?:\s*(.*)$",
-    re.MULTILINE,
-)
-STATUS_PATTERN = re.compile(r"^- status:\s*(\S+)\s*$", re.MULTILINE)
-CREATED_PATTERN = re.compile(r"^- created:\s*(\S+)\s*$", re.MULTILINE)
-DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 LEGACY_MISSING_ISSUE_PATTERN = re.compile(
     r"^[^:]+:\s+([FB]\d+(?:@[A-Za-z0-9._-]+)?):\s+missing\s+(status|created)$"
 )
-
-
-@dataclass(frozen=True)
-class HumanRequest:
-    request_id: str
-    title: str
-    status: str | None
-    created: str | None
-    raw: str
-    start: int
-    end: int
-    status_span: tuple[int, int] | None
 
 
 @dataclass(frozen=True)
@@ -64,81 +49,6 @@ class RegistryMigration:
     path: Path
     original: str
     updated: str
-
-
-def valid_date(value: str) -> bool:
-    if DATE_PATTERN.fullmatch(value) is None:
-        return False
-    try:
-        datetime.date.fromisoformat(value)
-    except ValueError:
-        return False
-    return True
-
-
-def human_path(root: Path, kind: str) -> Path:
-    return root / "docs" / "superplan" / "human" / CONFIG[kind]["filename"]
-
-
-def parse_registry(content: str, kind: str) -> tuple[list[HumanRequest], list[str]]:
-    matches = list(ENTRY_PATTERN.finditer(content))
-    prefix = CONFIG[kind]["prefix"]
-    filename = CONFIG[kind]["filename"]
-    entries: list[HumanRequest] = []
-    issues: list[str] = []
-    counts: Counter[str] = Counter()
-
-    for index, match in enumerate(matches):
-        start = match.start()
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(content)
-        raw = content[start:end].rstrip("\n")
-        request_id = f"{match.group(1)}{match.group(2)}{match.group(3) or ''}"
-        title = match.group(4).strip()
-        counts[request_id] += 1
-        if match.group(1) != prefix:
-            issues.append(f"{filename}: {request_id}: wrong id prefix for {kind}")
-        if not title:
-            issues.append(f"{filename}: {request_id}: missing title")
-
-        status_matches = list(STATUS_PATTERN.finditer(raw))
-        created_matches = list(CREATED_PATTERN.finditer(raw))
-        status = status_matches[0].group(1) if len(status_matches) == 1 else None
-        created = created_matches[0].group(1) if len(created_matches) == 1 else None
-        status_span = None
-        if len(status_matches) == 1:
-            value_start, value_end = status_matches[0].span(1)
-            status_span = (start + value_start, start + value_end)
-        elif not status_matches:
-            issues.append(f"{filename}: {request_id}: missing status")
-        else:
-            issues.append(f"{filename}: {request_id}: multiple status fields")
-        if status is not None and status not in HUMAN_STATUSES:
-            issues.append(f"{filename}: {request_id}: unknown status '{status}'")
-
-        if not created_matches:
-            issues.append(f"{filename}: {request_id}: missing created")
-        elif len(created_matches) > 1:
-            issues.append(f"{filename}: {request_id}: multiple created fields")
-        elif created is not None and not valid_date(created):
-            issues.append(f"{filename}: {request_id}: invalid created '{created}'")
-
-        entries.append(
-            HumanRequest(
-                request_id=request_id,
-                title=title,
-                status=status,
-                created=created,
-                raw=raw,
-                start=start,
-                end=end,
-                status_span=status_span,
-            )
-        )
-
-    for request_id, count in sorted(counts.items()):
-        if count > 1:
-            issues.append(f"{filename}: duplicate id {request_id} ({count} entries)")
-    return entries, issues
 
 
 def next_id(content: str, prefix: str) -> str:
@@ -239,21 +149,26 @@ def record_request(
         return 1, "error: --title must not be empty"
     if not valid_date(date):
         return 1, f"error: invalid date '{date}', expected YYYY-MM-DD"
-    path = human_path(root, kind)
-    content = path.read_text(encoding="utf-8") if path.exists() else ""
-    _, issues = parse_registry(content, kind)
-    if issues:
-        return (
-            1,
-            "registry validation failed; run human_requests.py validate; "
-            "for legacy missing fields, run human_requests.py migrate-legacy --check",
-        )
-    config = CONFIG[kind]
-    entry_id = next_id(content, config["prefix"]) + id_qualifier(root)
-    entry = render_entry(entry_id, clean_title, body, date, status)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(append_entry(content, config["heading"], entry), encoding="utf-8")
-    return 0, entry_id
+    try:
+        with workspace_lock(root):
+            path = human_path(root, kind)
+            original = path.read_text(encoding="utf-8") if path.exists() else None
+            content = original or ""
+            _, issues = parse_registry(content, kind)
+            if issues:
+                return (
+                    1,
+                    "registry validation failed; run human_requests.py validate; "
+                    "for legacy missing fields, run human_requests.py migrate-legacy --check",
+                )
+            config = CONFIG[kind]
+            entry_id = next_id(content, config["prefix"]) + id_qualifier(root)
+            entry = render_entry(entry_id, clean_title, body, date, status)
+            updated = append_entry(content, config["heading"], entry)
+            commit_text_updates([TextUpdate(path, original, updated)])
+            return 0, entry_id
+    except OSError as exc:
+        return 1, f"request write failed: {exc}"
 
 
 def add_record_arguments(parser: argparse.ArgumentParser) -> None:
@@ -303,13 +218,6 @@ def selected_kinds(kind: str) -> list[str]:
     return list(CONFIG) if kind == "all" else [kind]
 
 
-def load_kind(root: Path, kind: str) -> tuple[Path, str, list[HumanRequest], list[str]]:
-    path = human_path(root, kind)
-    content = path.read_text(encoding="utf-8") if path.exists() else ""
-    entries, issues = parse_registry(content, kind)
-    return path, content, entries, issues
-
-
 def request_kind(request_id: str) -> str | None:
     if request_id.startswith("F"):
         return "feature"
@@ -320,7 +228,7 @@ def request_kind(request_id: str) -> str | None:
 
 def request_completion_error(root: Path, request_id: str) -> str | None:
     plans = plan_index.discover_plans(root / "docs" / "superplan" / "plans")
-    plan_index.validate_plans(plans, root)
+    plan_index.validate_plans(plans, root, enforce_request_states=False)
     deliverable = [
         plan
         for plan in plans
@@ -334,6 +242,35 @@ def request_completion_error(root: Path, request_id: str) -> str | None:
         details = ", ".join(f"{plan.id} ({plan.status})" for plan in blockers)
         return f"{request_id}: incomplete related plans: {details}"
     return None
+
+
+def set_request_status(root: Path, request_id: str, status: str) -> tuple[int, str]:
+    kind = request_kind(request_id)
+    if kind is None:
+        return 1, f"invalid request id '{request_id}'"
+    try:
+        with workspace_lock(root):
+            path, content, entries, issues = load_kind(root, kind)
+            matches = [entry for entry in entries if entry.request_id == request_id]
+            if len(matches) != 1:
+                return 1, f"request id '{request_id}' matched {len(matches)} entries"
+            if issues:
+                return 1, "\n".join(issues)
+            entry = matches[0]
+            if entry.status is None or entry.status_span is None:
+                return 1, f"{request_id}: status is missing or ambiguous"
+            if status != entry.status and STATUS_TRANSITIONS.get(entry.status) != status:
+                return 1, f"{request_id}: invalid status transition {entry.status} -> {status}"
+            if entry.status == "accepted" and status == "done":
+                completion_error = request_completion_error(root, request_id)
+                if completion_error is not None:
+                    return 1, completion_error
+            start, end = entry.status_span
+            updated = content[:start] + status + content[end:]
+            commit_text_updates([TextUpdate(path, content, updated)])
+            return 0, f"{request_id}\t{status}"
+    except (OSError, ValueError) as exc:
+        return 1, f"{request_id}: status write failed: {exc}"
 
 
 def is_legacy_missing_issue(issue: str) -> bool:
@@ -461,7 +398,12 @@ def prepare_legacy_migration(
         return [], [], []
 
     plans = plan_index.discover_plans(root / "docs" / "superplan" / "plans")
-    plan_index.validate_plans(plans, root)
+    plan_index.validate_plans(
+        plans,
+        root,
+        enforce_request_states=False,
+        allow_legacy_missing=True,
+    )
     plans_by_source: dict[str, list[plan_index.PlanMetadata]] = {}
     for plan in plans:
         if plan.source_id:
@@ -507,28 +449,15 @@ def prepare_legacy_migration(
 
 
 def write_registry_migrations(migrations: list[RegistryMigration]) -> None:
-    for migration in migrations:
-        current = migration.path.read_text(encoding="utf-8")
-        if current != migration.original:
-            raise OSError(f"{migration.path}: registry changed during migration preflight")
-
-    written: list[RegistryMigration] = []
-    try:
-        for migration in migrations:
-            migration.path.write_text(migration.updated, encoding="utf-8")
-            written.append(migration)
-    except OSError as exc:
-        rollback_errors: list[str] = []
-        for migration in reversed(written):
-            try:
-                migration.path.write_text(migration.original, encoding="utf-8")
-            except OSError as rollback_exc:
-                rollback_errors.append(f"{migration.path}: {rollback_exc}")
-        detail = f"; rollback failed: {'; '.join(rollback_errors)}" if rollback_errors else ""
-        raise OSError(f"registry write failed: {exc}{detail}") from exc
+    commit_text_updates(
+        [
+            TextUpdate(migration.path, migration.original, migration.updated)
+            for migration in migrations
+        ]
+    )
 
 
-def run_legacy_migration(root: Path, kinds: list[str], *, write: bool) -> int:
+def _run_legacy_migration(root: Path, kinds: list[str], *, write: bool) -> int:
     try:
         migrations, fields, blocking = prepare_legacy_migration(root, kinds)
     except (OSError, ValueError) as exc:
@@ -560,6 +489,17 @@ def run_legacy_migration(root: Path, kinds: list[str], *, write: bool) -> int:
         return 1
     print(f"migrated {requests} requests ({len(fields)} fields)")
     return 0
+
+
+def run_legacy_migration(root: Path, kinds: list[str], *, write: bool) -> int:
+    if not write:
+        return _run_legacy_migration(root, kinds, write=False)
+    try:
+        with workspace_lock(root):
+            return _run_legacy_migration(root, kinds, write=True)
+    except OSError as exc:
+        print(f"legacy migration write failed: {exc}")
+        return 1
 
 
 def run(argv: list[str] | None = None) -> int:
@@ -630,7 +570,12 @@ def run(argv: list[str] | None = None) -> int:
             write=args.write,
         )
 
-    if args.command in {"show", "set-status"}:
+    if args.command == "set-status":
+        code, message = set_request_status(root, args.id, args.status)
+        print(message)
+        return code
+
+    if args.command == "show":
         kind = request_kind(args.id)
         if kind is None:
             print(f"invalid request id '{args.id}'")
@@ -641,35 +586,12 @@ def run(argv: list[str] | None = None) -> int:
             print(f"request id '{args.id}' matched {len(matches)} entries")
             return 1
         if issues:
-            relevant = issues if args.command == "set-status" else [
-                issue for issue in issues if args.id in issue
-            ]
+            relevant = [issue for issue in issues if args.id in issue]
             if relevant:
                 print("\n".join(relevant))
                 return 1
         entry = matches[0]
-        if args.command == "show":
-            print(entry.raw)
-            return 0
-
-        if entry.status is None or entry.status_span is None:
-            print(f"{args.id}: status is missing or ambiguous")
-            return 1
-        if args.status != entry.status and STATUS_TRANSITIONS.get(entry.status) != args.status:
-            print(f"{args.id}: invalid status transition {entry.status} -> {args.status}")
-            return 1
-        if entry.status == "accepted" and args.status == "done":
-            try:
-                completion_error = request_completion_error(root, args.id)
-            except (OSError, ValueError) as exc:
-                print(f"{args.id}: cannot validate related plans: {exc}")
-                return 1
-            if completion_error is not None:
-                print(completion_error)
-                return 1
-        start, end = entry.status_span
-        path.write_text(content[:start] + args.status + content[end:], encoding="utf-8")
-        print(f"{args.id}\t{args.status}")
+        print(entry.raw)
         return 0
 
     kinds = selected_kinds(args.type)
