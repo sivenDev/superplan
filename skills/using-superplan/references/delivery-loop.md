@@ -13,6 +13,28 @@ Continue for a compatible schema, run `--migrate` for older/missing or stale
 generated artifacts, and stop for a newer or malformed schema. Initialization
 and migration are offline and never inspect user-level skill/profile state.
 
+## Recovery Triage
+
+Use fresh command evidence rather than an earlier narrative diagnosis.
+
+1. When the current compatibility, registry, and plan checks pass, continue the
+   active route. Do not widen scope to historical repair or propose an older
+   Superplan version because a previous report named stale blockers.
+2. When registry validation reports only legacy missing `status`/`created`, run
+   `migrate-legacy --check`, apply `--write` after Workspace Safety when every
+   value is evidence-backed, validate again, and continue without another
+   decision prompt.
+3. When compatible active work and a historical repair have disjoint write
+   sets, an explicit current-task instruction to auto-recover or auto-isolate
+   counts as worktree consent. If delegation is useful and available, isolate
+   the repair under `worktrees.md`, keep its branch and commit separate, and do
+   not wait for it before continuing the active route. If their artifacts
+   overlap, defer the repair rather than racing both mutations.
+4. Stop only when the current route requires migration and its preflight remains
+   unsafe, the schema is newer or malformed, or continuation needs new
+   authority. Report the current failing evidence and the one required decision
+   concisely; provide historical detail only on request.
+
 ## Workspace Safety
 
 Before intake, plan/status changes, or implementation edits:
@@ -25,6 +47,8 @@ Before intake, plan/status changes, or implementation edits:
 3. If important changes exist, explain the concrete risk and ask whether to move
    subsequent Superplan work to a new worktree. Resolve this before mutation;
    never infer consent or automatically stash, commit, or create a worktree.
+   An explicit current-task instruction to auto-isolate or auto-recover is
+   consent for that isolation, so do not ask again.
 4. If accepted, read `worktrees.md`, create or reuse isolation from the committed
    baseline, leave the original worktree untouched, and resume the same route
    there. If declined, continue in place while preserving unrelated work and

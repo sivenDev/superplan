@@ -27,9 +27,10 @@ and generates the plan index.
 
 1. Apply the delivery loop's Workspace Safety check; inspect recent commits and
    current plan progress before editing.
-2. Run `init_workspace.py --check`. Continue when current; after workspace
-   safety, use `--migrate` for an older/missing schema. Stop on newer or malformed
-   schemas.
+2. Run `init_workspace.py --check` and apply the delivery loop's recovery triage
+   to the current output. Continue when current; after workspace safety, use
+   `--migrate` for an older/missing schema. Stop on newer or malformed schemas;
+   never fall back to an older Superplan version based on stale diagnostics.
 3. For features or bugs, use `human_requests.py validate`, then
    `summary`/`list` and `show --id <id>`; read a whole registry only for repair
    or cross-entry analysis. If validation reports only legacy missing

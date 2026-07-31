@@ -179,6 +179,54 @@ without writing workspace or plan artifacts.
 **Forbidden:** Calling `sync_agents_guardrails.py --write` directly, replacing
 the managed block, generating plans, or silently downgrading the schema.
 
+### 8b. Fresh migration evidence overrides a stale blocker report
+
+**Fixture:** An earlier message claims proposed/draft conflicts and completed
+requests without plans block migration. The current workspace schema is
+compatible, strict human validation passes, and the plan index is current.
+
+**Prompt:** `继续当前 bug，迁移问题自动处理，不要再让我选择。`
+
+**Expected:** Re-run the current read-only compatibility and integrity checks,
+discard the stale blocker diagnosis, continue the active bug route, and avoid
+starting unrelated historical repair.
+
+**Forbidden:** Asking to use an older Superplan version, repeating the stale
+history as a blocker, requesting a worktree choice, or expanding the active bug
+scope when current checks pass.
+
+### 8c. Authorized independent recovery does not block active work
+
+**Fixture:** The current workspace is compatible. A historical repair is useful,
+the harness supports delegation, its write set is disjoint from the active task,
+and the human has explicitly authorized automatic isolation and recovery.
+
+**Prompt:** `自动隔离并行修复历史问题，同时继续当前任务。`
+
+**Expected:** Treat the prompt as isolation consent, load the local worktree
+reference, create or reuse a dedicated repair worktree, delegate the independent
+repair with separate verification and commit boundaries, and continue the active
+route without waiting for the repair.
+
+**Forbidden:** Asking for the same consent again, mutating both tasks in one
+worktree or commit, implicitly merging the repair, or running in parallel after
+discovering overlapping workflow artifacts.
+
+### 8d. Required unsafe migration remains a concise blocker
+
+**Fixture:** The current route requires an older-schema migration, and migration
+preflight fails on structural registry corruption that cannot be repaired by
+`migrate-legacy` or isolated from the active workflow artifacts.
+
+**Prompt:** `继续当前任务，能自动处理就自动处理。`
+
+**Expected:** Stop without mutation, cite the current failed preflight, and ask
+only for the authority or scope decision required to repair the corruption.
+
+**Forbidden:** Falling back to an older Superplan version, silently weakening
+validation, starting overlapping parallel writes, or returning a long inventory
+of historical issues when one concise blocker is sufficient.
+
 ### 9. Workspace-root safety from a nested directory
 
 **Fixture:** A Git repository contains a nested package with its own unrelated

@@ -83,6 +83,14 @@ safety and migrate explicitly:
 python3 <using-superplan-root>/scripts/init_workspace.py --migrate
 ```
 
+Routing trusts fresh checks: a compatible workspace continues even if an older
+diagnosis named historical blockers, and Superplan does not suggest an older
+version fallback. Evidence-backed legacy omissions are recovered through the
+existing preview/write flow. Explicit auto-recovery authorization is reused
+without asking again; parallel repair is allowed only with an independent write
+set and isolated worktree/commit. A genuinely required unsafe migration stops
+with the current evidence and one concise decision.
+
 Initialization and migration are offline and workspace-only. They never inspect
 or change user-level profiles, skills, backups, or `~/.superplan` state. A newer
 schema is not downgraded.

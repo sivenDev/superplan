@@ -118,3 +118,10 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 验收：非法 human/plan 组合会被全局校验拒绝；关键写入不会静默覆盖并发修改或留下可避免的半完成状态；贡献者和 CI 使用同一条权威命令运行完整检查。
 
 非目标：不增加数据库或向量搜索，不继续压缩 skill 文案，不按文件大小机械拆分脚本，不在本次建设完整的模型行为评测平台。
+
+## F015: Automatically resolve non-blocking Superplan migration conflicts
+
+- status: done
+- created: 2026-07-31
+
+When compatibility or migration checks surface historical consistency problems, Superplan should verify current state and classify whether they affect the active task. Continue automatically when the workspace is compatible or the problems are unrelated. When an independent migration is useful, isolate it from the active task and delegate it when safe. Ask the user only when isolation is unsafe, the active-task baseline would change, or new authority is required. Preserve approval, workspace-safety, verification, and separate-commit boundaries.
