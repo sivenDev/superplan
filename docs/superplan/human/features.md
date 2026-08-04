@@ -125,3 +125,10 @@ Refactor the Superplan workflow for high-capability models: add low, standard, a
 - created: 2026-07-31
 
 When compatibility or migration checks surface historical consistency problems, Superplan should verify current state and classify whether they affect the active task. Continue automatically when the workspace is compatible or the problems are unrelated. When an independent migration is useful, isolate it from the active task and delegate it when safe. Ask the user only when isolation is unsafe, the active-task baseline would change, or new authority is required. Preserve approval, workspace-safety, verification, and separate-commit boundaries.
+
+## F016: Require post-worktree delivery handoff
+
+- status: done
+- created: 2026-08-04
+
+当 Superplan 在 linked worktree 中完成开发、验证和任务提交后，必须明确说明开发已完成，并询问用户是否将该分支合并到主干、是否删除对应 worktree 工作目录。未经明确确认，不自动合并或删除。

@@ -6,7 +6,7 @@
 
 | Type | Plans | Complete |
 | --- | --- | --- |
-| `feature` | 15 | 15 |
+| `feature` | 16 | 16 |
 | `bugfix` | 3 | 3 |
 
 ## Plan Groups
@@ -30,6 +30,7 @@
 | `F013` | [Integrate Effective Workflow Guidance into Superplan](features/F013-integrate-workflow-guidance-into-superplan.md) | `complete` | 2026-07-30 |
 | `F014` | [Harden Superplan State Integrity and Verification](features/F014-harden-state-integrity-and-verification.md) | `complete` | 2026-07-31 |
 | `F015` | [Automatically Resolve Non-Blocking Migration Conflicts](features/F015-automatically-resolve-non-blocking-migration-conflicts.md) | `complete` | 2026-07-31 |
+| `F016` | [Require Post-Worktree Delivery Handoff](features/F016-require-post-worktree-delivery-handoff.md) | `complete` | 2026-08-04 |
 
 ### Bugfix Plans
 

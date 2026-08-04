@@ -152,6 +152,11 @@ with acceptance. Repeated commands that prove no changed claim add no value.
    Do not rerun unchanged code tests after metadata-only progress updates.
 9. Create a task-level commit whose message includes the plan id. Stage only task
    changes.
+10. When delivery ran in a linked worktree, after development, verification, and
+    the task commit are complete, state that development is complete and ask
+    whether to merge the branch into the mainline branch and whether to remove
+    the linked worktree directory. Treat merge and cleanup as separate follow-up
+    authorizations; do neither implicitly.
 
 The human entry records intent, the plan records outcomes and evidence, tests
 record executable proof, and Git records the delivered diff.
