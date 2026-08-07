@@ -12,10 +12,4 @@
 1. skill 说明要精简，不用啰嗦重复，与 AI 能力重复部分不需要写，只要增加微小说明即可。
 2. 不要为了优化而优化，如果优化收益低，应该拒绝优化，正确是第一优化原则。
 
-<claude-mem-context>
-# Memory Context
 
-# [superplan] recent context, 2026-07-21 11:52am GMT+8
-
-No previous sessions found.
-</claude-mem-context>
