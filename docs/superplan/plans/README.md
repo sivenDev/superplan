@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Complete |
-| --- | --- | --- |
-| `feature` | 20 | 20 |
-| `bugfix` | 4 | 4 |
+| Type | Plans | Draft | Complete |
+| --- | --- | --- | --- |
+| `feature` | 21 | 1 | 20 |
+| `bugfix` | 4 | 0 | 4 |
 
 ## Plan Groups
 
@@ -35,6 +35,7 @@
 | `F018` | [Release Superplan 0.4.1](features/F018-release-superplan-0-4-1.md) | `complete` | 2026-08-18 |
 | `F019-01` | [RFC State Model and Enforcement](features/F019/01-rfc-state-model-and-enforcement.md) | `complete` | 2026-08-18 |
 | `F019-02` | [RFC Workflow Guidance and Release](features/F019/02-rfc-workflow-guidance-and-release.md) | `complete` | 2026-08-18 |
+| `F020` | [Safe Checkpoint Commits Before Human-Decision Pauses](features/F020-safe-checkpoint-commits-before-human-decision-pauses.md) | `draft` | 2026-08-18 |
 
 ### Bugfix Plans
 
