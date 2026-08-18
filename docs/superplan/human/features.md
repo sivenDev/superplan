@@ -177,3 +177,10 @@ Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace s
 - requires_rfc: true
 
 允许一个 feature 在确有独立设计审批边界时拥有多个 RFC，同时保留现有单 RFC 平铺路径。单 RFC 继续使用 docs/superplan/rfcs/<feature-id>.md；多 RFC 使用 docs/superplan/rfcs/<feature-id>/NN-<slug>.md，且两种布局对同一 feature 互斥。多 RFC 使用独立 RFC id（例如 F022-R01）和显式 feature 归属，避免与 F022-01 形式的 plan id 混淆。所有 RFC 必须获批后才能创建非 superseded 开发计划；每个计划只引用其直接依赖的 RFC，并至少引用一个匹配 RFC。现有平铺 RFC 无需迁移，branch-qualified feature id 必须继续工作。更新解析、跨产物校验、skill/reference、workspace guidance、README、行为场景和自动化测试。
+
+## F023: Raise the Automatic RFC Trigger Threshold
+
+- status: accepted
+- created: 2026-08-18
+
+收紧 feature 流程中 AI 自动启用 RFC 的门槛，避免仅因命中架构、跨模块或风险关键词就增加 RFC。只有同时存在具体未决设计问题、多个会实质改变方案的选项或单个难以逆转的决策、错误选择会改变验收或形成公共契约/迁移/安全/并发/数据完整性/发布回滚风险，并且无法通过一次澄清、保守默认或普通开发计划安全解决时，AI 才能自动设置 requires_rfc: true。可逆内部实现选择、任务规模、文件/模块数量、代码不熟悉和一般不确定性不触发 RFC；边界情况先提出一个简短澄清问题。人类显式要求或已持久化 requires_rfc: true 的行为保持不变。更新 feature skill、RFC reference、行为场景和包契约测试；不改变运行时脚本、workspace schema 或版本。
