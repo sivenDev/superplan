@@ -17,6 +17,14 @@ or continue to planning when its direct-accept conditions record `accepted`.
 Use the canonical summary/list/show commands to select existing state. Plan only
 an accepted entry; skip intake when the request already exists.
 
+Before drafting plans, use `references/rfc-spec.md` when the human explicitly
+requests or declines RFC, or the feature has `requires_rfc: true`. If material
+design risk makes an RFC necessary, state the concrete reason before enabling
+it with `human_requests.py require-rfc --id <feature-id>`, then load the
+reference; never silently override a decline. Size alone is not a reason. Stop
+for RFC approval before creating plans; plan approval remains a separate
+implementation gate.
+
 Use a feature-specific subdirectory only when one request needs multiple
 independently deliverable plans. Make user-visible acceptance explicit and name
 shared infrastructure boundaries rather than hiding them inside feature prose.

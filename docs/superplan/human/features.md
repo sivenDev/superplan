@@ -149,7 +149,7 @@ Publish Superplan version 0.4.1 by replacing the Codex manifest cachebuster vers
 
 ## F019: Add Optional RFC Stage to Feature Delivery
 
-- status: accepted
+- status: done
 - created: 2026-08-18
 
 - requires_rfc: true

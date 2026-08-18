@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Approved | Complete |
-| --- | --- | --- | --- |
-| `feature` | 20 | 1 | 19 |
-| `bugfix` | 4 | 0 | 4 |
+| Type | Plans | Complete |
+| --- | --- | --- |
+| `feature` | 20 | 20 |
+| `bugfix` | 4 | 4 |
 
 ## Plan Groups
 
@@ -34,7 +34,7 @@
 | `F017` | [Standardize Project-Local Worktree Location](features/F017-standardize-project-local-worktree-location.md) | `complete` | 2026-08-18 |
 | `F018` | [Release Superplan 0.4.1](features/F018-release-superplan-0-4-1.md) | `complete` | 2026-08-18 |
 | `F019-01` | [RFC State Model and Enforcement](features/F019/01-rfc-state-model-and-enforcement.md) | `complete` | 2026-08-18 |
-| `F019-02` | [RFC Workflow Guidance and Release](features/F019/02-rfc-workflow-guidance-and-release.md) | `approved` | 2026-08-18 |
+| `F019-02` | [RFC Workflow Guidance and Release](features/F019/02-rfc-workflow-guidance-and-release.md) | `complete` | 2026-08-18 |
 
 ### Bugfix Plans
 

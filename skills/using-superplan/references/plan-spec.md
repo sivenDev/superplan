@@ -49,6 +49,10 @@ parent: ""
 - `parent`: Topic parent when a feature or bugfix uses a subdirectory; otherwise
   empty.
 
+For a feature marked `requires_rfc: true`, create plans only after
+`docs/superplan/rfcs/<feature-id>.md` is approved, and list that exact path in
+each non-superseded plan's `References`.
+
 Feature and bugfix ids must match an existing source entry in the corresponding
 human file.
 
@@ -133,6 +137,8 @@ or policy boundaries when file paths alone are insufficient.
   sequencing.
 - `future`: deferred extension; still define goal, non-goals, and exit criteria.
 - `feature`: make user-visible acceptance explicit in Scope or Exit Criteria.
+- RFC-backed `feature`: keep design in the approved RFC and executable delivery
+  in the plan; RFC approval does not replace plan approval.
 - `bugfix`: add `Reproduction` and `Root Cause` after Baseline, and name the
   behavior-level regression or verification proving the defect is fixed.
 

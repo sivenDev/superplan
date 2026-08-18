@@ -52,6 +52,13 @@ class InitWorkspaceTests(unittest.TestCase):
 
             for name in ("prd.md", "features.md", "bugs.md"):
                 self.assertTrue((root / "docs" / "superplan" / "human" / name).exists())
+            feature_guidance = (
+                root / "docs" / "superplan" / "human" / "features.md"
+            ).read_text(encoding="utf-8")
+            self.assertIn("requires_rfc: true", feature_guidance)
+            self.assertIn("docs/superplan/rfcs/<feature-id>.md", feature_guidance)
+            self.assertIn("RFC 批准后才能创建开发计划", feature_guidance)
+            self.assertIn("计划仍需单独批准后才能编码", feature_guidance)
             agents = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(SYNC.START_MARKER, agents)
             self.assertIn(VERSION.workspace_marker(), agents)

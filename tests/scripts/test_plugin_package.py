@@ -57,7 +57,7 @@ class PluginPackageTests(unittest.TestCase):
             rf"\A{re.escape(version)}(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\Z"
         )
 
-        self.assertEqual(version, "0.4.1")
+        self.assertEqual(version, "0.5.0")
         self.assertEqual(load_version_module().WORKSPACE_SCHEMA_VERSION, 1)
         self.assertNotIn("skills", codex)
         self.assertRegex(codex["version"], codex_version_pattern)
@@ -81,6 +81,21 @@ class PluginPackageTests(unittest.TestCase):
             self.assertTrue(values["description"])
         self.assertFalse((ROOT / "deps" / "superpowers").exists())
         self.assertFalse((ROOT / "deps" / "superpowers.lock.json").exists())
+
+        feature_skill = ROOT / "skills" / "feature-plan-and-delivery" / "SKILL.md"
+        rfc_reference = feature_skill.parent / "references" / "rfc-spec.md"
+        self.assertIn("references/rfc-spec.md", feature_skill.read_text(encoding="utf-8"))
+        self.assertTrue(rfc_reference.is_file())
+        rfc_spec = rfc_reference.read_text(encoding="utf-8")
+        for contract in (
+            "docs/superplan/rfcs/<feature-id>.md",
+            "默认使用中文",
+            "version: 1",
+            "draft -> approved",
+            "Git 是默认修订历史",
+            "不保存逐轮对话",
+        ):
+            self.assertIn(contract, rfc_spec)
 
     def test_using_superplan_metadata_covers_setup_and_delivery_triggers(self) -> None:
         metadata = skill_frontmatter(ROOT / "skills" / "using-superplan" / "SKILL.md")

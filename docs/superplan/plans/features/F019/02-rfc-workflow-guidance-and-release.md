@@ -2,7 +2,7 @@
 id: "F019-02"
 title: "RFC Workflow Guidance and Release"
 type: "feature"
-status: "approved"
+status: "complete"
 summary: "Integrate the approved RFC workflow into feature guidance, behavior coverage, documentation, and a compatible Superplan release."
 source: "docs/superplan/human/features.md"
 created: "2026-08-18"
@@ -39,10 +39,10 @@ parent: "F019"
 - Inspect all four root skills and the new conditional reference for ownership and trigger clarity
 - `git diff --check -- skills/feature-plan-and-delivery skills/using-superplan/references tests/scripts/test_plugin_package.py`
 
-- [ ] Write the smallest complete RFC contract covering selection, Chinese default, artifact format, versioning, revisions, approvals, and plan handoff.
-- [ ] Load the reference only for explicit RFC intent or persisted RFC-required features and stop after presenting each draft RFC for human approval.
-- [ ] Keep plan and verification consequences in their existing shared owners without copying the RFC body contract.
-- [ ] Preserve exact four-skill discovery and validate the new reference path as a package contract.
+- [x] Write the smallest complete RFC contract covering selection, Chinese default, artifact format, versioning, revisions, approvals, and plan handoff.
+- [x] Load the reference only for explicit RFC intent or persisted RFC-required features and stop after presenting each draft RFC for human approval.
+- [x] Keep plan and verification consequences in their existing shared owners without copying the RFC body contract.
+- [x] Preserve exact four-skill discovery and validate the new reference path as a package contract.
 
 ## Task 2: Align user guidance, workspace assets, and behavior scenarios
 
@@ -66,10 +66,10 @@ parent: "F019"
 - `python3 skills/using-superplan/scripts/init_workspace.py --check --root .`
 - `git diff --check -- skills/using-superplan/assets/human/features.md README.md docs/install.md tests/behavior/workflow.md tests/scripts/test_init_workspace.py`
 
-- [ ] Teach new workspaces the optional field and two-stage approval without modifying established registries during migration.
-- [ ] Document only user-visible RFC behavior and keep setup documentation unchanged unless inspection finds a concrete mismatch.
-- [ ] Prove agent judgment, language, path, version, revision, pause, and direct-feature behavior through action-based scenarios.
-- [ ] Preserve workspace schema and initialization idempotency.
+- [x] Teach new workspaces the optional field and two-stage approval without modifying established registries during migration.
+- [x] Document only user-visible RFC behavior and keep setup documentation unchanged unless inspection finds a concrete mismatch.
+- [x] Prove agent judgment, language, path, version, revision, pause, and direct-feature behavior through action-based scenarios.
+- [x] Preserve workspace schema and initialization idempotency.
 
 ## Task 3: Publish, verify, and complete F019
 
@@ -99,10 +99,10 @@ parent: "F019"
 - `git diff --check`
 - `git status --short`
 
-- [ ] Synchronize active release surfaces at `0.5.0` while preserving schema `1`, historical records, and optional Codex build metadata.
-- [ ] Obtain current package, behavior, workspace, RFC, plan, full-regression, diff, and status evidence.
-- [ ] Complete F019-02 after F019-01, set F019 done only when both plans are complete, and refresh the generated index.
-- [ ] Create a dedicated commit whose message includes `F019-02` and excludes unrelated changes.
+- [x] Synchronize active release surfaces at `0.5.0` while preserving schema `1`, historical records, and optional Codex build metadata.
+- [x] Obtain current package, behavior, workspace, RFC, plan, full-regression, diff, and status evidence.
+- [x] Complete F019-02 after F019-01, set F019 done only when both plans are complete, and refresh the generated index.
+- [x] Create a dedicated commit whose message includes `F019-02` and excludes unrelated changes.
 
 ## References
 - `docs/superplan/human/features.md`

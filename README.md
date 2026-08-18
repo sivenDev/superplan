@@ -67,7 +67,7 @@ Initialized repositories store a machine-readable marker inside the managed
 `AGENTS.md` block:
 
 ```text
-<!-- superplan-workspace: schema=1; generated-by=0.4.1 -->
+<!-- superplan-workspace: schema=1; generated-by=0.5.0 -->
 ```
 
 Check compatibility without writing:
@@ -107,8 +107,35 @@ python3 <using-superplan-root>/scripts/human_requests.py list --type feature
 python3 <using-superplan-root>/scripts/human_requests.py show --id F012
 ```
 
-It also provides `record` and forward-only `set-status` commands.
+It also provides `record`, monotonic `require-rfc`, and forward-only
+`set-status` commands.
 `record_human_request.py` remains as a compatibility adapter.
+
+### Optional Feature RFCs
+
+Features normally proceed directly to implementation planning. Use an RFC when
+the human explicitly requests one or when unresolved architecture, ownership,
+public contracts, migration, security, concurrency, data integrity, release, or
+rollback decisions would materially change the plan. The agent states its
+reason before autonomously enabling RFC; task size alone is not a trigger.
+
+RFC-backed features keep the same feature id and lifecycle. Set
+`requires_rfc: true`, then maintain the design at:
+
+```text
+docs/superplan/rfcs/<feature-id>.md
+```
+
+RFCs default to Chinese unless the human or project language policy says
+otherwise. New RFCs start at `version: 1`; draft edits before first approval do
+not increment it. A material change to an approved RFC returns it to `draft`,
+increments the version once, and requires reapproval. Git records revisions;
+conversation transcripts are omitted unless an audit requirement says
+otherwise.
+
+The gates remain separate: approve the RFC before creating development plans,
+then approve the plans before coding. Each RFC-backed plan references the exact
+RFC path.
 
 ### Legacy Registry Recovery
 

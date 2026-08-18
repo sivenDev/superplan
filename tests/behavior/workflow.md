@@ -358,3 +358,50 @@ evidence or blocking validation errors.
 inventing a date, repairing only part of the selected registries, changing
 existing metadata/body text, or treating duplicate/malformed fields as legacy
 omissions.
+
+### 16. Optional RFC selection, approval, and revision
+
+**Fixture:** Fresh initialized repositories with accepted features and no plans.
+
+**Prompt A:** `这个 feature 需要 RFC：为订单事件增加可回放语义。`
+
+**Expected A:** Mark the feature `requires_rfc: true`, create
+`docs/superplan/rfcs/<feature-id>.md` as a Chinese `draft` with `version: 1`,
+present it, and stop for RFC approval. After approval, create a separate draft
+feature plan that references the exact RFC path and stop again for plan
+approval.
+
+**Prompt B:** `设计跨越鉴权和审计模块，公共事件兼容策略未定；请继续这个 feature。`
+
+**Expected B:** State the material design risks before autonomously enabling
+RFC, then follow Prompt A's two approval gates.
+
+**Prompt C:** `给这个边界明确的单模块贪吃蛇游戏制定计划；文件很多。`
+
+**Expected C:** Use the direct feature-plan path; size or task count alone does
+not trigger RFC.
+
+**Prompt D:** `不要 RFC，直接规划。` The fixture also contains a credible
+data-migration risk that would materially change acceptance.
+
+**Expected D:** Respect the decline, explain the concrete risk, and request
+renewed confirmation before changing RFC routing; do not silently enable it.
+
+**Prompt E:** `RFC 用英文。` In a separate fixture, approve version 1 and then
+request a material contract change.
+
+**Expected E:** Honor the language override. For the approved material change,
+return the RFC to `draft`, increment to version 2 once, update current decisions
+and important alternatives, and request reapproval. Do not add chat logs or
+increment for wording-only edits.
+
+**Prompt F:** Use branch-qualified feature `F001@feature-x` and attempt to create
+a plan while its RFC is missing or draft.
+
+**Expected F:** Use `docs/superplan/rfcs/F001@feature-x.md`; reject the plan
+until that exact RFC is approved and referenced.
+
+**Forbidden:** `human/rfcs.md`, `R` ids, an RFC plan type/root skill, nested RFC
+directories, English by default, plan creation from a draft RFC, coding after
+RFC approval but before plan approval, transcript/checkpoint history, or version
+increments for preapproval or non-material edits.
