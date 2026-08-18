@@ -162,3 +162,10 @@ Add an optional RFC design stage inside the existing feature lifecycle. The feat
 - created: 2026-08-18
 
 When a Superplan workflow must pause for human confirmation after the current task has produced persistent changes, validate the changed artifacts, stage only current-task paths or hunks, and create a checkpoint commit before returning control so concurrent worktrees do not inherit avoidable dirty state. Do not commit when there are no changes, do not include pre-existing, user-owned, or unrelated changes, and do not checkpoint a known invalid or unsafe state. Keep final delivery commits distinct, and do not rewrite checkpoint commits once another worktree or branch may depend on them.
+
+## F021: Release Superplan 0.6.0 and refresh local Codex installation
+
+- status: accepted
+- created: 2026-08-18
+
+Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace schema 1. Synchronize all active version surfaces and validation expectations, create a dedicated release commit, and push main to git@github.com:sivenDev/superplan.git only after confirming the remote main head has not moved. Then update the existing local Codex installation from the confirmed local superplan-dev marketplace using the plugin-creator cachebuster and reinstall flow, verify the installed plugin loads the new F020 checkpoint guidance, restore the repository manifest to the exact release version, and leave the worktree clean. Do not edit marketplace configuration by hand or create a new marketplace.
