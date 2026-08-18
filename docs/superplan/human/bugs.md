@@ -44,3 +44,10 @@ Screenshot symptom: a feature record was generated, but the recorder wrote body 
 - created: 2026-07-31
 
 为旧版 Superplan human registry 增加显式、可预览的迁移流程：只处理缺失 status/created 的历史条目，dry-run 展示建议值和证据，无法可靠推断时拒绝写入；不让 init_workspace 自动修改 human 数据，不放宽正常 record 的严格校验。
+
+## B004: Accept Codex Cachebuster Build Metadata in Package Contract
+
+- status: done
+- created: 2026-08-18
+
+The committed Codex plugin manifest uses SemVer build metadata (0.4.0+codex.20260804101449) to refresh the plugin cache, while the package contract requires exact equality with the canonical 0.4.0 version and therefore breaks focused and repository verification. Preserve exact canonical versions for the shared version module, Claude manifest, and marketplace; allow only the Codex manifest to append valid build metadata whose base version matches the canonical version. Do not remove or regenerate the current cachebuster. Acceptance: the focused package contract and full repository verifier pass.

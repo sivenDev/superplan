@@ -53,11 +53,16 @@ class PluginPackageTests(unittest.TestCase):
         codex = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
         claude = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
         marketplace = json.loads((ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+        codex_version_pattern = re.compile(
+            rf"\A{re.escape(version)}(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\Z"
+        )
 
         self.assertEqual(version, "0.4.0")
         self.assertEqual(load_version_module().WORKSPACE_SCHEMA_VERSION, 1)
         self.assertNotIn("skills", codex)
-        self.assertEqual(codex["version"], version)
+        self.assertRegex(codex["version"], codex_version_pattern)
+        self.assertNotRegex("999.0.0+codex.1", codex_version_pattern)
+        self.assertNotRegex(f"{version}+codex..1", codex_version_pattern)
         self.assertEqual(claude["version"], version)
         self.assertEqual(marketplace["plugins"][0]["version"], version)
         self.assertIn(

@@ -7,7 +7,7 @@
 | Type | Plans | Complete |
 | --- | --- | --- |
 | `feature` | 16 | 16 |
-| `bugfix` | 3 | 3 |
+| `bugfix` | 4 | 4 |
 
 ## Plan Groups
 
@@ -39,3 +39,4 @@
 | `B001` | [Decode Escaped Newlines in Human Request Bodies](bugs/B001-decode-escaped-newlines-in-request-bodies.md) | `complete` | 2026-07-07 |
 | `B002` | [Resolve Superplan Skill Routing and Validation Gaps](bugs/B002-resolve-skill-routing-and-validation-gaps.md) | `complete` | 2026-07-30 |
 | `B003` | [Add Safe Legacy Registry Migration](bugs/B003-add-safe-legacy-registry-migration.md) | `complete` | 2026-07-31 |
+| `B004` | [Accept Codex Cachebuster Build Metadata in Package Contract](bugs/B004-accept-codex-cachebuster-build-metadata.md) | `complete` | 2026-08-18 |
