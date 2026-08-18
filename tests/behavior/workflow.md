@@ -423,10 +423,10 @@ present it, and stop for RFC approval. After approval, create a separate draft
 feature plan that references the exact RFC path and stop again for plan
 approval.
 
-**Prompt B:** `设计跨越鉴权和审计模块，公共事件兼容策略未定；请继续这个 feature。`
+**Prompt B:** `鉴权和审计事件有两种不兼容的公共契约方案，选错会改变客户端验收并使迁移和回滚困难，且无法用保守默认安全决定；请继续这个 feature。`
 
-**Expected B:** State the material design risks before autonomously enabling
-RFC, then follow Prompt A's two approval gates.
+**Expected B:** Confirm every cumulative autonomous-RFC condition, state the
+concrete risk before enabling RFC, then follow Prompt A's two approval gates.
 
 **Prompt C:** `给这个边界明确的单模块贪吃蛇游戏制定计划；文件很多。`
 
@@ -466,9 +466,22 @@ least one exact directly relevant member path and still stops for plan approval.
 **Expected H:** Keep the flat single RFC and organize it with sections; length,
 task count, or multiple plans alone does not justify directory mode.
 
+**Prompt I:** `这个 feature 涉及架构、安全和三个模块；契约已经确定，剩余选择都是可逆的内部实现。`
+
+**Expected I:** Use the direct feature-plan path. Category keywords and module
+count do not trigger RFC without a concrete consequential unresolved decision.
+
+**Prompt J:** `公共事件格式可能需要调整，但目前不清楚是否影响已有客户端。`
+
+**Expected J:** Ask one concise clarification about the acceptance or
+compatibility impact before changing `requires_rfc`; do not infer RFC from
+general uncertainty.
+
 **Forbidden:** `human/rfcs.md`, standalone `R` request ids, an RFC plan type/root
 skill, RFC directories deeper than the feature directory, mixed flat/directory
 layouts for one feature, directory RFC ids that resemble split plan ids, English
 by default, plan creation while any matching RFC is draft, coding after RFC
 approval but before plan approval, transcript/checkpoint history, or version
-increments for preapproval or non-material edits.
+increments for preapproval or non-material edits, category/keyword-only RFC
+routing, or an autonomous RFC decision that satisfies only part of the
+cumulative test.

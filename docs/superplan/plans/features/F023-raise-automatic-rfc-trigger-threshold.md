@@ -2,7 +2,7 @@
 id: "F023"
 title: "Raise the Automatic RFC Trigger Threshold"
 type: "feature"
-status: "draft"
+status: "complete"
 summary: "Require a concrete, consequential, unresolved, and non-trivially-resolvable decision before AI autonomously enables an RFC."
 source: "docs/superplan/human/features.md"
 created: "2026-08-18"
@@ -39,10 +39,10 @@ parent: ""
 - Inspect the applicable scenario 16 prompts against the accepted F023 request
 - `git diff --check -- skills/feature-plan-and-delivery tests/behavior/workflow.md tests/scripts/test_plugin_package.py`
 
-- [ ] Require every consequential-decision condition before autonomous RFC enablement.
-- [ ] Make category keywords and reversible internal choices explicit non-triggers.
-- [ ] Route borderline cases through one concise clarification question.
-- [ ] Preserve explicit requests, persisted routing, declines, artifact rules, and approval gates.
+- [x] Require every consequential-decision condition before autonomous RFC enablement.
+- [x] Make category keywords and reversible internal choices explicit non-triggers.
+- [x] Route borderline cases through one concise clarification question.
+- [x] Preserve explicit requests, persisted routing, declines, artifact rules, and approval gates.
 
 ## Task 2: Verify, complete, and deliver F023
 
@@ -66,9 +66,9 @@ parent: ""
 - `git diff --check`
 - `git status --short`
 
-- [ ] Obtain focused package, behavior, workspace, registry, guardrail, plan-index, diff, and status evidence.
-- [ ] Mark the plan complete and F023 done only after the workflow contract is final.
-- [ ] Create one final F023 commit without runtime-script, version, release, remote, or installation changes.
+- [x] Obtain focused package, behavior, workspace, registry, guardrail, plan-index, diff, and status evidence.
+- [x] Mark the plan complete and F023 done only after the workflow contract is final.
+- [x] Create one final F023 commit without runtime-script, version, release, remote, or installation changes.
 
 ## References
 - `docs/superplan/human/features.md`

@@ -84,7 +84,16 @@ class PluginPackageTests(unittest.TestCase):
 
         feature_skill = ROOT / "skills" / "feature-plan-and-delivery" / "SKILL.md"
         rfc_reference = feature_skill.parent / "references" / "rfc-spec.md"
-        self.assertIn("references/rfc-spec.md", feature_skill.read_text(encoding="utf-8"))
+        feature_skill_content = feature_skill.read_text(encoding="utf-8")
+        normalized_feature_skill = " ".join(feature_skill_content.split())
+        self.assertIn("references/rfc-spec.md", feature_skill_content)
+        self.assertIn("full cumulative test", normalized_feature_skill)
+        self.assertIn(
+            "category or keyword matches are insufficient", normalized_feature_skill
+        )
+        self.assertIn(
+            "borderline cases ask one concise clarification", normalized_feature_skill
+        )
         self.assertTrue(rfc_reference.is_file())
         rfc_spec = rfc_reference.read_text(encoding="utf-8")
         for contract in (
@@ -99,6 +108,14 @@ class PluginPackageTests(unittest.TestCase):
             "draft -> approved",
             "Git 是默认修订历史",
             "不保存逐轮对话",
+            "自主启用 RFC 必须同时满足",
+            "具体、未解决的设计决策",
+            "难以逆转的选择",
+            "错误选择会改变验收",
+            "一次澄清、保守默认或普通开发计划",
+            "类别或关键词命中",
+            "可逆的内部实现选择",
+            "边界情况先提出一个简短澄清问题",
         ):
             self.assertIn(contract, rfc_spec)
 

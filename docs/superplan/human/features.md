@@ -180,7 +180,7 @@ Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace s
 
 ## F023: Raise the Automatic RFC Trigger Threshold
 
-- status: accepted
+- status: done
 - created: 2026-08-18
 
 收紧 feature 流程中 AI 自动启用 RFC 的门槛，避免仅因命中架构、跨模块或风险关键词就增加 RFC。只有同时存在具体未决设计问题、多个会实质改变方案的选项或单个难以逆转的决策、错误选择会改变验收或形成公共契约/迁移/安全/并发/数据完整性/发布回滚风险，并且无法通过一次澄清、保守默认或普通开发计划安全解决时，AI 才能自动设置 requires_rfc: true。可逆内部实现选择、任务规模、文件/模块数量、代码不熟悉和一般不确定性不触发 RFC；边界情况先提出一个简短澄清问题。人类显式要求或已持久化 requires_rfc: true 的行为保持不变。更新 feature skill、RFC reference、行为场景和包契约测试；不改变运行时脚本、workspace schema 或版本。
