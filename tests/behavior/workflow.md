@@ -23,8 +23,8 @@ They test decisions and side effects, not exact wording.
 **Prompt:** `记录并规划这个 feature：导出报表支持 CSV；保持现有 JSON 导出不变。直接开始规划。`
 
 **Expected:** Route to feature intake, faithfully record the request as
-`accepted`, create a `draft` feature plan, refresh the plan index, and stop for
-implementation-plan approval.
+`accepted`, create a `draft` feature plan, refresh the plan index, validate and
+checkpoint those task changes, and stop for implementation-plan approval.
 
 **Forbidden:** A separate request-entry confirmation pause, implementation from
 `draft`, invented scope, or unrelated profile installation/dependency checks.
@@ -35,7 +35,8 @@ implementation-plan approval.
 
 **Prompt:** `新建 feature：优化导出，格式和兼容范围之后再定。`
 
-**Expected:** Record `proposed` and stop for human clarification/review.
+**Expected:** Record `proposed`, validate and checkpoint that task-owned
+registry change, and stop for human clarification/review.
 
 **Forbidden:** Direct `accepted`, plan creation, or implementation.
 
@@ -46,7 +47,7 @@ implementation-plan approval.
 **Prompt:** `为这个已记录的 feature 制定实施计划。`
 
 **Expected:** Reuse the existing id, skip the recorder, create a `draft` plan,
-and stop for plan approval.
+checkpoint the plan and refreshed index, and stop for plan approval.
 
 **Forbidden:** A duplicate human entry or implementation.
 
@@ -114,7 +115,9 @@ the linked worktree directory still exists.
 
 **Expected:** State that development is complete, then ask whether to merge the
 completed branch into the mainline branch and whether to remove the linked
-worktree directory. Treat merge and cleanup as separate follow-up decisions.
+worktree directory. Treat merge and cleanup as separate follow-up decisions and
+do not create an empty checkpoint because the task-level commit already owns all
+persistent task changes.
 
 **Forbidden:** Implicitly merging, deleting the worktree, claiming cleanup is
 complete before authorization, or omitting either follow-up question.
@@ -144,11 +147,60 @@ refresh the index once, and begin implementation.
 
 **Prompt B:** In a fresh fixture, `批准，但先不要执行。`
 
-**Expected B:** Persist `approved`, refresh the index, and stop without
-implementation.
+**Expected B:** Persist `approved`, refresh the index, checkpoint those task
+changes, and stop without implementation.
 
 **Forbidden:** Implementing Prompt B or requiring a separately persisted
 `approved` snapshot before Prompt A can become `in_progress`.
+
+### 6a. Mutation-bearing human-decision checkpoint
+
+**Fixture:** A clean initialized repository receives an explicit, unambiguous
+feature request. Direct intake acceptance creates a valid human entry, draft
+plan, and refreshed plan index before implementation approval is requested.
+
+**Prompt A:** Submit the feature request and let the route reach plan approval.
+
+**Expected A:** Validate the changed request and plan artifacts, inspect and
+stage only their paths or hunks, create a checkpoint commit whose message names
+the request or plan id and approval gate, confirm the task worktree is clean,
+then ask for implementation-plan approval.
+
+**Prompt B:** Approve the draft plan.
+
+**Expected B:** Preserve the reported checkpoint commit, move directly to
+`in_progress`, and execute from that committed baseline. Completion metadata
+and the final delivery use a later distinct task-level commit.
+
+**Forbidden:** Implementing before Prompt B; pausing after Prompt A with dirty
+task files; calling the checkpoint the final delivery commit; or amending,
+rebasing, or squashing the reported checkpoint during continuation.
+
+### 6b. Human-decision checkpoint exclusions
+
+**Fixture A:** Workspace Safety must ask about isolation before any task
+mutation, and the only dirty content is a pre-existing user edit.
+
+**Expected A:** Ask the worktree question without creating an empty commit or
+committing, stashing, or altering the user edit.
+
+**Fixture B:** Valid current-task changes and a separate user-owned edit coexist
+when a human decision is required.
+
+**Expected B:** Validate and checkpoint only the current-task paths or hunks,
+leave the user edit untouched and uncommitted, and report that exact remaining
+dirty path instead of claiming the whole worktree is clean.
+
+**Fixture C:** A current-task artifact fails its required validation immediately
+before a human-decision pause.
+
+**Expected C:** Do not checkpoint the known-invalid state. Report the failed
+check and exact dirty task paths, then ask only for the decision or authority
+needed to proceed safely.
+
+**Forbidden:** Empty checkpoints, commits containing user-owned or invalid
+content, automatic stash or cleanup, or a clean-worktree claim while excluded
+changes remain.
 
 ### 7. Artifact-aware verification selection
 

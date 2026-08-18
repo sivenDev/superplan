@@ -67,6 +67,31 @@ changes, the human or an external tool makes relevant changes, unexpected
 non-task Git changes appear, or files/environment facts supporting the earlier
 decision change.
 
+## Human-Decision Checkpoints
+
+Immediately before returning control for a required human decision, inspect the
+current task's persistent changes. When task changes exist:
+
+1. Validate the changed artifacts enough to establish a safe handoff state,
+   then inspect the diff and stage only current-task paths or hunks.
+2. Create a checkpoint commit whose message includes the relevant plan or
+   request id and identifies the decision gate. Keep it distinct from the final
+   delivery commit.
+3. Never include pre-existing, user-owned, unrelated, secret-bearing, or
+   known-invalid state. If a safe checkpoint cannot be formed, do not fabricate
+   one; report the failed validation or safety reason and the exact dirty paths.
+4. Inspect status after the commit. Confirm the task-owned state is clean; when
+   excluded dirty content remains, report its exact paths and do not claim the
+   whole worktree is clean.
+5. Treat a reported checkpoint as an immutable handoff baseline. Do not amend,
+   rebase, or squash it after reporting it.
+
+Do not create an empty checkpoint when no task changes exist. In particular, a
+Workspace Safety question asked before mutation must not commit, stash, or alter
+the existing work it is protecting. This checkpoint boundary applies to intake
+review, plan approval, queued approval, blockers, and delivery follow-up only
+when the active task has produced persistent changes since its last commit.
+
 ## Workflow Composition
 
 For `docs/superplan/**` work, Superplan owns the persisted request, design, plan,

@@ -158,7 +158,7 @@ Add an optional RFC design stage inside the existing feature lifecycle. The feat
 
 ## F020: Create safe checkpoint commits before human-decision pauses
 
-- status: accepted
+- status: done
 - created: 2026-08-18
 
 When a Superplan workflow must pause for human confirmation after the current task has produced persistent changes, validate the changed artifacts, stage only current-task paths or hunks, and create a checkpoint commit before returning control so concurrent worktrees do not inherit avoidable dirty state. Do not commit when there are no changes, do not include pre-existing, user-owned, or unrelated changes, and do not checkpoint a known invalid or unsafe state. Keep final delivery commits distinct, and do not rewrite checkpoint commits once another worktree or branch may depend on them.
