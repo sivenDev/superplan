@@ -91,6 +91,49 @@ class RecordHumanRequestTests(unittest.TestCase):
             self.assertIn("- status: accepted", content)
             self.assertNotIn("- status: proposed", content)
 
+    def test_feature_can_be_recorded_as_rfc_required(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            (root / "docs").mkdir()
+
+            code = MODULE.run(
+                [
+                    "--root",
+                    str(root),
+                    "--type",
+                    "feature",
+                    "--title",
+                    "Risky feature",
+                    "--requires-rfc",
+                ]
+            )
+
+            self.assertEqual(code, 0)
+            content = (root / "docs" / "superplan" / "human" / "features.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("- requires_rfc: true", content)
+
+    def test_bug_rejects_requires_rfc_without_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            (root / "docs").mkdir()
+
+            code = MODULE.run(
+                [
+                    "--root",
+                    str(root),
+                    "--type",
+                    "bug",
+                    "--title",
+                    "Crash",
+                    "--requires-rfc",
+                ]
+            )
+
+            self.assertEqual(code, 1)
+            self.assertFalse((root / "docs" / "superplan" / "human" / "bugs.md").exists())
+
     def test_unsupported_status_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)

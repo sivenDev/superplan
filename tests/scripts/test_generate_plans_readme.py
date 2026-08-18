@@ -25,13 +25,40 @@ def write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def registry(request_id: str, status: str = "accepted") -> str:
+def registry(
+    request_id: str,
+    status: str = "accepted",
+    *,
+    requires_rfc: bool = False,
+) -> str:
     noun = "Features" if request_id.startswith("F") else "Bugs"
+    rfc_field = "- requires_rfc: true\n" if requires_rfc else ""
     return (
         f"# {noun}\n\n"
         f"## {request_id}: Known\n\n"
         f"- status: {status}\n"
         "- created: 2026-01-01\n"
+        f"{rfc_field}"
+    )
+
+
+def rfc(
+    rfc_id: str,
+    *,
+    status: str = "approved",
+    version: str = "1",
+    source: str = "docs/superplan/human/features.md",
+) -> str:
+    return (
+        "---\n"
+        f'id: "{rfc_id}"\n'
+        f'title: "RFC {rfc_id}"\n'
+        f'status: "{status}"\n'
+        f"version: {version}\n"
+        f'source: "{source}"\n'
+        'created: "2026-01-01"\n'
+        "---\n"
+        "# RFC\n"
     )
 
 
@@ -294,6 +321,147 @@ order: 1
                     )
 
                 self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
+
+    def test_rfc_required_plan_waits_for_approval_and_exact_reference(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            plans_dir = self._plans_dir(root)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", requires_rfc=True),
+            )
+            plan_path = plans_dir / "features" / "F001.md"
+            write(
+                plan_path,
+                plan(plan_id="F001", title="Feat", plan_type="feature"),
+            )
+
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("non-superseded plans but no RFC", output)
+
+            rfc_path = root / "docs" / "superplan" / "rfcs" / "F001.md"
+            write(rfc_path, rfc("F001", status="draft"))
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("RFC is draft", output)
+
+            write(rfc_path, rfc("F001"))
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("missing exact References entry", output)
+
+            write(
+                plan_path,
+                plan(
+                    plan_id="F001",
+                    title="Feat",
+                    plan_type="feature",
+                    body="## References\n- `docs/superplan/rfcs/F001.md`",
+                ),
+            )
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
+
+    def test_rfc_documents_validate_metadata_ownership_and_flat_paths(self) -> None:
+        cases = [
+            ("version-zero", "F001.md", rfc("F001", version="0"), "positive integer"),
+            ("version-text", "F001.md", rfc("F001", version="one"), "positive integer"),
+            ("filename", "F002.md", rfc("F001"), "filename must match"),
+            (
+                "source",
+                "F001.md",
+                rfc("F001", source="docs/superplan/human/prd.md"),
+                "RFC source must be",
+            ),
+        ]
+        for name, filename, document, expected in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as tempdir:
+                root = Path(tempdir)
+                write(
+                    root / "docs" / "superplan" / "human" / "features.md",
+                    registry("F001", requires_rfc=True),
+                )
+                write(root / "docs" / "superplan" / "rfcs" / filename, document)
+
+                code, output = self.run_cli(["--root", str(root), "--catalog"])
+
+                self.assertEqual(code, 1)
+                self.assertIn(expected, output)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", requires_rfc=True),
+            )
+            write(root / "docs" / "superplan" / "rfcs" / "F001" / "rfc.md", rfc("F001"))
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("RFC documents must use", output)
+
+    def test_rfc_rejects_orphan_non_required_and_proposed_owners(self) -> None:
+        cases = [
+            (registry("F002", requires_rfc=True), "F001", "no matching feature request"),
+            (registry("F001"), "F001", "not marked requires_rfc"),
+            (
+                registry("F001", "proposed", requires_rfc=True),
+                "F001",
+                "proposed feature 'F001' cannot have an RFC",
+            ),
+        ]
+        for registry_text, rfc_id, expected in cases:
+            with self.subTest(expected=expected), tempfile.TemporaryDirectory() as tempdir:
+                root = Path(tempdir)
+                write(
+                    root / "docs" / "superplan" / "human" / "features.md",
+                    registry_text,
+                )
+                write(root / "docs" / "superplan" / "rfcs" / f"{rfc_id}.md", rfc(rfc_id))
+
+                code, output = self.run_cli(["--root", str(root), "--catalog"])
+
+                self.assertEqual(code, 1)
+                self.assertIn(expected, output)
+
+    def test_qualified_rfc_and_superseded_plan_behavior(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            request_id = "F001@feature-safe"
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry(request_id, requires_rfc=True),
+            )
+            write(
+                root / "docs" / "superplan" / "rfcs" / f"{request_id}.md",
+                rfc(request_id),
+            )
+            write(
+                self._plans_dir(root) / "features" / f"{request_id}-01.md",
+                plan(
+                    plan_id=f"{request_id}-01",
+                    title="Qualified",
+                    plan_type="feature",
+                    body=f"## References\n- `docs/superplan/rfcs/{request_id}.md`",
+                ),
+            )
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", requires_rfc=True),
+            )
+            write(
+                self._plans_dir(root) / "features" / "F001.md",
+                plan(
+                    plan_id="F001",
+                    title="Old",
+                    plan_type="feature",
+                    status="superseded",
+                ),
+            )
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
 
     def test_feature_source_file_must_match_type_and_exist(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

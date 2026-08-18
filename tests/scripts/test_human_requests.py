@@ -52,9 +52,10 @@ def plan_document(
     *,
     created: str = "2026-01-01",
     plan_type: str = "feature",
+    rfc_reference: str | None = None,
 ) -> str:
     source = "features.md" if plan_type == "feature" else "bugs.md"
-    return (
+    document = (
         "---\n"
         f'id: "{plan_id}"\n'
         f'title: "Plan {plan_id}"\n'
@@ -65,6 +66,22 @@ def plan_document(
         f'created: "{created}"\n'
         "depends_on: []\n"
         'parent: ""\n'
+        "---\n"
+    )
+    if rfc_reference is not None:
+        document += f"\n## References\n- `{rfc_reference}`\n"
+    return document
+
+
+def rfc_document(rfc_id: str, status: str) -> str:
+    return (
+        "---\n"
+        f'id: "{rfc_id}"\n'
+        f'title: "RFC {rfc_id}"\n'
+        f'status: "{status}"\n'
+        "version: 1\n"
+        'source: "docs/superplan/human/features.md"\n'
+        'created: "2026-01-01"\n'
         "---\n"
     )
 
@@ -118,6 +135,29 @@ class HumanRequestsTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertIn("F003\tdone", all_entries)
 
+    def test_summary_and_list_expose_rfc_required_features_compactly(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            content = registry().replace(
+                "- created: 2026-01-02\n",
+                "- created: 2026-01-02\n- requires_rfc: true\n",
+                1,
+            )
+            write(root / "docs" / "superplan" / "human" / "features.md", content)
+
+            code, summary = self.run_cli(
+                ["--root", str(root), "summary", "--type", "feature"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("rfc_required=1", summary)
+
+            code, listed = self.run_cli(
+                ["--root", str(root), "list", "--type", "feature"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("F002@branch-safe\taccepted\t2026-01-02\tAccepted two\trfc", listed)
+            self.assertNotIn("Proposed one\trfc", listed)
+
     def test_show_returns_one_exact_qualified_entry(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
@@ -154,6 +194,71 @@ class HumanRequestsTests(unittest.TestCase):
                 1,
             )
             self.assertEqual(path.read_text(encoding="utf-8"), expected)
+
+    def test_require_rfc_is_transactional_idempotent_and_preserves_registry_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            original = registry()
+            write(path, original)
+
+            args = [
+                "--root",
+                str(root),
+                "require-rfc",
+                "--id",
+                "F002@branch-safe",
+            ]
+            code, output = self.run_cli(args)
+            self.assertEqual(code, 0)
+            self.assertEqual(output, "F002@branch-safe\trequires_rfc=true\n")
+            updated = path.read_text(encoding="utf-8")
+            expected = original.replace(
+                "- created: 2026-01-02",
+                "- created: 2026-01-02\n- requires_rfc: true",
+                1,
+            )
+            self.assertEqual(updated, expected)
+
+            code, output = self.run_cli(args)
+            self.assertEqual(code, 0)
+            self.assertEqual(path.read_text(encoding="utf-8"), updated)
+
+    def test_require_rfc_replaces_false_and_rejects_late_or_non_feature_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            feature_path = root / "docs" / "superplan" / "human" / "features.md"
+            content = registry().replace(
+                "- created: 2026-01-01\n",
+                "- created: 2026-01-01\n- requires_rfc: false\n",
+                1,
+            )
+            write(feature_path, content)
+            write(root / "docs" / "superplan" / "human" / "bugs.md", registry("B"))
+
+            code, _ = self.run_cli(
+                ["--root", str(root), "require-rfc", "--id", "F001"]
+            )
+            self.assertEqual(code, 0)
+            self.assertIn("- requires_rfc: true", feature_path.read_text(encoding="utf-8"))
+
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe.md",
+                plan_document("F002@branch-safe", "draft"),
+            )
+            before = feature_path.read_text(encoding="utf-8")
+            code, output = self.run_cli(
+                ["--root", str(root), "require-rfc", "--id", "F002@branch-safe"]
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("cannot enable RFC after plan creation", output)
+            self.assertEqual(feature_path.read_text(encoding="utf-8"), before)
+
+            code, output = self.run_cli(
+                ["--root", str(root), "require-rfc", "--id", "B001"]
+            )
+            self.assertEqual(code, 1)
+            self.assertIn("valid only for features", output)
 
     def test_set_status_rejects_backward_or_skipped_transition_without_write(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -238,6 +343,51 @@ class HumanRequestsTests(unittest.TestCase):
             self.assertEqual(output, "F002@branch-safe\tdone\n")
             self.assertIn("- status: done", path.read_text(encoding="utf-8"))
 
+    def test_set_status_done_requires_approved_rfc_for_rfc_backed_feature(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            original = registry().replace(
+                "- created: 2026-01-02\n",
+                "- created: 2026-01-02\n- requires_rfc: true\n",
+                1,
+            )
+            write(path, original)
+            rfc_path_text = "docs/superplan/rfcs/F002@branch-safe.md"
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / "F002@branch-safe.md",
+                plan_document(
+                    "F002@branch-safe",
+                    "complete",
+                    rfc_reference=rfc_path_text,
+                ),
+            )
+
+            args = [
+                "--root",
+                str(root),
+                "set-status",
+                "--id",
+                "F002@branch-safe",
+                "--status",
+                "done",
+            ]
+            code, output = self.run_cli(args)
+            self.assertEqual(code, 1)
+            self.assertIn("no RFC", output)
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+
+            rfc_path = root / rfc_path_text
+            write(rfc_path, rfc_document("F002@branch-safe", "draft"))
+            code, output = self.run_cli(args)
+            self.assertEqual(code, 1)
+            self.assertIn("RFC is draft", output)
+
+            write(rfc_path, rfc_document("F002@branch-safe", "approved"))
+            code, output = self.run_cli(args)
+            self.assertEqual(code, 0)
+            self.assertEqual(output, "F002@branch-safe\tdone\n")
+
     def test_validate_reports_duplicates_missing_fields_and_unknown_status(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
@@ -255,6 +405,30 @@ class HumanRequestsTests(unittest.TestCase):
             self.assertIn("duplicate id F001", output)
             self.assertIn("unknown status 'mystery'", output)
             self.assertIn("missing created", output)
+
+    def test_validate_rejects_invalid_duplicate_and_bug_rfc_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                "# Features\n\n"
+                "## F001: Invalid\n\n"
+                "- status: accepted\n- created: 2026-01-01\n"
+                "- requires_rfc: yes\n- requires_rfc: true\n",
+            )
+            write(
+                root / "docs" / "superplan" / "human" / "bugs.md",
+                "# Bugs\n\n"
+                "## B001: Invalid\n\n"
+                "- status: accepted\n- created: 2026-01-01\n"
+                "- requires_rfc: true\n",
+            )
+
+            code, output = self.run_cli(["--root", str(root), "validate"])
+
+            self.assertEqual(code, 1)
+            self.assertIn("multiple requires_rfc fields", output)
+            self.assertIn("requires_rfc is feature-only", output)
 
     def test_migrate_legacy_previews_then_writes_only_missing_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -562,7 +736,7 @@ class HumanRequestsTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(
                 output,
-                "feature total=300 proposed=0 accepted=1 done=299 invalid=0\n",
+                "feature total=300 proposed=0 accepted=1 done=299 invalid=0 rfc_required=0\n",
             )
 
 

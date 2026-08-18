@@ -27,6 +27,7 @@ ENTRY_PATTERN = re.compile(
 )
 STATUS_PATTERN = re.compile(r"^- status:\s*(\S+)\s*$", re.MULTILINE)
 CREATED_PATTERN = re.compile(r"^- created:\s*(\S+)\s*$", re.MULTILINE)
+REQUIRES_RFC_PATTERN = re.compile(r"^- requires_rfc:\s*(\S+)\s*$", re.MULTILINE)
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
@@ -36,10 +37,12 @@ class HumanRequest:
     title: str
     status: str | None
     created: str | None
+    requires_rfc: bool
     raw: str
     start: int
     end: int
     status_span: tuple[int, int] | None
+    requires_rfc_span: tuple[int, int] | None
 
 
 def valid_date(value: str) -> bool:
@@ -78,6 +81,7 @@ def parse_registry(content: str, kind: str) -> tuple[list[HumanRequest], list[st
 
         status_matches = list(STATUS_PATTERN.finditer(raw))
         created_matches = list(CREATED_PATTERN.finditer(raw))
+        requires_rfc_matches = list(REQUIRES_RFC_PATTERN.finditer(raw))
         status = status_matches[0].group(1) if len(status_matches) == 1 else None
         created = created_matches[0].group(1) if len(created_matches) == 1 else None
         status_span = None
@@ -98,16 +102,36 @@ def parse_registry(content: str, kind: str) -> tuple[list[HumanRequest], list[st
         elif created is not None and not valid_date(created):
             issues.append(f"{filename}: {request_id}: invalid created '{created}'")
 
+        requires_rfc = False
+        requires_rfc_span = None
+        if requires_rfc_matches:
+            if kind != "feature":
+                issues.append(f"{filename}: {request_id}: requires_rfc is feature-only")
+            if len(requires_rfc_matches) > 1:
+                issues.append(f"{filename}: {request_id}: multiple requires_rfc fields")
+            else:
+                value = requires_rfc_matches[0].group(1)
+                if value not in {"true", "false"}:
+                    issues.append(
+                        f"{filename}: {request_id}: invalid requires_rfc '{value}', expected true or false"
+                    )
+                else:
+                    requires_rfc = value == "true"
+                    value_start, value_end = requires_rfc_matches[0].span(1)
+                    requires_rfc_span = (start + value_start, start + value_end)
+
         entries.append(
             HumanRequest(
                 request_id=request_id,
                 title=title,
                 status=status,
                 created=created,
+                requires_rfc=requires_rfc,
                 raw=raw,
                 start=start,
                 end=end,
                 status_span=status_span,
+                requires_rfc_span=requires_rfc_span,
             )
         )
 

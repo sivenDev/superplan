@@ -146,3 +146,12 @@ When Superplan controls linked-worktree placement, use the primary project root 
 - created: 2026-08-18
 
 Publish Superplan version 0.4.1 by replacing the Codex manifest cachebuster version with the exact release version 0.4.1 and synchronizing every current version source, plugin manifest, marketplace entry, managed generator marker, documentation example, and package-contract assertion. Preserve workspace schema 1 and historical request/plan evidence. Acceptance: all active version surfaces report 0.4.1, generated workspace artifacts are current, and focused plus full repository verification pass.
+
+## F019: Add Optional RFC Stage to Feature Delivery
+
+- status: accepted
+- created: 2026-08-18
+
+- requires_rfc: true
+
+Add an optional RFC design stage inside the existing feature lifecycle. The feature remains the sole human request and completion entity. Enter the RFC stage when the human explicitly requests it or when the agent identifies material architectural ambiguity, cross-module boundaries, public contracts, data migration, security, or complex dependencies; the agent must state its reasoning. Do not require an RFC solely because a task is large. If the human explicitly declines an RFC, respect that choice unless material risk requires renewed confirmation. RFC documents default to Chinese unless the human explicitly requests another language or the project defines a different documentation language. For RFC-required features, create an RFC at docs/superplan/rfcs/<feature-id>.md and obtain human approval before creating implementation plans under docs/superplan/plans/features/<feature-id>/. Define one concise RFC authoring specification with a required positive-integer version: new RFCs start at version 1, draft edits before first approval do not increment it, and material changes to an approved RFC increment it before reapproval. Drafts retain the current authoritative decisions and important alternatives, while Git history is the default revision record and per-conversation logs are omitted unless explicitly required for audit. Do not add human/rfcs.md, a separate RFC request type, plan type, or root skill.

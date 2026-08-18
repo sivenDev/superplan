@@ -112,14 +112,17 @@ def render_entry(
     body: str | None,
     date: str,
     status: str = "proposed",
+    requires_rfc: bool = False,
 ) -> str:
     lines = [
         f"## {entry_id}: {title}",
         "",
         f"- status: {status}",
         f"- created: {date}",
-        "",
     ]
+    if requires_rfc:
+        lines.append("- requires_rfc: true")
+    lines.append("")
     body_text = normalize_body_text(body or "").strip()
     if body_text:
         lines.extend([body_text, ""])
@@ -143,12 +146,15 @@ def record_request(
     body: str,
     status: str,
     date: str,
+    requires_rfc: bool = False,
 ) -> tuple[int, str]:
     clean_title = title.strip()
     if not clean_title:
         return 1, "error: --title must not be empty"
     if not valid_date(date):
         return 1, f"error: invalid date '{date}', expected YYYY-MM-DD"
+    if requires_rfc and kind != "feature":
+        return 1, "error: --requires-rfc is valid only for features"
     try:
         with workspace_lock(root):
             path = human_path(root, kind)
@@ -163,7 +169,14 @@ def record_request(
                 )
             config = CONFIG[kind]
             entry_id = next_id(content, config["prefix"]) + id_qualifier(root)
-            entry = render_entry(entry_id, clean_title, body, date, status)
+            entry = render_entry(
+                entry_id,
+                clean_title,
+                body,
+                date,
+                status,
+                requires_rfc=requires_rfc,
+            )
             updated = append_entry(content, config["heading"], entry)
             commit_text_updates([TextUpdate(path, original, updated)])
             return 0, entry_id
@@ -185,6 +198,11 @@ def add_record_arguments(parser: argparse.ArgumentParser) -> None:
         "--date",
         default=datetime.date.today().isoformat(),
         help="Creation date (YYYY-MM-DD). Defaults to today.",
+    )
+    parser.add_argument(
+        "--requires-rfc",
+        action="store_true",
+        help="Mark a new feature as requiring an approved RFC before planning.",
     )
 
 
@@ -209,6 +227,7 @@ def run_record_compat(argv: list[str] | None = None) -> int:
         body=args.body,
         status=args.status,
         date=args.date,
+        requires_rfc=args.requires_rfc,
     )
     print(message)
     return code
@@ -242,6 +261,51 @@ def request_completion_error(root: Path, request_id: str) -> str | None:
         details = ", ".join(f"{plan.id} ({plan.status})" for plan in blockers)
         return f"{request_id}: incomplete related plans: {details}"
     return None
+
+
+def require_rfc(root: Path, request_id: str) -> tuple[int, str]:
+    if request_kind(request_id) != "feature":
+        return 1, f"{request_id}: RFC routing is valid only for features"
+    try:
+        with workspace_lock(root):
+            path, content, entries, issues = load_kind(root, "feature")
+            matches = [entry for entry in entries if entry.request_id == request_id]
+            if len(matches) != 1:
+                return 1, f"request id '{request_id}' matched {len(matches)} entries"
+            if issues:
+                return 1, "\n".join(issues)
+            entry = matches[0]
+            if entry.status not in INITIAL_STATUSES:
+                return 1, f"{request_id}: RFC routing requires proposed or accepted status"
+            if entry.requires_rfc:
+                return 0, f"{request_id}\trequires_rfc=true"
+
+            plans = plan_index.discover_plans(root / "docs" / "superplan" / "plans")
+            related = [
+                plan
+                for plan in plans
+                if plan.source_id == request_id and plan.status != "superseded"
+            ]
+            if related:
+                details = ", ".join(
+                    f"{plan.id} ({plan.status})"
+                    for plan in sorted(related, key=lambda item: item.id)
+                )
+                return 1, f"{request_id}: cannot enable RFC after plan creation: {details}"
+
+            if entry.requires_rfc_span is not None:
+                start, end = entry.requires_rfc_span
+                updated = content[:start] + "true" + content[end:]
+            else:
+                created_match = CREATED_PATTERN.search(entry.raw)
+                if created_match is None:
+                    return 1, f"{request_id}: created is missing or ambiguous"
+                insert_at = entry.start + created_match.end(1)
+                updated = content[:insert_at] + "\n- requires_rfc: true" + content[insert_at:]
+            commit_text_updates([TextUpdate(path, content, updated)])
+            return 0, f"{request_id}\trequires_rfc=true"
+    except (OSError, ValueError) as exc:
+        return 1, f"{request_id}: RFC routing write failed: {exc}"
 
 
 def set_request_status(root: Path, request_id: str, status: str) -> tuple[int, str]:
@@ -532,6 +596,12 @@ def run(argv: list[str] | None = None) -> int:
     status_parser.add_argument("--id", required=True)
     status_parser.add_argument("--status", required=True, choices=HUMAN_STATUSES)
 
+    rfc_parser = subparsers.add_parser(
+        "require-rfc",
+        help="Require an RFC for a feature before any deliverable plan exists",
+    )
+    rfc_parser.add_argument("--id", required=True)
+
     validate_parser = subparsers.add_parser("validate", help="Validate request registries")
     validate_parser.add_argument("--type", choices=["all", *CONFIG], default="all")
 
@@ -559,6 +629,7 @@ def run(argv: list[str] | None = None) -> int:
             body=args.body,
             status=args.status,
             date=args.date,
+            requires_rfc=args.requires_rfc,
         )
         print(message)
         return code
@@ -572,6 +643,11 @@ def run(argv: list[str] | None = None) -> int:
 
     if args.command == "set-status":
         code, message = set_request_status(root, args.id, args.status)
+        print(message)
+        return code
+
+    if args.command == "require-rfc":
+        code, message = require_rfc(root, args.id)
         print(message)
         return code
 
@@ -607,9 +683,15 @@ def run(argv: list[str] | None = None) -> int:
     if args.command == "summary":
         for kind, entries, issues in loaded:
             counts = Counter(entry.status for entry in entries if entry.status in HUMAN_STATUSES)
+            rfc_summary = (
+                f" rfc_required={sum(entry.requires_rfc for entry in entries)}"
+                if kind == "feature"
+                else ""
+            )
             print(
                 f"{kind} total={len(entries)} proposed={counts['proposed']} "
                 f"accepted={counts['accepted']} done={counts['done']} invalid={len(issues)}"
+                f"{rfc_summary}"
             )
         return 0
 
@@ -622,8 +704,9 @@ def run(argv: list[str] | None = None) -> int:
     for _, entries, _ in loaded:
         for entry in entries:
             if entry.status in statuses:
+                marker = "\trfc" if entry.requires_rfc else ""
                 print(
-                    f"{entry.request_id}\t{entry.status}\t{entry.created or '-'}\t{entry.title}"
+                    f"{entry.request_id}\t{entry.status}\t{entry.created or '-'}\t{entry.title}{marker}"
                 )
     return 0
 

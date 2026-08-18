@@ -19,6 +19,7 @@ from typing import Iterable
 
 from human_registry import CONFIG as HUMAN_CONFIG
 from human_registry import HumanRequest, load_kind
+from rfc_documents import RFCDocument, discover_rfcs
 from safe_writes import TextUpdate, commit_text_updates, workspace_lock
 from workspace_paths import resolve_existing_workspace
 
@@ -262,6 +263,20 @@ def topological_order(plans: list[PlanMetadata]) -> list[PlanMetadata]:
     return result
 
 
+def plan_references_rfc(plan: PlanMetadata, rfc_path: str) -> bool:
+    in_references = False
+    for line in plan.path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped == "## References":
+            in_references = True
+            continue
+        if in_references and stripped.startswith("## "):
+            return False
+        if in_references and stripped in {f"- `{rfc_path}`", f"- {rfc_path}"}:
+            return True
+    return False
+
+
 def validate_plans(
     plans: list[PlanMetadata],
     root: Path,
@@ -298,6 +313,17 @@ def validate_plans(
         root,
         allow_legacy_missing=allow_legacy_missing,
     )
+    rfcs = discover_rfcs(root)
+    rfc_by_id: dict[str, RFCDocument] = {rfc.id: rfc for rfc in rfcs}
+    features = human_requests.get("F", {})
+    for rfc in rfcs:
+        request = features.get(rfc.id)
+        if request is None:
+            raise ValueError(f"{rfc.path}: RFC id '{rfc.id}' has no matching feature request")
+        if not request.requires_rfc:
+            raise ValueError(f"{rfc.path}: feature '{rfc.id}' is not marked requires_rfc")
+        if request.status == "proposed":
+            raise ValueError(f"{rfc.path}: proposed feature '{rfc.id}' cannot have an RFC")
     plans_by_source: dict[str, list[PlanMetadata]] = {}
     for plan in plans:
         prefix = SOURCE_ID_TYPES.get(plan.plan_type)
@@ -319,6 +345,34 @@ def validate_plans(
             )
         plans_by_source.setdefault(plan.source_id, []).append(plan)
 
+    for request in features.values():
+        if not request.requires_rfc:
+            continue
+        deliverable = [
+            plan
+            for plan in plans_by_source.get(request.request_id, [])
+            if plan.status != "superseded"
+        ]
+        rfc = rfc_by_id.get(request.request_id)
+        if deliverable and rfc is None:
+            raise ValueError(
+                f"{request.request_id}: RFC-required feature has non-superseded plans but no RFC"
+            )
+        if deliverable and rfc is not None and rfc.status != "approved":
+            raise ValueError(
+                f"{request.request_id}: RFC-required feature has non-superseded plans but RFC is {rfc.status}"
+            )
+        if deliverable and rfc is not None:
+            expected_path = f"docs/superplan/rfcs/{request.request_id}.md"
+            missing = [
+                plan.id for plan in deliverable if not plan_references_rfc(plan, expected_path)
+            ]
+            if missing:
+                raise ValueError(
+                    f"{request.request_id}: RFC-required plans missing exact References entry "
+                    f"'{expected_path}': {', '.join(sorted(missing))}"
+                )
+
     if not enforce_request_states:
         return
 
@@ -335,6 +389,13 @@ def validate_plans(
                 )
             if request.status != "done":
                 continue
+            if request.requires_rfc:
+                rfc = rfc_by_id.get(request.request_id)
+                if rfc is None or rfc.status != "approved":
+                    state = "missing" if rfc is None else rfc.status
+                    raise ValueError(
+                        f"{request.request_id}: done RFC-required feature has RFC state '{state}'"
+                    )
             if not deliverable:
                 raise ValueError(
                     f"{request.request_id}: done request has no non-superseded related plans"
