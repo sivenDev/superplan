@@ -169,3 +169,11 @@ When a Superplan workflow must pause for human confirmation after the current ta
 - created: 2026-08-18
 
 Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace schema 1. Synchronize all active version surfaces and validation expectations, create a dedicated release commit, and push main to git@github.com:sivenDev/superplan.git only after confirming the remote main head has not moved. Then update the existing local Codex installation from the confirmed local superplan-dev marketplace using the plugin-creator cachebuster and reinstall flow, verify the installed plugin loads the new F020 checkpoint guidance, restore the repository manifest to the exact release version, and leave the worktree clean. Do not edit marketplace configuration by hand or create a new marketplace.
+
+## F022: Support Multiple RFCs per Feature
+
+- status: accepted
+- created: 2026-08-18
+- requires_rfc: true
+
+允许一个 feature 在确有独立设计审批边界时拥有多个 RFC，同时保留现有单 RFC 平铺路径。单 RFC 继续使用 docs/superplan/rfcs/<feature-id>.md；多 RFC 使用 docs/superplan/rfcs/<feature-id>/NN-<slug>.md，且两种布局对同一 feature 互斥。多 RFC 使用独立 RFC id（例如 F022-R01）和显式 feature 归属，避免与 F022-01 形式的 plan id 混淆。所有 RFC 必须获批后才能创建非 superseded 开发计划；每个计划只引用其直接依赖的 RFC，并至少引用一个匹配 RFC。现有平铺 RFC 无需迁移，branch-qualified feature id 必须继续工作。更新解析、跨产物校验、skill/reference、workspace guidance、README、行为场景和自动化测试。
