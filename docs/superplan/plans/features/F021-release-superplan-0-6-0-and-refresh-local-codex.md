@@ -2,7 +2,7 @@
 id: "F021"
 title: "Release Superplan 0.6.0 and Refresh Local Codex Installation"
 type: "feature"
-status: "draft"
+status: "in_progress"
 summary: "Publish Superplan 0.6.0 to GitHub and reinstall the local Codex plugin from the existing development marketplace."
 source: "docs/superplan/human/features.md"
 created: "2026-08-18"
@@ -28,18 +28,19 @@ parent: ""
 - Modify: `skills/using-superplan/scripts/superplan_version.py`
 - Modify: `tests/scripts/test_plugin_package.py`
 - Modify: `AGENTS.md` (managed generator-version marker only)
+- Modify: `README.md` (current workspace-marker example only)
 
 **Change Map:**
 - Release sources: replace active `0.5.0` values with exact `0.6.0` while preserving all non-version manifest content and workspace schema `1`.
 - Package contract: update only the explicit canonical release expectation while retaining optional valid Codex build metadata and exact Claude/marketplace equality.
-- Managed workspace: regenerate the guardrail block so its generator marker reports `0.6.0` without changing the F020 checkpoint rule or non-managed instructions.
+- Managed workspace and documentation: regenerate the guardrail block and update the current README marker example so both report `0.6.0`, without changing the F020 checkpoint rule, non-managed instructions, or historical evidence.
 
 **Verification:**
 - `python3 -m unittest discover -s tests/scripts -p 'test_plugin_package.py'`
 - `uv run --with pyyaml python /Users/zhengxiwan/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .`
 - `python3 skills/using-superplan/scripts/sync_agents_guardrails.py --root . --check`
 - Search active release surfaces for stale `0.5.0` while preserving historical request and plan evidence.
-- `git diff --check -- .codex-plugin .claude-plugin skills/using-superplan/scripts/superplan_version.py tests/scripts/test_plugin_package.py AGENTS.md`
+- `git diff --check -- .codex-plugin .claude-plugin skills/using-superplan/scripts/superplan_version.py tests/scripts/test_plugin_package.py AGENTS.md README.md`
 
 - [ ] Set every committed current release surface to exact base version `0.6.0`.
 - [ ] Preserve workspace schema `1`, optional Codex build-metadata validation, and all non-version package content.
@@ -88,3 +89,4 @@ parent: ""
 - `.claude-plugin/marketplace.json`
 - `skills/using-superplan/scripts/superplan_version.py`
 - `tests/scripts/test_plugin_package.py`
+- `README.md`
