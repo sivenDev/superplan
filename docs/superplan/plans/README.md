@@ -6,7 +6,7 @@
 
 | Type | Plans | Complete |
 | --- | --- | --- |
-| `feature` | 17 | 17 |
+| `feature` | 18 | 18 |
 | `bugfix` | 4 | 4 |
 
 ## Plan Groups
@@ -32,6 +32,7 @@
 | `F015` | [Automatically Resolve Non-Blocking Migration Conflicts](features/F015-automatically-resolve-non-blocking-migration-conflicts.md) | `complete` | 2026-07-31 |
 | `F016` | [Require Post-Worktree Delivery Handoff](features/F016-require-post-worktree-delivery-handoff.md) | `complete` | 2026-08-04 |
 | `F017` | [Standardize Project-Local Worktree Location](features/F017-standardize-project-local-worktree-location.md) | `complete` | 2026-08-18 |
+| `F018` | [Release Superplan 0.4.1](features/F018-release-superplan-0-4-1.md) | `complete` | 2026-08-18 |
 
 ### Bugfix Plans
 

@@ -139,3 +139,10 @@ When compatibility or migration checks surface historical consistency problems, 
 - created: 2026-08-18
 
 When Superplan controls linked-worktree placement, use the primary project root .worktrees directory by default and require that directory to be Git-ignored. An explicit user path overrides the default. Reuse a suitable current linked worktree instead of nesting another one. Do not constrain branch names or worktree child-directory names; if a harness cannot honor the location, report the actual path without moving it.
+
+## F018: Release Superplan 0.4.1
+
+- status: done
+- created: 2026-08-18
+
+Publish Superplan version 0.4.1 by replacing the Codex manifest cachebuster version with the exact release version 0.4.1 and synchronizing every current version source, plugin manifest, marketplace entry, managed generator marker, documentation example, and package-contract assertion. Preserve workspace schema 1 and historical request/plan evidence. Acceptance: all active version surfaces report 0.4.1, generated workspace artifacts are current, and focused plus full repository verification pass.

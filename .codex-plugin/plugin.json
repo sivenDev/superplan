@@ -1,6 +1,6 @@
 {
   "name": "superplan",
-  "version": "0.4.0+codex.20260804101449",
+  "version": "0.4.1",
   "description": "Plan-first delivery workflow skills for docs/superplan repositories.",
   "author": {
     "name": "siven"
