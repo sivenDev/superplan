@@ -132,3 +132,10 @@ When compatibility or migration checks surface historical consistency problems, 
 - created: 2026-08-04
 
 当 Superplan 在 linked worktree 中完成开发、验证和任务提交后，必须明确说明开发已完成，并询问用户是否将该分支合并到主干、是否删除对应 worktree 工作目录。未经明确确认，不自动合并或删除。
+
+## F017: Standardize Project-Local Worktree Location
+
+- status: done
+- created: 2026-08-18
+
+When Superplan controls linked-worktree placement, use the primary project root .worktrees directory by default and require that directory to be Git-ignored. An explicit user path overrides the default. Reuse a suitable current linked worktree instead of nesting another one. Do not constrain branch names or worktree child-directory names; if a harness cannot honor the location, report the actual path without moving it.

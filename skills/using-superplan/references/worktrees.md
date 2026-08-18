@@ -5,12 +5,15 @@ and the human has accepted isolation, including explicit current-task standing
 authorization to auto-isolate or auto-recover.
 
 1. Check whether the current checkout already provides a valid linked worktree;
-   reuse suitable isolation instead of creating another copy.
-2. Prefer a harness-native worktree mechanism. Otherwise use `git worktree` with
-   a dedicated branch from the committed baseline.
-3. Follow an explicit path preference, then an established repository
-   convention. Verify a project-local worktree directory is ignored; do not edit
-   `.gitignore` without authorization.
+   reuse suitable isolation instead of nesting or creating another copy.
+2. Prefer a harness-native worktree mechanism. When it accepts a location, use
+   an explicit user path or else `<primary-project-root>/.worktrees/`; verify the
+   project-local directory is ignored before use, and do not edit `.gitignore`
+   without authorization. If the harness controls placement, report its actual
+   path without moving the worktree.
+3. Otherwise use `git worktree` with a dedicated branch from the committed
+   baseline and the same path precedence. Do not constrain the branch name or
+   the child-directory name beneath `.worktrees/`.
 4. Leave the original checkout and its uncommitted work untouched. Do not stash,
    commit, copy, or move those changes into the new worktree.
 5. Run only repository-documented setup and a cheap relevant baseline check.

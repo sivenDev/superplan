@@ -91,10 +91,14 @@ human has accepted isolation; the original checkout contains uncommitted work.
 
 **Prompt:** `继续在隔离 worktree 中处理。`
 
-**Expected:** Load the local worktree reference, reuse valid isolation or create
-a dedicated branch/worktree from the committed baseline, leave the original
-checkout untouched, run only documented setup plus a cheap baseline, and resume
-the same route with the path and result reported.
+**Expected:** Load the local worktree reference and reuse valid current
+isolation instead of nesting another worktree. When Superplan controls
+placement, honor an explicit user path or else use the primary project root's
+ignored `.worktrees/` directory, without constraining branch or child-directory
+names. If a harness cannot honor the location, keep and report its actual path
+instead of moving it. Leave the original checkout untouched, run only documented
+setup plus a cheap baseline, and resume the same route with the path and result
+reported.
 
 **Forbidden:** Invoking an external workflow skill, stashing or copying the
 original changes, editing `.gitignore` without authorization, blind dependency
