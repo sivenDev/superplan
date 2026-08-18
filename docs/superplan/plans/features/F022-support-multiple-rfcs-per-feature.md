@@ -2,7 +2,7 @@
 id: "F022"
 title: "Support Multiple RFCs per Feature"
 type: "feature"
-status: "draft"
+status: "complete"
 summary: "Support backward-compatible single and multi-RFC feature layouts with deterministic identity, approval, and plan-reference validation."
 source: "docs/superplan/human/features.md"
 created: "2026-08-18"
@@ -37,10 +37,10 @@ parent: ""
 - Disposable flat and directory RFC fixtures through `generate_plans_readme.py --catalog`
 - `git diff --check -- skills/using-superplan/scripts/rfc_documents.py tests/scripts/test_generate_plans_readme.py`
 
-- [ ] Extend the document model and parser without changing valid flat RFC inputs.
-- [ ] Discover only the two approved layouts and reject ambiguous or malformed directory structures.
-- [ ] Enforce directory RFC feature identity, `RNN` identity, filename sequence, and branch-qualified ownership.
-- [ ] Add focused compatibility and invalid-state regression coverage.
+- [x] Extend the document model and parser without changing valid flat RFC inputs.
+- [x] Discover only the two approved layouts and reject ambiguous or malformed directory structures.
+- [x] Enforce directory RFC feature identity, `RNN` identity, filename sequence, and branch-qualified ownership.
+- [x] Add focused compatibility and invalid-state regression coverage.
 
 ## Task 2: Enforce feature-level approval sets and direct plan references
 
@@ -63,10 +63,10 @@ parent: ""
 - Disposable CLI completion fixtures for flat and directory RFC modes
 - `git diff --check -- skills/using-superplan/scripts/generate_plans_readme.py tests/scripts/test_generate_plans_readme.py tests/scripts/test_human_requests.py`
 
-- [ ] Replace the singular RFC lookup with deterministic feature-grouped validation.
-- [ ] Require all matching RFCs to be approved before plans and completion.
-- [ ] Preserve flat exact-reference behavior and add directory direct-reference validation.
-- [ ] Prove normal features, flat RFCs, qualified ids, superseded plans, and atomic completion remain compatible.
+- [x] Replace the singular RFC lookup with deterministic feature-grouped validation.
+- [x] Require all matching RFCs to be approved before plans and completion.
+- [x] Preserve flat exact-reference behavior and add directory direct-reference validation.
+- [x] Prove normal features, flat RFCs, qualified ids, superseded plans, and atomic completion remain compatible.
 
 ## Task 3: Align concise guidance and shipped workspace behavior
 
@@ -96,10 +96,10 @@ parent: ""
 - `python3 skills/using-superplan/scripts/init_workspace.py --check --root .`
 - `git diff --check -- skills/feature-plan-and-delivery skills/using-superplan/references skills/using-superplan/assets/human/features.md README.md tests`
 
-- [ ] Keep multi-RFC selection conditional on independent design boundaries and preserve single RFC as the default.
-- [ ] Synchronize route, shared plan, verification, workspace, and user documentation contracts without repetition.
-- [ ] Add package, initialization, and behavior coverage for dual layouts and approval pauses.
-- [ ] Confirm workspace schema `1`, root skill inventory, preservation, and idempotency remain valid.
+- [x] Keep multi-RFC selection conditional on independent design boundaries and preserve single RFC as the default.
+- [x] Synchronize route, shared plan, verification, workspace, and user documentation contracts without repetition.
+- [x] Add package, initialization, and behavior coverage for dual layouts and approval pauses.
+- [x] Confirm workspace schema `1`, root skill inventory, preservation, and idempotency remain valid.
 
 ## Task 4: Verify, complete, and deliver F022
 
@@ -122,9 +122,11 @@ parent: ""
 - `git diff --check`
 - `git status --short`
 
-- [ ] Obtain current focused, behavior, full-regression, registry, RFC, workspace, plan-index, diff, and status evidence.
-- [ ] Mark the plan complete and F022 done only after implementation evidence is final.
-- [ ] Create a separate final commit containing only F022 delivery changes and no release, remote, or installation mutations.
+**Completion Evidence:** `python3 tools/verify_repo.py` passed 108 tests, compiled 19 Python files, and passed workspace, registry, guardrail, plan-index, and diff checks. Focused RFC/plan, human-request, package, and initialization suites passed; the four root skills and applicable RFC behavior scenarios were inspected against the approved contract.
+
+- [x] Obtain current focused, behavior, full-regression, registry, RFC, workspace, plan-index, diff, and status evidence.
+- [x] Mark the plan complete and F022 done only after implementation evidence is final.
+- [x] Create a separate final commit containing only F022 delivery changes and no release, remote, or installation mutations.
 
 ## References
 - `docs/superplan/human/features.md`

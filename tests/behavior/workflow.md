@@ -453,7 +453,22 @@ a plan while its RFC is missing or draft.
 **Expected F:** Use `docs/superplan/rfcs/F001@feature-x.md`; reject the plan
 until that exact RFC is approved and referenced.
 
-**Forbidden:** `human/rfcs.md`, `R` ids, an RFC plan type/root skill, nested RFC
-directories, English by default, plan creation from a draft RFC, coding after
-RFC approval but before plan approval, transcript/checkpoint history, or version
+**Prompt G:** `存储模型和发布策略需要独立审批与版本，请为同一 feature 分别写 RFC。`
+
+**Expected G:** Use `docs/superplan/rfcs/<feature-id>/01-storage-model.md` and
+`02-rollout-strategy.md`, with RFC ids `<feature-id>-R01` and
+`<feature-id>-R02` plus explicit matching `feature` metadata. Stop for approval
+while either RFC is draft. After all are approved, each draft plan references at
+least one exact directly relevant member path and still stops for plan approval.
+
+**Prompt H:** `RFC 很长并对应多个开发计划，但只有一个整体设计审批。`
+
+**Expected H:** Keep the flat single RFC and organize it with sections; length,
+task count, or multiple plans alone does not justify directory mode.
+
+**Forbidden:** `human/rfcs.md`, standalone `R` request ids, an RFC plan type/root
+skill, RFC directories deeper than the feature directory, mixed flat/directory
+layouts for one feature, directory RFC ids that resemble split plan ids, English
+by default, plan creation while any matching RFC is draft, coding after RFC
+approval but before plan approval, transcript/checkpoint history, or version
 increments for preapproval or non-material edits.

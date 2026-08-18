@@ -16,7 +16,14 @@ python3 <using-superplan-root>/scripts/human_requests.py require-rfc --id <featu
 
 ## 文档契约
 
-RFC 路径为 `docs/superplan/rfcs/<feature-id>.md`，完整保留 branch-qualified id。默认使用中文；人类或项目文档规范明确要求其他语言时可覆盖。
+单 RFC 是默认形式，路径为 `docs/superplan/rfcs/<feature-id>.md`，`id` 与 feature id 一致。仅当设计主题需要独立审批、版本或计划引用时，使用多 RFC 目录：
+
+```text
+docs/superplan/rfcs/<feature-id>/01-<slug>.md
+docs/superplan/rfcs/<feature-id>/02-<slug>.md
+```
+
+同一 feature 的平铺文件与目录互斥。目录 RFC 使用 `id: "F001-R01"`、`feature: "F001"`，序号必须与文件名前缀一致；branch-qualified feature id 原样保留。默认使用中文；人类或项目文档规范明确要求其他语言时可覆盖。
 
 必需 frontmatter：
 
@@ -40,4 +47,4 @@ created: "YYYY-MM-DD"
 - approved RFC 的实质修改先恢复 `draft`，版本递增一次，再重新审批；纯文字或排版修正不递增。
 - Git 是默认修订历史。保留影响当前决策的重要替代方案，不保存逐轮对话；仅在明确审计要求下增加简短的已批准版本记录。
 
-展示 draft RFC 后停止，等待 RFC 审批。只有 matching RFC 为 `approved` 后才能创建 feature 开发计划；计划的 `References` 必须列出准确 RFC 路径。RFC 审批不授权编码，开发计划仍需独立审批。
+展示 draft RFC 后停止，等待 RFC 审批。只有该 feature 的所有 RFC 都为 `approved` 后才能创建开发计划。平铺模式的每个计划引用唯一 RFC；目录模式的每个计划至少引用一份直接相关 RFC 的准确路径。RFC 审批不授权编码，开发计划仍需独立审批。

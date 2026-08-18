@@ -73,10 +73,17 @@ def plan_document(
     return document
 
 
-def rfc_document(rfc_id: str, status: str) -> str:
+def rfc_document(
+    rfc_id: str,
+    status: str,
+    *,
+    feature: str | None = None,
+) -> str:
+    feature_field = f'feature: "{feature}"\n' if feature is not None else ""
     return (
         "---\n"
         f'id: "{rfc_id}"\n'
+        f"{feature_field}"
         f'title: "RFC {rfc_id}"\n'
         f'status: "{status}"\n'
         "version: 1\n"
@@ -387,6 +394,58 @@ class HumanRequestsTests(unittest.TestCase):
             code, output = self.run_cli(args)
             self.assertEqual(code, 0)
             self.assertEqual(output, "F002@branch-safe\tdone\n")
+
+    def test_set_status_done_requires_all_directory_rfcs_approved(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            path = root / "docs" / "superplan" / "human" / "features.md"
+            original = registry().replace(
+                "- created: 2026-01-02\n",
+                "- created: 2026-01-02\n- requires_rfc: true\n",
+                1,
+            )
+            write(path, original)
+            request_id = "F002@branch-safe"
+            rfc_dir = root / "docs" / "superplan" / "rfcs" / request_id
+            first_path = f"docs/superplan/rfcs/{request_id}/01-contract.md"
+            write(
+                root / "docs" / "superplan" / "plans" / "features" / f"{request_id}.md",
+                plan_document(
+                    request_id,
+                    "complete",
+                    rfc_reference=first_path,
+                ),
+            )
+            write(
+                rfc_dir / "01-contract.md",
+                rfc_document(f"{request_id}-R01", "approved", feature=request_id),
+            )
+            write(
+                rfc_dir / "02-rollout.md",
+                rfc_document(f"{request_id}-R02", "draft", feature=request_id),
+            )
+
+            args = [
+                "--root",
+                str(root),
+                "set-status",
+                "--id",
+                request_id,
+                "--status",
+                "done",
+            ]
+            code, output = self.run_cli(args)
+            self.assertEqual(code, 1)
+            self.assertIn("RFCs are not approved", output)
+            self.assertEqual(path.read_text(encoding="utf-8"), original)
+
+            write(
+                rfc_dir / "02-rollout.md",
+                rfc_document(f"{request_id}-R02", "approved", feature=request_id),
+            )
+            code, output = self.run_cli(args)
+            self.assertEqual(code, 0)
+            self.assertEqual(output, f"{request_id}\tdone\n")
 
     def test_validate_reports_duplicates_missing_fields_and_unknown_status(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

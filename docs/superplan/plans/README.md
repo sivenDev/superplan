@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Draft | Complete |
-| --- | --- | --- | --- |
-| `feature` | 23 | 1 | 22 |
-| `bugfix` | 4 | 0 | 4 |
+| Type | Plans | Complete |
+| --- | --- | --- |
+| `feature` | 23 | 23 |
+| `bugfix` | 4 | 4 |
 
 ## Plan Groups
 
@@ -37,7 +37,7 @@
 | `F019-02` | [RFC Workflow Guidance and Release](features/F019/02-rfc-workflow-guidance-and-release.md) | `complete` | 2026-08-18 |
 | `F020` | [Safe Checkpoint Commits Before Human-Decision Pauses](features/F020-safe-checkpoint-commits-before-human-decision-pauses.md) | `complete` | 2026-08-18 |
 | `F021` | [Release Superplan 0.6.0 and Refresh Local Codex Installation](features/F021-release-superplan-0-6-0-and-refresh-local-codex.md) | `complete` | 2026-08-18 |
-| `F022` | [Support Multiple RFCs per Feature](features/F022-support-multiple-rfcs-per-feature.md) | `draft` | 2026-08-18 |
+| `F022` | [Support Multiple RFCs per Feature](features/F022-support-multiple-rfcs-per-feature.md) | `complete` | 2026-08-18 |
 
 ### Bugfix Plans
 

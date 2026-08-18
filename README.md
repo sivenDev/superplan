@@ -120,11 +120,22 @@ rollback decisions would materially change the plan. The agent states its
 reason before autonomously enabling RFC; task size alone is not a trigger.
 
 RFC-backed features keep the same feature id and lifecycle. Set
-`requires_rfc: true`, then maintain the design at:
+`requires_rfc: true`. A single RFC remains the default:
 
 ```text
 docs/superplan/rfcs/<feature-id>.md
 ```
+
+When design topics need independent approval, versions, or plan references, use
+the mutually exclusive directory layout:
+
+```text
+docs/superplan/rfcs/<feature-id>/01-<slug>.md
+docs/superplan/rfcs/<feature-id>/02-<slug>.md
+```
+
+Directory RFCs use ids such as `<feature-id>-R01` and an explicit `feature`
+field. Existing flat RFCs remain valid and require no migration.
 
 RFCs default to Chinese unless the human or project language policy says
 otherwise. New RFCs start at `version: 1`; draft edits before first approval do
@@ -133,9 +144,10 @@ increments the version once, and requires reapproval. Git records revisions;
 conversation transcripts are omitted unless an audit requirement says
 otherwise.
 
-The gates remain separate: approve the RFC before creating development plans,
-then approve the plans before coding. Each RFC-backed plan references the exact
-RFC path.
+The gates remain separate: approve every RFC for the feature before creating
+development plans, then approve the plans before coding. Flat-mode plans
+reference the single exact RFC path; directory-mode plans reference at least one
+directly relevant member path.
 
 ### Legacy Registry Recovery
 

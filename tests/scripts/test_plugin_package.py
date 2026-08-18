@@ -89,6 +89,11 @@ class PluginPackageTests(unittest.TestCase):
         rfc_spec = rfc_reference.read_text(encoding="utf-8")
         for contract in (
             "docs/superplan/rfcs/<feature-id>.md",
+            "docs/superplan/rfcs/<feature-id>/01-<slug>.md",
+            'id: "F001-R01"',
+            'feature: "F001"',
+            "平铺文件与目录互斥",
+            "所有 RFC 都为 `approved`",
             "默认使用中文",
             "version: 1",
             "draft -> approved",

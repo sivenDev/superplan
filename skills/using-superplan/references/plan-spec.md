@@ -49,9 +49,11 @@ parent: ""
 - `parent`: Topic parent when a feature or bugfix uses a subdirectory; otherwise
   empty.
 
-For a feature marked `requires_rfc: true`, create plans only after
-`docs/superplan/rfcs/<feature-id>.md` is approved, and list that exact path in
-each non-superseded plan's `References`.
+For a feature marked `requires_rfc: true`, create plans only after every RFC in
+its mutually exclusive flat or feature-directory layout is approved. Flat-mode
+plans list `docs/superplan/rfcs/<feature-id>.md`; directory-mode plans list at
+least one directly relevant `docs/superplan/rfcs/<feature-id>/NN-<slug>.md`
+path in `References`.
 
 Feature and bugfix ids must match an existing source entry in the corresponding
 human file.

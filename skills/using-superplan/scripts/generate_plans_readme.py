@@ -277,6 +277,14 @@ def plan_references_rfc(plan: PlanMetadata, rfc_path: str) -> bool:
     return False
 
 
+def unapproved_rfcs(rfcs: list[RFCDocument]) -> list[RFCDocument]:
+    return [rfc for rfc in rfcs if rfc.status != "approved"]
+
+
+def rfc_paths(root: Path, rfcs: list[RFCDocument]) -> list[str]:
+    return [rfc.path.relative_to(root).as_posix() for rfc in rfcs]
+
+
 def validate_plans(
     plans: list[PlanMetadata],
     root: Path,
@@ -314,16 +322,25 @@ def validate_plans(
         allow_legacy_missing=allow_legacy_missing,
     )
     rfcs = discover_rfcs(root)
-    rfc_by_id: dict[str, RFCDocument] = {rfc.id: rfc for rfc in rfcs}
+    rfcs_by_feature: dict[str, list[RFCDocument]] = {}
+    for rfc in rfcs:
+        rfcs_by_feature.setdefault(rfc.feature_id, []).append(rfc)
     features = human_requests.get("F", {})
     for rfc in rfcs:
-        request = features.get(rfc.id)
+        request = features.get(rfc.feature_id)
         if request is None:
-            raise ValueError(f"{rfc.path}: RFC id '{rfc.id}' has no matching feature request")
+            raise ValueError(
+                f"{rfc.path}: RFC '{rfc.id}' has no matching feature request "
+                f"'{rfc.feature_id}'"
+            )
         if not request.requires_rfc:
-            raise ValueError(f"{rfc.path}: feature '{rfc.id}' is not marked requires_rfc")
+            raise ValueError(
+                f"{rfc.path}: feature '{rfc.feature_id}' is not marked requires_rfc"
+            )
         if request.status == "proposed":
-            raise ValueError(f"{rfc.path}: proposed feature '{rfc.id}' cannot have an RFC")
+            raise ValueError(
+                f"{rfc.path}: proposed feature '{rfc.feature_id}' cannot have an RFC"
+            )
     plans_by_source: dict[str, list[PlanMetadata]] = {}
     for plan in plans:
         prefix = SOURCE_ID_TYPES.get(plan.plan_type)
@@ -353,24 +370,47 @@ def validate_plans(
             for plan in plans_by_source.get(request.request_id, [])
             if plan.status != "superseded"
         ]
-        rfc = rfc_by_id.get(request.request_id)
-        if deliverable and rfc is None:
+        request_rfcs = rfcs_by_feature.get(request.request_id, [])
+        if deliverable and not request_rfcs:
             raise ValueError(
                 f"{request.request_id}: RFC-required feature has non-superseded plans but no RFC"
             )
-        if deliverable and rfc is not None and rfc.status != "approved":
-            raise ValueError(
-                f"{request.request_id}: RFC-required feature has non-superseded plans but RFC is {rfc.status}"
+        pending_rfcs = unapproved_rfcs(request_rfcs)
+        if deliverable and pending_rfcs:
+            if len(request_rfcs) == 1:
+                raise ValueError(
+                    f"{request.request_id}: RFC-required feature has non-superseded "
+                    f"plans but RFC is {pending_rfcs[0].status}"
+                )
+            details = ", ".join(
+                f"{rfc.id} ({rfc.status})" for rfc in pending_rfcs
             )
-        if deliverable and rfc is not None:
-            expected_path = f"docs/superplan/rfcs/{request.request_id}.md"
+            raise ValueError(
+                f"{request.request_id}: RFC-required feature has non-superseded "
+                f"plans but RFCs are not approved: {details}"
+            )
+        if deliverable and request_rfcs:
+            expected_paths = rfc_paths(root, request_rfcs)
             missing = [
-                plan.id for plan in deliverable if not plan_references_rfc(plan, expected_path)
+                plan.id
+                for plan in deliverable
+                if not any(
+                    plan_references_rfc(plan, expected_path)
+                    for expected_path in expected_paths
+                )
             ]
             if missing:
+                if len(expected_paths) == 1:
+                    raise ValueError(
+                        f"{request.request_id}: RFC-required plans missing exact "
+                        f"References entry '{expected_paths[0]}': "
+                        f"{', '.join(sorted(missing))}"
+                    )
+                expected = ", ".join(f"'{path}'" for path in expected_paths)
                 raise ValueError(
-                    f"{request.request_id}: RFC-required plans missing exact References entry "
-                    f"'{expected_path}': {', '.join(sorted(missing))}"
+                    f"{request.request_id}: RFC-required plans must reference at least "
+                    f"one exact matching RFC path ({expected}): "
+                    f"{', '.join(sorted(missing))}"
                 )
 
     if not enforce_request_states:
@@ -390,11 +430,24 @@ def validate_plans(
             if request.status != "done":
                 continue
             if request.requires_rfc:
-                rfc = rfc_by_id.get(request.request_id)
-                if rfc is None or rfc.status != "approved":
-                    state = "missing" if rfc is None else rfc.status
+                request_rfcs = rfcs_by_feature.get(request.request_id, [])
+                pending_rfcs = unapproved_rfcs(request_rfcs)
+                if not request_rfcs:
                     raise ValueError(
-                        f"{request.request_id}: done RFC-required feature has RFC state '{state}'"
+                        f"{request.request_id}: done RFC-required feature has RFC state 'missing'"
+                    )
+                if pending_rfcs:
+                    if len(request_rfcs) == 1:
+                        raise ValueError(
+                            f"{request.request_id}: done RFC-required feature has RFC "
+                            f"state '{pending_rfcs[0].status}'"
+                        )
+                    details = ", ".join(
+                        f"{rfc.id} ({rfc.status})" for rfc in pending_rfcs
+                    )
+                    raise ValueError(
+                        f"{request.request_id}: done RFC-required feature has "
+                        f"unapproved RFCs: {details}"
                     )
             if not deliverable:
                 raise ValueError(

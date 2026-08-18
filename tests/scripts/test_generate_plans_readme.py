@@ -48,10 +48,13 @@ def rfc(
     status: str = "approved",
     version: str = "1",
     source: str = "docs/superplan/human/features.md",
+    feature: str | None = None,
 ) -> str:
+    feature_field = f'feature: "{feature}"\n' if feature is not None else ""
     return (
         "---\n"
         f'id: "{rfc_id}"\n'
+        f"{feature_field}"
         f'title: "RFC {rfc_id}"\n'
         f'status: "{status}"\n'
         f"version: {version}\n"
@@ -362,7 +365,7 @@ order: 1
             )
             self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
 
-    def test_rfc_documents_validate_metadata_ownership_and_flat_paths(self) -> None:
+    def test_rfc_documents_validate_metadata_ownership_and_layouts(self) -> None:
         cases = [
             ("version-zero", "F001.md", rfc("F001", version="0"), "positive integer"),
             ("version-text", "F001.md", rfc("F001", version="one"), "positive integer"),
@@ -394,10 +397,166 @@ order: 1
                 root / "docs" / "superplan" / "human" / "features.md",
                 registry("F001", requires_rfc=True),
             )
-            write(root / "docs" / "superplan" / "rfcs" / "F001" / "rfc.md", rfc("F001"))
+            write(
+                root / "docs" / "superplan" / "rfcs" / "F001" / "rfc.md",
+                rfc("F001-R01", feature="F001"),
+            )
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("filename must match NN-<slug>.md", output)
+
+    def test_directory_rfcs_validate_identity_layout_and_branch_qualification(self) -> None:
+        request_id = "F001@feature-safe"
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry(request_id, requires_rfc=True),
+            )
+            rfc_dir = root / "docs" / "superplan" / "rfcs" / request_id
+            write(
+                rfc_dir / "01-storage-model.md",
+                rfc(f"{request_id}-R01", status="draft", feature=request_id),
+            )
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
+
+            invalid_cases = [
+                (
+                    "feature",
+                    "01-storage-model.md",
+                    rfc(f"{request_id}-R01", feature="F001"),
+                    "RFC feature must match directory",
+                ),
+                (
+                    "id",
+                    "01-storage-model.md",
+                    rfc(f"{request_id}-R02", feature=request_id),
+                    "directory RFC id must be",
+                ),
+                (
+                    "filename",
+                    "storage-model.md",
+                    rfc(f"{request_id}-R01", feature=request_id),
+                    "filename must match NN-<slug>.md",
+                ),
+                (
+                    "sequence",
+                    "00-storage-model.md",
+                    rfc(f"{request_id}-R00", feature=request_id),
+                    "sequence must be positive",
+                ),
+                (
+                    "missing-feature",
+                    "01-storage-model.md",
+                    rfc(f"{request_id}-R01"),
+                    "missing metadata keys: feature",
+                ),
+            ]
+            for name, filename, document, expected in invalid_cases:
+                with self.subTest(name=name):
+                    for path in rfc_dir.glob("*.md"):
+                        path.unlink()
+                    write(rfc_dir / filename, document)
+                    code, output = self.run_cli(["--root", str(root), "--catalog"])
+                    self.assertEqual(code, 1)
+                    self.assertIn(expected, output)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", requires_rfc=True),
+            )
+            rfc_root = root / "docs" / "superplan" / "rfcs"
+            write(rfc_root / "F001.md", rfc("F001"))
+            write(rfc_root / "F001" / "01-design.md", rfc("F001-R01", feature="F001"))
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("cannot mix flat and directory RFC layouts", output)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", requires_rfc=True),
+            )
+            write(
+                root / "docs" / "superplan" / "rfcs" / "F001" / "nested" / "01-design.md",
+                rfc("F001-R01", feature="F001"),
+            )
             code, output = self.run_cli(["--root", str(root), "--catalog"])
             self.assertEqual(code, 1)
             self.assertIn("RFC documents must use", output)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", requires_rfc=True),
+            )
+            rfc_dir = root / "docs" / "superplan" / "rfcs" / "F001"
+            write(rfc_dir / "01-first.md", rfc("F001-R01", feature="F001"))
+            write(rfc_dir / "01-second.md", rfc("F001-R01", feature="F001"))
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("duplicate RFC id 'F001-R01'", output)
+
+    def test_directory_rfc_sets_require_all_approval_and_direct_plan_references(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            write(
+                root / "docs" / "superplan" / "human" / "features.md",
+                registry("F001", requires_rfc=True),
+            )
+            rfc_dir = root / "docs" / "superplan" / "rfcs" / "F001"
+            first_path = "docs/superplan/rfcs/F001/01-storage-model.md"
+            second_path = "docs/superplan/rfcs/F001/02-rollout-strategy.md"
+            write(rfc_dir / "01-storage-model.md", rfc("F001-R01", feature="F001"))
+            write(
+                rfc_dir / "02-rollout-strategy.md",
+                rfc("F001-R02", status="draft", feature="F001"),
+            )
+            plans_dir = self._plans_dir(root) / "features"
+            write(
+                plans_dir / "F001-01.md",
+                plan(
+                    plan_id="F001-01",
+                    title="Storage",
+                    plan_type="feature",
+                    body=f"## References\n- `{first_path}`",
+                ),
+            )
+            write(
+                plans_dir / "F001-02.md",
+                plan(
+                    plan_id="F001-02",
+                    title="Rollout",
+                    plan_type="feature",
+                    body=f"## References\n- `{second_path}`",
+                ),
+            )
+
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("RFCs are not approved", output)
+            self.assertIn("F001-R02 (draft)", output)
+
+            write(rfc_dir / "02-rollout-strategy.md", rfc("F001-R02", feature="F001"))
+            self.assertEqual(MODULE.run(["--root", str(root), "--catalog"]), 0)
+
+            write(
+                plans_dir / "F001-02.md",
+                plan(
+                    plan_id="F001-02",
+                    title="Rollout",
+                    plan_type="feature",
+                    body="## References\n- `docs/superplan/rfcs/F999/01-other.md`",
+                ),
+            )
+            code, output = self.run_cli(["--root", str(root), "--catalog"])
+            self.assertEqual(code, 1)
+            self.assertIn("at least one exact matching RFC path", output)
+            self.assertIn("F001-02", output)
 
     def test_rfc_rejects_orphan_non_required_and_proposed_owners(self) -> None:
         cases = [

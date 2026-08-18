@@ -172,7 +172,7 @@ Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace s
 
 ## F022: Support Multiple RFCs per Feature
 
-- status: accepted
+- status: done
 - created: 2026-08-18
 - requires_rfc: true
 
