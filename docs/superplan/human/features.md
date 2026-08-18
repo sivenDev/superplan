@@ -165,7 +165,7 @@ When a Superplan workflow must pause for human confirmation after the current ta
 
 ## F021: Release Superplan 0.6.0 and refresh local Codex installation
 
-- status: accepted
+- status: done
 - created: 2026-08-18
 
 Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace schema 1. Synchronize all active version surfaces and validation expectations, create a dedicated release commit, and push main to git@github.com:sivenDev/superplan.git only after confirming the remote main head has not moved. Then update the existing local Codex installation from the confirmed local superplan-dev marketplace using the plugin-creator cachebuster and reinstall flow, verify the installed plugin loads the new F020 checkpoint guidance, restore the repository manifest to the exact release version, and leave the worktree clean. Do not edit marketplace configuration by hand or create a new marketplace.

@@ -2,7 +2,7 @@
 id: "F021"
 title: "Release Superplan 0.6.0 and Refresh Local Codex Installation"
 type: "feature"
-status: "in_progress"
+status: "complete"
 summary: "Publish Superplan 0.6.0 to GitHub and reinstall the local Codex plugin from the existing development marketplace."
 source: "docs/superplan/human/features.md"
 created: "2026-08-18"
@@ -42,10 +42,10 @@ parent: ""
 - Search active release surfaces for stale `0.5.0` while preserving historical request and plan evidence.
 - `git diff --check -- .codex-plugin .claude-plugin skills/using-superplan/scripts/superplan_version.py tests/scripts/test_plugin_package.py AGENTS.md README.md`
 
-- [ ] Set every committed current release surface to exact base version `0.6.0`.
-- [ ] Preserve workspace schema `1`, optional Codex build-metadata validation, and all non-version package content.
-- [ ] Regenerate only the managed workspace marker and keep historical version evidence unchanged.
-- [ ] Pass focused package and plugin validation before final repository verification.
+- [x] Set every committed current release surface to exact base version `0.6.0`.
+- [x] Preserve workspace schema `1`, optional Codex build-metadata validation, and all non-version package content.
+- [x] Regenerate only the managed workspace marker and keep historical version evidence unchanged.
+- [x] Pass focused package and plugin validation before final repository verification.
 
 ## Task 2: Commit, push, and refresh the local Codex plugin
 
@@ -72,11 +72,19 @@ parent: ""
 - `codex plugin list`
 - Inspect `/Users/zhengxiwan/.codex/plugins/cache/superplan-dev/superplan/` for the installed `0.6.0+codex.*` cache and F020 checkpoint guidance.
 
-- [ ] Obtain current full repository, release-surface, plugin, plan-index, diff, and status evidence.
-- [ ] Complete F021 and create a dedicated release commit containing only release and progress artifacts.
-- [ ] Refuse a non-fast-forward overwrite if remote `main` changes; otherwise push the complete local `main` and verify the remote release commit.
-- [ ] Reinstall from the confirmed local `superplan-dev` marketplace using one temporary cachebuster without hand-editing marketplace configuration.
-- [ ] Verify the installed cache includes F020, restore the source manifest to exact `0.6.0`, and leave the repository clean.
+- [x] Obtain current full repository, release-surface, plugin, plan-index, diff, and status evidence.
+- [x] Complete F021 and create a dedicated release commit containing only release and progress artifacts.
+- [x] Refuse a non-fast-forward overwrite if remote `main` changes; otherwise push the complete local `main` and verify the remote release commit.
+- [x] Reinstall from the confirmed local `superplan-dev` marketplace using one temporary cachebuster without hand-editing marketplace configuration.
+- [x] Verify the installed cache includes F020, restore the source manifest to exact `0.6.0`, and leave the repository clean.
+
+## Implementation Evidence
+
+- Release identity: `.codex-plugin/plugin.json`, both Claude package surfaces, `SUPERPLAN_VERSION`, the package assertion, the managed workspace marker, and the current README example report exact `0.6.0`; workspace schema remains `1` and historical `0.5.0` evidence was not rewritten.
+- Validation: the six focused package tests passed; the plugin-creator validator passed through isolated `uv --with pyyaml`; `python3 tools/verify_repo.py` passed 105 tests, compilation of 19 Python files, workspace compatibility, request, guardrail, plan-index, and diff checks.
+- GitHub delivery: fresh pre-push evidence kept remote `main` at `31eba55afa43d9d5061807c6146e944d0a74f067`; `git push origin main:main` fast-forwarded it to release implementation commit `3b9e6bf94ea3f0170747d6c502a58becc5b29326` without force.
+- Local Codex refresh: the existing local `superplan-dev` marketplace reinstalled `superplan` as `0.6.0+codex.20260818123736` under `/Users/zhengxiwan/.codex/plugins/cache/superplan-dev/superplan/0.6.0+codex.20260818123736`; the cached delivery loop contains `Human-Decision Checkpoints` and matches the repository SHA-256 `3051e2a411645d6d890399fd3c78426e5f43dbeb69e2825b85c57d8fa5423ff8`.
+- Source restoration: after installation, `.codex-plugin/plugin.json` was restored to exact `0.6.0`; `codex plugin list` still reports the enabled cachebuster installation, marketplace configuration is unchanged, and the repository returned to a clean state before completion metadata.
 
 ## References
 - `docs/superplan/human/features.md`
