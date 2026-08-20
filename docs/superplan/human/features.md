@@ -197,3 +197,10 @@ Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace s
 - requires_rfc: true
 
 优化 Superplan 的 skill 路由和说明分层，消除入口、具体路由与共享 reference 之间的触发重叠和规则复述，并让低风险计划保持紧凑；保留 workspace safety、人工审批、RFC 与 plan 分离、bug 根因和状态完整性等安全边界。验收结果是四个根 skill 职责清晰、共享规则各有唯一权威、低风险任务不再产生仪式化说明，现有行为与验证契约继续通过。
+
+## F026: Release Superplan 0.7.0 to GitHub
+
+- status: accepted
+- created: 2026-08-20
+
+Synchronize every active Superplan release surface from 0.6.0 to exact 0.7.0 while preserving workspace schema 1 and historical version evidence. Run focused plugin/package checks and the authoritative repository verifier, create a dedicated release commit, confirm remote main still matches the preflight head, then push main to git@github.com:sivenDev/superplan.git without force. Do not tag, create a GitHub Release, or refresh the local Codex installation.

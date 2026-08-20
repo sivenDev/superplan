@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Complete |
-| --- | --- | --- |
-| `feature` | 26 | 26 |
-| `bugfix` | 4 | 4 |
+| Type | Plans | Draft | Complete |
+| --- | --- | --- | --- |
+| `feature` | 27 | 1 | 26 |
+| `bugfix` | 4 | 0 | 4 |
 
 ## Plan Groups
 
@@ -41,6 +41,7 @@
 | `F023` | [Raise the Automatic RFC Trigger Threshold](features/F023-raise-automatic-rfc-trigger-threshold.md) | `complete` | 2026-08-18 |
 | `F024` | [Clarify Concise Feature Intake Format](features/F024-clarify-concise-feature-intake-format.md) | `complete` | 2026-08-20 |
 | `F025` | [Streamline Skill Routing and Instruction Ownership](features/F025-streamline-skill-routing-and-instructions.md) | `complete` | 2026-08-20 |
+| `F026` | [Release Superplan 0.7.0 to GitHub](features/F026-release-superplan-0-7-0-to-github.md) | `draft` | 2026-08-20 |
 
 ### Bugfix Plans
 
