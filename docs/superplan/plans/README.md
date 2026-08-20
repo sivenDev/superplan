@@ -4,10 +4,10 @@
 
 ## Status
 
-| Type | Plans | Draft | Complete |
-| --- | --- | --- | --- |
-| `feature` | 26 | 1 | 25 |
-| `bugfix` | 4 | 0 | 4 |
+| Type | Plans | Complete |
+| --- | --- | --- |
+| `feature` | 26 | 26 |
+| `bugfix` | 4 | 4 |
 
 ## Plan Groups
 
@@ -40,7 +40,7 @@
 | `F022` | [Support Multiple RFCs per Feature](features/F022-support-multiple-rfcs-per-feature.md) | `complete` | 2026-08-18 |
 | `F023` | [Raise the Automatic RFC Trigger Threshold](features/F023-raise-automatic-rfc-trigger-threshold.md) | `complete` | 2026-08-18 |
 | `F024` | [Clarify Concise Feature Intake Format](features/F024-clarify-concise-feature-intake-format.md) | `complete` | 2026-08-20 |
-| `F025` | [Streamline Skill Routing and Instruction Ownership](features/F025-streamline-skill-routing-and-instructions.md) | `draft` | 2026-08-20 |
+| `F025` | [Streamline Skill Routing and Instruction Ownership](features/F025-streamline-skill-routing-and-instructions.md) | `complete` | 2026-08-20 |
 
 ### Bugfix Plans
 

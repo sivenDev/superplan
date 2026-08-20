@@ -3,15 +3,15 @@
 Superplan packages a plan-first delivery workflow for coding agents around
 `docs/superplan/human/*` and `docs/superplan/plans/*`.
 
-The main entry skill is `$using-superplan`. Four route skills stay discoverable;
-detailed debugging, worktree, planning, and verification guidance is loaded from
-their references only when the route needs it.
+`$using-superplan` is the explicit setup and fallback entry. Natural-language
+PRD, feature, and bug requests select their specialized skills directly; shared
+and conditional guidance is loaded from references only when the route needs it.
 
 ## Focused Skill Set
 
 Superplan exposes only four skills:
 
-- `using-superplan`: initializes workspaces and routes requests.
+- `using-superplan`: initializes, checks, migrates, and explicitly dispatches.
 - `project-bootstrap-from-prd`: turns a PRD into reviewed mainline plans.
 - `feature-plan-and-delivery`: plans and delivers accepted features.
 - `bugfix-plan-and-delivery`: diagnoses, plans, and delivers accepted bugs.
@@ -20,6 +20,9 @@ The route skills own conditional references for specialized behavior. This keeps
 generic workflow descriptions out of global skill discovery without losing the
 debugging, worktree-safety, test-first, review, or verification boundaries that
 materially affect delivery.
+
+Runtime authority lives in the skill references and deterministic scripts;
+this README is a maintainer-facing overview.
 
 ## Repository Layout
 
@@ -56,7 +59,8 @@ The short version:
    python3 <using-superplan-root>/scripts/init_workspace.py
    ```
 
-4. Use `$using-superplan` as the entry skill.
+4. Use the specialized project, feature, or bug skill through natural language,
+   or invoke `$using-superplan` explicitly for setup and fallback dispatch.
 
 If your harness only supports raw skill installation, install the four
 directories under `skills/`.
@@ -211,10 +215,14 @@ testing, verification, and delegation ceremony to every change:
   failure distinguishes the change, plus deeper debugging, regression, and
   independent review.
 
-The approved Superplan plan is the persisted design and execution artifact. Plans
-record outcomes, exact files, important boundaries, and evidence without copying
-the complete future diff. Small and medium tasks default to one capable agent;
-subagents are reserved for genuinely independent slices or high-risk review.
+The approved Superplan plan is the persisted design and execution artifact. Every
+plan records goal, scope, non-goals, exit criteria, task outcomes, exact files,
+verification, and result checkboxes. Low-risk single-boundary plans may omit
+Architecture, Baseline, and Change Map when those sections add no decision value;
+cross-module, migration, public-contract, high-risk, and complex-bug work keeps
+the full form. Plans do not copy the complete future diff. Small and medium tasks
+default to one capable agent; subagents are reserved for genuinely independent
+slices or high-risk review.
 
 Human approval remains the gate out of `draft`. Approved work that stays queued
 is persisted as `approved`; work starting immediately can persist `in_progress`
@@ -223,7 +231,9 @@ validation plus compact candidate discovery followed by full-text review of the
 related closure; routine progress updates use local plan/index checks.
 Still-current safety, dependency, and test evidence is reused until relevant
 workspace, file, or environment state changes. The canonical verification matrix
-selects checks by artifact type and risk.
+selects focused, final, and metadata-only checks by artifact type and risk. When
+`python3 tools/verify_repo.py` is the final repository command, its internal
+checks are not repeated as separate final steps.
 
 Task-level commit messages include the plan id when one exists, linking the human
 request and plan to the actual implementation in Git.

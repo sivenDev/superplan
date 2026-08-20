@@ -16,6 +16,32 @@ They test decisions and side effects, not exact wording.
 
 ## Scenarios
 
+### 0. Specialized routing and explicit fallback
+
+**Fixture:** Clean initialized Superplan repositories with all four root skills
+available.
+
+**Prompt A:** `根据 docs/superplan/human/prd.md 为这个新项目制定计划。`
+
+**Expected A:** Select `project-bootstrap-from-prd` directly, then enter the
+shared delivery loop and plan specification.
+
+**Prompt B:** In fresh contexts, submit one natural-language feature request and
+one bug report whose types are clear.
+
+**Expected B:** Select `feature-plan-and-delivery` and
+`bugfix-plan-and-delivery` directly. Load intake, RFC, or debugging references
+only when their documented conditions apply.
+
+**Prompt C:** `使用 $using-superplan 处理这个请求：继续已记录的 F001。`
+
+**Expected C:** Use the explicit fallback entry, apply the shared delivery loop,
+and dispatch to the feature route.
+
+**Forbidden:** Treating `using-superplan` as a co-equal preferred route for
+clear natural-language PRD, feature, or bug requests; requiring its entry body
+before a specialized route; or disabling implicit discovery for any root skill.
+
 ### 1. Explicit fast feature intake
 
 **Fixture:** Clean initialized Superplan repository; no matching feature entry.
@@ -218,11 +244,41 @@ evidence.
 
 **Prompt B:** `按计划实现并验证这个脚本行为。`
 
-**Expected B:** Run the focused related tests while iterating and the full script
-suite once after behavior stabilizes.
+**Expected B:** Run the focused related tests while iterating, then run
+`python3 tools/verify_repo.py` once after behavior stabilizes. Do not separately
+rerun the full script suite or other sub-checks already contained in that final
+command.
 
 **Forbidden:** Full code regression for Fixture A or omission of final script
 regression for Fixture B.
+
+### 7a. Risk-proportionate plan body
+
+**Fixture A:** An accepted, low-risk feature changes one documentation policy
+boundary. Scope, files, and expected wording are already explicit; there is no
+architecture choice, migration, compatibility condition, or non-obvious
+baseline fact.
+
+**Prompt A:** `为这个 feature 创建实施计划。`
+
+**Expected A:** Create a compact draft plan with Goal, Scope, Non-Goals, Exit
+Criteria, and at least one task containing Outcome, Files, Verification, and a
+result checkbox. Omit Architecture, Baseline, and Change Map because they add no
+decision value.
+
+**Fixture B:** A separate accepted feature changes a public contract across
+modules and requires a compatibility migration. A separate accepted complex bug
+has a proven reproduction and root cause.
+
+**Prompt B:** Create plans for each fixture.
+
+**Expected B:** Use the full form for the cross-module contract/migration plan,
+including Architecture, Baseline, and Change Map. The bugfix plan also includes
+Reproduction and Root Cause and retains behavior-level regression evidence.
+
+**Forbidden:** Omitting core fields from a compact plan, adding empty ceremonial
+conditional sections, or using compact form for material boundaries, migration,
+public contracts, high-risk work, or complex bugs.
 
 ### 8. Versioned workspace migration boundary
 

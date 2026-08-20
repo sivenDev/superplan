@@ -74,7 +74,29 @@ Normal flow is:
 - Use `superseded` for a retained plan replaced by another plan and name the
   replacement.
 
-## Required Body
+## Body Contract
+
+Every new plan requires `Goal`, `Scope`, `Non-Goals`, and observable `Exit
+Criteria`, plus at least one task with `Outcome`, explicit `Files`, executable
+`Verification`, and a result checkbox.
+
+Use the compact form when the work is low risk, has one clear delivery boundary,
+and additional sections would add no decision value. Add these fields when their
+condition applies:
+
+- `Architecture`: boundaries, contracts, design direction, or implementation
+  constraints are not already evident from Scope.
+- `Baseline`: current facts, known failures, migration starting points, or
+  compatibility conditions affect execution.
+- `Change Map`: multiple files, symbols, or policy boundaries need an explicit
+  ownership map; a single mechanical boundary may omit it.
+
+Standard/high-risk work, cross-module changes, migrations, public contracts, and
+complex bugs default to the full form. Omit an inapplicable conditional field
+rather than filling it with generic prose. Existing plans remain valid whether
+they include these fields or not.
+
+The full shape is:
 
 ```markdown
 # <Title> Plan
@@ -111,22 +133,23 @@ Body fields describe only current execution decisions:
 - `Goal`: one-sentence project gain.
 - `Scope`: exact delivery boundary and user-visible result where applicable.
 - `Non-Goals`: explicit scope exclusions; required.
-- `Architecture`: decisions affecting boundaries or implementation direction,
-  not mechanical steps.
-- `Baseline`: current facts required to execute the plan.
+- `Architecture` and `Baseline`: include only under the conditions above.
 - `Exit Criteria`: observable completion conditions.
 - `References`: only direct inputs to this plan.
 
 ## Task Contract
 
-Each task must have a result-oriented title, `Outcome`, explicit `Files`, a
-`Change Map`, executable `Verification`, and checkboxes. Name important symbols
-or policy boundaries when file paths alone are insufficient.
+Each task must have a result-oriented title, `Outcome`, explicit `Files`,
+executable `Verification`, and checkboxes. Add a `Change Map` under the condition
+above; name important symbols or policy boundaries when file paths alone are
+insufficient.
 
 - Split work by independently verifiable delivery boundaries, not equal size.
 - Keep dependency order explicit.
 - Test observable acceptance behavior; do not require a test per function.
 - Apply the risk profile from `delivery-loop.md` to testing and verification.
+- State the claim and actual verification entrypoint. Do not list sub-checks
+  already executed by the selected authoritative command.
 - Omit implementation bodies, brainstorming transcripts, checkpoint history,
   unrelated lists, artificial microsteps, and repeated checks against unchanged
   implementation state.

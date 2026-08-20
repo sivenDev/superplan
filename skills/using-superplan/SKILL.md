@@ -1,54 +1,33 @@
 ---
 name: using-superplan
-description: Use to initialize, check, or migrate a Superplan workspace, or to route project, feature, and bug work through docs/superplan human requests, reviewed plans, approval gates, and verified delivery
+description: Use to initialize, check, or migrate a Superplan workspace, or as the explicitly invoked fallback dispatcher for an otherwise unclassified Superplan request
 ---
 
 # Using Superplan
 
-Read `references/delivery-loop.md` before routed work. It owns workspace safety,
-risk, approval, verification, progress, and delivery.
+Read `references/delivery-loop.md` before routed work. It is the shared
+lifecycle authority.
 
 `<using-superplan-root>` means this skill's installed directory.
 
-## Setup and Initialization
+## Workspace Entry
 
-Before initialization writes into a Git workspace, apply the delivery loop's
-Workspace Safety check.
+Run `python3 <using-superplan-root>/scripts/init_workspace.py` to initialize a
+workspace. Add `--check` to inspect compatibility without writes, or `--migrate`
+after Workspace Safety when the check reports an older or missing schema. Stop
+on a newer or malformed schema.
 
-When the human asks to initialize Superplan, run:
+Initialization is offline and workspace-only. Use `--root <path>` for an
+explicit target.
 
-`python3 <using-superplan-root>/scripts/init_workspace.py`
+## Fallback Routing
 
-Use `--root <path>` for an explicit target. Initialization is offline and
-workspace-only. It preserves existing human docs, refreshes managed guardrails,
-and generates the plan index.
+When the human explicitly invokes `$using-superplan`, or asks to use Superplan
+without identifying a request type, apply the delivery loop and dispatch to:
 
-## Route Entry
+- PRD-based first project development: `$project-bootstrap-from-prd`
+- New or recorded feature: `$feature-plan-and-delivery`
+- New, diagnosed, or recorded bug: `$bugfix-plan-and-delivery`
 
-1. Apply the delivery loop's Workspace Safety check; inspect recent commits and
-   current plan progress before editing.
-2. Run `init_workspace.py --check` and apply the delivery loop's recovery triage
-   to the current output. Continue when current; after workspace safety, use
-   `--migrate` for an older/missing schema. Stop on newer or malformed schemas;
-   never fall back to an older Superplan version based on stale diagnostics.
-3. For features or bugs, use `human_requests.py validate`, then
-   `summary`/`list` and `show --id <id>`; read a whole registry only for repair
-   or cross-entry analysis. If validation reports only legacy missing
-   `status`/`created`, preview `migrate-legacy --check` and use `--write` after
-   workspace safety; repair every other error manually. Read `prd.md` directly
-   for first project development.
-4. Before creating or structurally revising a plan, read
-   `references/plan-spec.md`, validate all metadata, inspect `--catalog`, and
-   search all statuses for related source, dependency, scope, or artifact
-   candidates. Read the changed plan and discovered related closure in full.
-5. If generated guardrails are stale, migrate through `init_workspace.py` after
-   workspace safety rather than editing the managed block manually.
-
-## Routing
-
-- New project from a rough PRD: use `$project-bootstrap-from-prd`.
-- New or recorded feature: use `$feature-plan-and-delivery`.
-- New or recorded bug: use `$bugfix-plan-and-delivery`.
-
-For new feature or bug intake, the route skill applies
-`references/intake-spec.md` before planning.
+Natural-language requests for those types should select the specialized skill
+directly; they do not need this entry skill first.

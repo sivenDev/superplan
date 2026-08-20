@@ -141,47 +141,32 @@ Before completion, map every material claim to current command or inspection
 evidence, inspect failures and meaningful warnings, and compare the final diff
 with acceptance. Repeated commands that prove no changed claim add no value.
 
-## Delivery
+## Delivery State Machine
 
-1. Establish or reuse still-fresh Workspace Safety evidence, inspect recent
-   commits and `docs/superplan/plans`, and preserve unrelated work.
-2. For feature/bug routes, validate the registry and use compact summary/list
-   plus exact-entry retrieval; load the full registry only for repair or genuine
-   cross-entry analysis. Read the PRD directly for project bootstrap.
-3. Confirm scope, constraints, acceptance, non-goals, and risk. Bug routes apply
-   their local debugging reference before planning when the cause is not proven.
-4. Read `plan-spec.md`, create the smallest independently verifiable plan set,
-   and start new plans at `status: draft`.
-5. For structural plan changes, run exhaustive global validation, inspect the
-   compact catalog, and search all statuses for source, dependency, scope, text,
-   and artifact candidates. Read the changed plan and iteratively discovered
-   related closure in full. Routine status, checkbox, or evidence updates use
-   local plan/index validation. Present every new or structurally revised draft
-   and stop for human approval.
-6. Human approval is the gate out of `draft`; never implement before it. Persist
-   `approved` when approved work will remain queued. If execution starts in the
-   same continuation, persist `in_progress` directly and refresh the index once,
-   then execute in dependency order.
-7. During implementation, run focused checks for the selected risk profile. Bug
-   fixes keep a behavior-level regression proving the reproduced failure. Clean
-   directly related redundancy without widening scope.
-8. After the implementation state is final, obtain current completion evidence
-   selected from `verification-matrix.md` and run any relevant full regression
-   once. Mark each delivered plan complete first. For a feature or bug, set its
-   human entry to `done` only after at least one non-superseded related plan
-   exists and every such plan is `complete`; `human_requests.py set-status`
-   enforces this boundary. Then refresh the index with:
-
-   `python3 <using-superplan-root>/scripts/generate_plans_readme.py --write --check`
-
-   Do not rerun unchanged code tests after metadata-only progress updates.
-9. Create a task-level commit whose message includes the plan id. Stage only task
-   changes.
-10. When delivery ran in a linked worktree, after development, verification, and
-    the task commit are complete, state that development is complete and ask
-    whether to merge the branch into the mainline branch and whether to remove
-    the linked worktree directory. Treat merge and cleanup as separate follow-up
-    authorizations; do neither implicitly.
+1. **Safety and compatibility:** Establish or reuse fresh Workspace Safety
+   evidence, inspect recent progress, and run the read-only workspace check.
+   Apply Recovery Triage only when compatibility or integrity is not current.
+2. **Intake or diagnosis:** Read the PRD directly, or validate the feature/bug
+   registry and select state through compact summary/list plus exact-entry
+   retrieval; load a full registry only for repair or cross-entry analysis.
+   Apply the route's intake or debugging reference when its condition is met,
+   then confirm scope, acceptance, non-goals, and risk.
+3. **Draft and approval:** Use `plan-spec.md` to create the smallest verifiable
+   plan set at `draft`. Apply its structural or local validation rule, present
+   new or structurally revised drafts, and use Human-Decision Checkpoints before
+   pausing. Human approval is required to persist `approved` or `in_progress`.
+4. **Implementation:** Execute approved plans in dependency order without
+   widening scope. Use focused checks selected by the risk profile and
+   `verification-matrix.md`; bug fixes retain behavior-level regression proof.
+5. **Verification and progress completion:** After implementation stabilizes,
+   collect current final evidence once. Mark delivered plans `complete` before
+   setting a feature or bug to `done`; every non-superseded related plan must be
+   complete. Refresh the plan index, and use metadata-only verification for
+   subsequent progress edits.
+6. **Commit and optional worktree handoff:** Inspect ownership, stage only task
+   changes, and create a task-level commit naming the plan id. For linked
+   worktrees, ask separately whether to merge the branch and remove the worktree
+   directory; do neither implicitly.
 
 The human entry records intent, the plan records outcomes and evidence, tests
 record executable proof, and Git records the delivered diff.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Using Superplan"
-  short_description: "Initialize and route plan-first delivery"
-  default_prompt: "Use $using-superplan to initialize, check, or migrate a workspace, or route project, feature, and bug work through reviewed docs/superplan plans."
+  short_description: "Set up Superplan or dispatch an explicit request"
+  default_prompt: "Use $using-superplan to initialize, check, or migrate this workspace, or dispatch this request to the correct Superplan route."

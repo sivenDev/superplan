@@ -2,7 +2,7 @@
 id: "F025"
 title: "Streamline Skill Routing and Instruction Ownership"
 type: "feature"
-status: "draft"
+status: "complete"
 summary: "Make Superplan skill selection and instruction ownership concise while preserving every approval, safety, and state-integrity boundary."
 source: "docs/superplan/human/features.md"
 created: "2026-08-20"
@@ -40,10 +40,10 @@ parent: ""
 - Run `/Users/zhengxiwan/.codex/skills/.system/skill-creator/scripts/quick_validate.py` for each of the four root skill directories.
 - Execute the applicable routing and reference-loading scenarios from `tests/behavior/workflow.md` in fresh contexts.
 
-- [ ] Partition automatic trigger intent between the total entry and the three specialized routes without disabling implicit invocation.
-- [ ] Reduce each root skill to non-obvious routing and route-specific decisions while retaining every required reference load.
-- [ ] Keep UI metadata consistent with explicit `$using-superplan` invocation and validate all four skill packages.
-- [ ] Prove specialized requests do not require the redundant total-entry layer and explicit total-entry requests still dispatch correctly.
+- [x] Partition automatic trigger intent between the total entry and the three specialized routes without disabling implicit invocation.
+- [x] Reduce each root skill to non-obvious routing and route-specific decisions while retaining every required reference load.
+- [x] Keep UI metadata consistent with explicit `$using-superplan` invocation and validate all four skill packages.
+- [x] Prove specialized requests do not require the redundant total-entry layer and explicit total-entry requests still dispatch correctly.
 
 ## Task 2: Consolidate shared authorities and add risk-proportionate plan bodies
 
@@ -70,10 +70,10 @@ parent: ""
 - Inspect all four root skills and every directly changed reference together for one authority per rule.
 - Execute applicable compact/full plan, verification-selection, RFC, approval, checkpoint, and completion scenarios from `tests/behavior/workflow.md`.
 
-- [ ] Replace the repeated Delivery expansion with a compact lifecycle state machine without losing recovery or handoff behavior.
-- [ ] Make plan body detail conditional on material information while preserving mandatory scope, evidence, files, non-goals, exit criteria, and bug-specific proof.
-- [ ] Prevent final verification from listing or rerunning checks already contained in the authoritative repository command.
-- [ ] Keep feature human guidance concise and synchronize generated/current examples without migrating unrelated user-maintained content.
+- [x] Replace the repeated Delivery expansion with a compact lifecycle state machine without losing recovery or handoff behavior.
+- [x] Make plan body detail conditional on material information while preserving mandatory scope, evidence, files, non-goals, exit criteria, and bug-specific proof.
+- [x] Prevent final verification from listing or rerunning checks already contained in the authoritative repository command.
+- [x] Keep feature human guidance concise and synchronize generated/current examples without migrating unrelated user-maintained content.
 
 ## Task 3: Verify, complete, and deliver F025
 
@@ -92,9 +92,15 @@ parent: ""
 - `python3 tools/verify_repo.py`
 - After metadata-only completion updates, run `python3 skills/using-superplan/scripts/generate_plans_readme.py --root . --write --check` and inspect `git status --short`.
 
-- [ ] Obtain current structural, behavior, initialization, skill-package, repository, plan-index, diff, and ownership evidence.
-- [ ] Mark the plan complete before transitioning F025 to done, without rerunning unchanged implementation regression after metadata-only edits.
-- [ ] Create a dedicated F025 delivery commit that excludes `.codex/config.toml` and preserves the RFC/plan approval checkpoints.
+- [x] Obtain current structural, behavior, initialization, skill-package, repository, plan-index, diff, and ownership evidence.
+- [x] Mark the plan complete before transitioning F025 to done, without rerunning unchanged implementation regression after metadata-only edits.
+- [x] Create a dedicated F025 delivery commit that excludes `.codex/config.toml` and preserves the RFC/plan approval checkpoints.
+
+## Completion Evidence
+
+- Focused package and initialization suites passed with 7 and 12 tests. All four root skills passed `quick_validate.py` using the existing Python environment with PyYAML.
+- Routing, progressive disclosure, compact/full plan, verification selection, approval, checkpoint, completion, bug, and RFC behavior scenarios were updated or inspected against the approved ownership boundaries.
+- `python3 tools/verify_repo.py` passed 109 tests, compiled 19 Python files, and passed workspace compatibility, human registry, managed guardrail, plan-index, and diff checks.
 
 ## References
 - `docs/superplan/human/features.md`

@@ -8,7 +8,7 @@
 >
 > 正文只记录需求意图。能说清时用一段话概括要做什么、主要范围、验收结果和关键限制；设计决策、替代方案与风险论证留给 RFC，执行任务留给 plan。
 >
-> `requires_rfc: true` 为可选字段，缺失时按 `false`。人类明确要求或 AI 说明实质设计风险后，可在创建计划前启用。单 RFC 默认保存于 `docs/superplan/rfcs/<feature-id>.md`；只有独立审批、版本或计划引用边界才使用 `docs/superplan/rfcs/<feature-id>/NN-<slug>.md`，两种布局互斥。RFC 默认使用中文；所有 RFC 批准后才能创建开发计划，计划仍需单独批准后才能编码。
+> `requires_rfc: true` 为可选字段，缺失时按 `false`。人类明确要求或 AI 说明实质设计风险后可启用；需要 RFC 的 feature 必须先完成独立设计审批，再进入计划审批，具体格式由 Superplan RFC 流程管理。
 
 <!-- 新增条目模板（把 F<NNN> 替换为下一个编号，例如 F001）：
 

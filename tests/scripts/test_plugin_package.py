@@ -87,15 +87,15 @@ class PluginPackageTests(unittest.TestCase):
         feature_skill_content = feature_skill.read_text(encoding="utf-8")
         normalized_feature_skill = " ".join(feature_skill_content.split())
         self.assertIn("references/rfc-spec.md", feature_skill_content)
-        self.assertIn("full cumulative test", normalized_feature_skill)
-        self.assertIn(
-            "category or keyword matches are insufficient", normalized_feature_skill
-        )
-        self.assertIn(
-            "borderline cases ask one concise clarification", normalized_feature_skill
-        )
         self.assertTrue(rfc_reference.is_file())
         rfc_spec = rfc_reference.read_text(encoding="utf-8")
+        for duplicated_procedure in (
+            "full cumulative test",
+            "category or keyword matches are insufficient",
+            "borderline cases ask one concise clarification",
+            "human_requests.py require-rfc",
+        ):
+            self.assertNotIn(duplicated_procedure, normalized_feature_skill)
         for contract in (
             "docs/superplan/rfcs/<feature-id>.md",
             "docs/superplan/rfcs/<feature-id>/01-<slug>.md",
@@ -119,17 +119,36 @@ class PluginPackageTests(unittest.TestCase):
         ):
             self.assertIn(contract, rfc_spec)
 
-    def test_using_superplan_metadata_covers_setup_and_delivery_triggers(self) -> None:
-        metadata = skill_frontmatter(ROOT / "skills" / "using-superplan" / "SKILL.md")
-        description = metadata["description"].lower()
-        for intent in ("initialize", "check", "migrate", "project", "feature", "bug"):
-            self.assertIn(intent, description)
+    def test_skill_metadata_partitions_setup_and_delivery_triggers(self) -> None:
+        skill_paths = {
+            path.parent.name: path for path in (ROOT / "skills").glob("*/SKILL.md")
+        }
+        descriptions = {
+            name: skill_frontmatter(path)["description"].lower()
+            for name, path in skill_paths.items()
+        }
 
-        ui = (ROOT / "skills" / "using-superplan" / "agents" / "openai.yaml").read_text(
-            encoding="utf-8"
-        ).lower()
-        self.assertIn("initialize", ui)
-        self.assertIn("migrate", ui)
+        using_description = descriptions["using-superplan"]
+        for intent in ("initialize", "check", "migrate", "explicit", "fallback"):
+            self.assertIn(intent, using_description)
+        self.assertIn("prd", descriptions["project-bootstrap-from-prd"])
+        self.assertIn("feature", descriptions["feature-plan-and-delivery"])
+        self.assertIn("bug", descriptions["bugfix-plan-and-delivery"])
+
+        using_content = skill_paths["using-superplan"].read_text(encoding="utf-8")
+        self.assertIn("## Fallback Routing", using_content)
+        self.assertNotIn("## Route Entry", using_content)
+        for route in EXPECTED_SKILLS - {"using-superplan"}:
+            self.assertIn(f"${route}", using_content)
+            self.assertIn("delivery-loop.md", skill_paths[route].read_text(encoding="utf-8"))
+
+        ui_path = ROOT / "skills" / "using-superplan" / "agents" / "openai.yaml"
+        ui = ui_path.read_text(encoding="utf-8")
+        self.assertIn("$using-superplan", ui)
+        self.assertNotIn("allow_implicit_invocation: false", ui)
+        for line in ui.splitlines():
+            if line.startswith("  ") and ":" in line:
+                self.assertRegex(line, r'^  [a-z_]+: ".*"$')
 
         codex = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
         self.assertIn("initialize", codex["interface"]["longDescription"].lower())
@@ -141,6 +160,49 @@ class PluginPackageTests(unittest.TestCase):
         )
         self.assertIn("delivery-loop.md", content)
         self.assertNotIn("sync_agents_guardrails.py", content)
+
+    def test_shared_references_keep_process_depth_proportional(self) -> None:
+        references = ROOT / "skills" / "using-superplan" / "references"
+        delivery = (references / "delivery-loop.md").read_text(encoding="utf-8")
+        state_machine = delivery.split("## Delivery State Machine", 1)[1].split(
+            "## Managed Guardrails", 1
+        )[0]
+        phases = re.findall(r"^\d+\. \*\*(.+?):\*\*", state_machine, re.MULTILINE)
+        self.assertEqual(
+            phases,
+            [
+                "Safety and compatibility",
+                "Intake or diagnosis",
+                "Draft and approval",
+                "Implementation",
+                "Verification and progress completion",
+                "Commit and optional worktree handoff",
+            ],
+        )
+
+        plan_spec = (references / "plan-spec.md").read_text(encoding="utf-8")
+        for required in (
+            "`Goal`",
+            "`Scope`",
+            "`Non-Goals`",
+            "`Exit Criteria`",
+            "`Outcome`",
+            "`Files`",
+            "`Verification`",
+        ):
+            self.assertIn(required, plan_spec)
+        for conditional in ("`Architecture`", "`Baseline`", "`Change Map`"):
+            self.assertIn(conditional, plan_spec)
+        self.assertIn("Existing plans remain valid", plan_spec)
+        self.assertIn("`Reproduction` and `Root Cause`", plan_spec)
+
+        verification = (references / "verification-matrix.md").read_text(
+            encoding="utf-8"
+        )
+        for phase in ("Focused", "Final", "Metadata-only"):
+            self.assertIn(f"**{phase}:**", verification)
+        self.assertEqual(verification.count("python3 tools/verify_repo.py"), 1)
+        self.assertIn("do not list or rerun", verification)
 
     def test_current_package_surfaces_do_not_claim_external_runtime(self) -> None:
         paths = [

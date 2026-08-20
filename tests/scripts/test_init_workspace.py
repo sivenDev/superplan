@@ -58,11 +58,15 @@ class InitWorkspaceTests(unittest.TestCase):
             self.assertIn("可选正文（一段话即可）", feature_guidance)
             self.assertIn("设计决策、替代方案与风险论证留给 RFC", feature_guidance)
             self.assertIn("requires_rfc: true", feature_guidance)
-            self.assertIn("docs/superplan/rfcs/<feature-id>.md", feature_guidance)
-            self.assertIn("docs/superplan/rfcs/<feature-id>/NN-<slug>.md", feature_guidance)
-            self.assertIn("两种布局互斥", feature_guidance)
-            self.assertIn("所有 RFC 批准后才能创建开发计划", feature_guidance)
-            self.assertIn("计划仍需单独批准后才能编码", feature_guidance)
+            self.assertIn("先完成独立设计审批，再进入计划审批", feature_guidance)
+            self.assertIn("具体格式由 Superplan RFC 流程管理", feature_guidance)
+            for runtime_detail in (
+                "docs/superplan/rfcs/<feature-id>.md",
+                "docs/superplan/rfcs/<feature-id>/NN-<slug>.md",
+                "两种布局互斥",
+                "RFC 默认使用中文",
+            ):
+                self.assertNotIn(runtime_detail, feature_guidance)
             agents = (root / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn(SYNC.START_MARKER, agents)
             self.assertIn(VERSION.workspace_marker(), agents)
