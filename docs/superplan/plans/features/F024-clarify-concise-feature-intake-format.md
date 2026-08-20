@@ -2,7 +2,7 @@
 id: "F024"
 title: "Clarify Concise Feature Intake Format"
 type: "feature"
-status: "draft"
+status: "complete"
 summary: "Make feature intake record concise request intent without expanding ordinary entries into RFC-style design documents."
 source: "docs/superplan/human/features.md"
 created: "2026-08-20"
@@ -44,10 +44,16 @@ parent: ""
 - `git diff --check`
 - `git status --short`
 
-- [ ] Define the smallest faithful feature body and keep the rule in the intake authority.
-- [ ] Update the initialized and current human guidance without changing recorder or migration behavior.
-- [ ] Cover concise intake in focused initialization and behavior contracts.
-- [ ] Verify, mark F024 complete, set the feature done, refresh the index, and create a dedicated F024 delivery commit.
+- [x] Define the smallest faithful feature body and keep the rule in the intake authority.
+- [x] Update the initialized and current human guidance without changing recorder or migration behavior.
+- [x] Cover concise intake in focused initialization and behavior contracts.
+- [x] Verify, mark F024 complete, set the feature done, refresh the index, and create a dedicated F024 delivery commit.
+
+## Completion Evidence
+
+- Focused initialization and package-contract suites passed with 12 and 6 tests respectively; new workspace output contains the concise one-paragraph feature guidance and preserves the existing RFC routing contract.
+- The feature intake behavior scenario now requires a concise request paragraph and rejects RFC-style request sections or design analysis while retaining direct acceptance and plan approval gates.
+- `python3 tools/verify_repo.py` passed 108 tests, compiled 19 Python files, and passed workspace compatibility, human registry, managed guardrail, plan-index, and diff checks.
 
 ## References
 - `docs/superplan/human/features.md`

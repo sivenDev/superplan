@@ -55,6 +55,8 @@ class InitWorkspaceTests(unittest.TestCase):
             feature_guidance = (
                 root / "docs" / "superplan" / "human" / "features.md"
             ).read_text(encoding="utf-8")
+            self.assertIn("可选正文（一段话即可）", feature_guidance)
+            self.assertIn("设计决策、替代方案与风险论证留给 RFC", feature_guidance)
             self.assertIn("requires_rfc: true", feature_guidance)
             self.assertIn("docs/superplan/rfcs/<feature-id>.md", feature_guidance)
             self.assertIn("docs/superplan/rfcs/<feature-id>/NN-<slug>.md", feature_guidance)

@@ -10,6 +10,8 @@
 > - `status`：`proposed`(待人工复核) → `accepted`(已确认、可规划) → `done`(已交付)
 > - `created`：创建日期，格式 `YYYY-MM-DD`
 >
+> 正文只记录需求意图。能说清时用一段话概括要做什么、主要范围、验收结果和关键限制；设计决策、替代方案与风险论证留给 RFC，执行任务留给 plan。
+>
 > 确认某条无误后，把它的 `status` 改为 `accepted`，再交给 skill 规划实现。
 
 <!-- 新增条目模板（把 F<NNN> 替换为下一个编号，例如 F001）：
@@ -19,7 +21,7 @@
 - status: proposed
 - created: YYYY-MM-DD
 
-可选详细描述：目标 / 范围 / 验收标准 / 非目标。
+可选正文（一段话即可）：范围：...；验收：...；限制或非目标：...。
 -->
 
 ## F001: Prefer subagent-based plan decomposition and execution when safe
@@ -187,7 +189,7 @@ Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace s
 
 ## F024: 明确精简的 Feature 登记格式
 
-- status: accepted
+- status: done
 - created: 2026-08-20
 
 范围：收紧 feature intake 与新工作区模板，默认用一段简洁正文说明要做什么、主要范围、验收结果和关键限制；能用自然段说清时不拆 RFC 式章节，不在登记中展开设计决策、替代方案、风险论证或实施步骤。验收：feature 登记规范与模板明确该边界，保留必要的状态、编号和 RFC 路由说明；不修改登记脚本、RFC 文档契约或运行时行为。

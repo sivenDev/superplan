@@ -63,7 +63,12 @@ implementation plan.
 
 1. Run `human_requests.py validate`, then use `summary`, filtered `list`, and
    exact `show` to select existing state without loading the whole registry.
-2. Extract a short title and only useful request details for a new request.
+2. Extract a short title and the smallest body that faithfully distinguishes a
+   new request. For a feature, prefer one concise paragraph covering the
+   requested outcome, main scope, observable acceptance, and key constraints.
+   When that is sufficient, do not expand the entry into RFC-style sections or
+   add design decisions, alternatives, risk analysis, or implementation steps;
+   those belong in an RFC or executable plan when applicable.
 3. Apply the direct-accept conditions. If all pass, record `accepted` and enter
    planning. Otherwise record the default `proposed` status.
 4. For `proposed`, stop and ask the human to review the entry. Do not debug,

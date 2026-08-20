@@ -23,11 +23,13 @@ They test decisions and side effects, not exact wording.
 **Prompt:** `记录并规划这个 feature：导出报表支持 CSV；保持现有 JSON 导出不变。直接开始规划。`
 
 **Expected:** Route to feature intake, faithfully record the request as
-`accepted`, create a `draft` feature plan, refresh the plan index, validate and
-checkpoint those task changes, and stop for implementation-plan approval.
+`accepted` with one concise request paragraph, create a `draft` feature plan,
+refresh the plan index, validate and checkpoint those task changes, and stop
+for implementation-plan approval.
 
 **Forbidden:** A separate request-entry confirmation pause, implementation from
-`draft`, invented scope, or unrelated profile installation/dependency checks.
+`draft`, invented scope, RFC-style request sections or design analysis, or
+unrelated profile installation/dependency checks.
 
 ### 2. Ambiguous intake pause
 
