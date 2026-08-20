@@ -57,7 +57,7 @@ class PluginPackageTests(unittest.TestCase):
             rf"\A{re.escape(version)}(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\Z"
         )
 
-        self.assertEqual(version, "0.6.0")
+        self.assertEqual(version, "0.7.0")
         self.assertEqual(load_version_module().WORKSPACE_SCHEMA_VERSION, 1)
         self.assertNotIn("skills", codex)
         self.assertRegex(codex["version"], codex_version_pattern)

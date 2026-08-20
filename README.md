@@ -71,7 +71,7 @@ Initialized repositories store a machine-readable marker inside the managed
 `AGENTS.md` block:
 
 ```text
-<!-- superplan-workspace: schema=1; generated-by=0.6.0 -->
+<!-- superplan-workspace: schema=1; generated-by=0.7.0 -->
 ```
 
 Check compatibility without writing:

@@ -2,7 +2,7 @@
 id: "F026"
 title: "Release Superplan 0.7.0 to GitHub"
 type: "feature"
-status: "draft"
+status: "in_progress"
 summary: "Synchronize the Superplan 0.7.0 release, verify it, and push main to GitHub without force."
 source: "docs/superplan/human/features.md"
 created: "2026-08-20"
@@ -42,10 +42,10 @@ parent: ""
 - Search active release surfaces for stale `0.6.0` while preserving historical evidence.
 - `python3 tools/verify_repo.py`
 
-- [ ] Set all committed current release surfaces to exact `0.7.0`.
-- [ ] Preserve workspace schema `1`, optional Codex build metadata support, and non-version package content.
-- [ ] Regenerate only the managed version marker and keep historical version evidence unchanged.
-- [ ] Pass focused plugin/package checks and one final authoritative repository verification.
+- [x] Set all committed current release surfaces to exact `0.7.0`.
+- [x] Preserve workspace schema `1`, optional Codex build metadata support, and non-version package content.
+- [x] Regenerate only the managed version marker and keep historical version evidence unchanged.
+- [x] Pass focused plugin/package checks and one final authoritative repository verification.
 
 ## Task 2: Complete, commit, and push F026
 
