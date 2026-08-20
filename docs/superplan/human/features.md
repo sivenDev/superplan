@@ -193,3 +193,11 @@ Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace s
 - created: 2026-08-20
 
 范围：收紧 feature intake 与新工作区模板，默认用一段简洁正文说明要做什么、主要范围、验收结果和关键限制；能用自然段说清时不拆 RFC 式章节，不在登记中展开设计决策、替代方案、风险论证或实施步骤。验收：feature 登记规范与模板明确该边界，保留必要的状态、编号和 RFC 路由说明；不修改登记脚本、RFC 文档契约或运行时行为。
+
+## F025: 精简 Superplan Skill 流程与说明架构
+
+- status: accepted
+- created: 2026-08-20
+- requires_rfc: true
+
+优化 Superplan 的 skill 路由和说明分层，消除入口、具体路由与共享 reference 之间的触发重叠和规则复述，并让低风险计划保持紧凑；保留 workspace safety、人工审批、RFC 与 plan 分离、bug 根因和状态完整性等安全边界。验收结果是四个根 skill 职责清晰、共享规则各有唯一权威、低风险任务不再产生仪式化说明，现有行为与验证契约继续通过。
