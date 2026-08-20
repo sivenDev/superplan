@@ -2,7 +2,7 @@
 id: "F026"
 title: "Release Superplan 0.7.0 to GitHub"
 type: "feature"
-status: "in_progress"
+status: "complete"
 summary: "Synchronize the Superplan 0.7.0 release, verify it, and push main to GitHub without force."
 source: "docs/superplan/human/features.md"
 created: "2026-08-20"
@@ -66,9 +66,16 @@ parent: ""
 - `git status --short --untracked-files=all`
 - `git ls-remote origin refs/heads/main`
 
-- [ ] Complete F026 and create a dedicated release commit that excludes `.codex/config.toml`.
-- [ ] Refuse to push if remote `main` differs from the preflight SHA.
-- [ ] Push `main:main` without force and verify GitHub resolves to the F026 release commit.
+- [x] Complete F026 and create a dedicated release commit that excludes `.codex/config.toml`.
+- [x] Refuse to push if remote `main` differs from the preflight SHA.
+- [x] Push `main:main` without force and verify GitHub resolves to the F026 release commit.
+
+## Implementation Evidence
+
+- Release identity: the Codex manifest, Claude manifest, repository marketplace entry, `SUPERPLAN_VERSION`, package assertion, managed `AGENTS.md` marker, and current README marker report exact `0.7.0`; workspace schema remains `1` and historical `0.6.0` evidence is unchanged.
+- Validation: all 7 focused package tests passed; the plugin-creator validator and managed guardrail check passed; `python3 tools/verify_repo.py` passed 109 tests, compiled 19 Python files, and passed workspace, registry, guardrail, plan-index, and diff checks.
+- GitHub delivery: the pre-push remote SHA remained `c5e8ad5efe224127bcfda322f0a2e1b72fb9d3c0`; non-force push advanced `origin/main` to verified release commit `3f5b4c62310b963925c66def596a7609b66a8605`.
+- Ownership: the user-owned `.codex/config.toml` remained untracked and excluded; no tag, GitHub Release, local plugin reinstall, force push, or schema change occurred.
 
 ## References
 - `docs/superplan/human/features.md`

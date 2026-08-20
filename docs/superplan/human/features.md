@@ -200,7 +200,7 @@ Publish the completed F020 workflow as Superplan 0.6.0 while keeping workspace s
 
 ## F026: Release Superplan 0.7.0 to GitHub
 
-- status: accepted
+- status: done
 - created: 2026-08-20
 
 Synchronize every active Superplan release surface from 0.6.0 to exact 0.7.0 while preserving workspace schema 1 and historical version evidence. Run focused plugin/package checks and the authoritative repository verifier, create a dedicated release commit, confirm remote main still matches the preflight head, then push main to git@github.com:sivenDev/superplan.git without force. Do not tag, create a GitHub Release, or refresh the local Codex installation.
